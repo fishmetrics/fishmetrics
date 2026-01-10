@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FISHMETRICS</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-title">FISHMETRICS</div>
+        <div class="brand-sub">CREATURES OF THE DEEP</div>
+      </div>
+      <img class="brand-logo" src="logo.png" alt="FishMetrics logo" />
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Locations</div>
+        <div id="locationButtons" class="btn-list" aria-label="Locations"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Rarity</div>
+        <div class="rarity-legend">
+          <div class="legend-item"><span class="swatch common"></span>Common</div>
+          <div class="legend-item"><span class="swatch rare"></span>Rare</div>
+          <div class="legend-item"><span class="swatch epic"></span>Epic</div>
+          <div class="legend-item"><span class="swatch legendary"></span>Legendary</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section progress">
+        <div class="sidebar-title">Bestiary Progress</div>
+        <div class="donut" role="img" aria-label="Bestiary progress">
+          <div class="donut-value" id="bestiaryProgress">0%</div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="content">
+
+      <section class="kpis" aria-label="Summary">
+        <div class="kpi">
+          <div class="kpi-label">Average Star Rating</div>
+          <div class="kpi-stars" id="avgStars">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Total Points</div>
+          <div class="kpi-value" id="totalPoints">0</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">4 Star Catches</div>
+          <div class="kpi-value" id="pct4">0.0%</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">5 Star Catches</div>
+          <div class="kpi-value" id="pct5">0.0%</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Best Map</div>
+          <div class="kpi-value" id="bestMap">—</div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel span-2">
+          <div class="panel-title">Total Points / Rarity</div>
+          <canvas id="pointsByRarityChart"></canvas>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The Legendary</div>
+          <canvas id="legendaryChart"></canvas>
+        </div>
+
+        <div class="panel span-2">
+          <div class="panel-title">Total Stars / Rarity</div>
+          <canvas id="starsByRarityChart"></canvas>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The Fearsome Four</div>
+          <canvas id="fearsomeChart"></canvas>
+        </div>
+
+        <div class="panel span-2">
+          <div class="panel-title">Star Catches</div>
+          <canvas id="starCatchesChart"></canvas>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Points / Map</div>
+          <canvas id="pointsByMapChart"></canvas>
+        </div>
+      </section>
+
+      <section class="table-wrap">
+        <div class="table-head">
+          <div class="table-title">Records</div>
+
+          <label class="location-select">
+            Location:
+            <select id="locationSelect"></select>
+            <span class="total-fish">Total Fish: <strong id="totalFishCount"></strong></span>
+            <span class="total-fish total-fish-all">All Locations: <strong id="totalFishCountAll"></strong></span>
+          </label>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Fish</th>
+                <th>Your Record (lbs)</th>
+                <th>Points</th>
+                <th>Stars</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

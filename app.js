@@ -1,0 +1,867 @@
+
+const CATEGORY_MIN_POINTS = { Common:300, Rare:400, Epic:500, Legendary:5000 };
+
+const CATEGORY_ORDER = ["Common","Rare","Epic","Legendary"];
+const CATEGORY_RANK = Object.fromEntries(CATEGORY_ORDER.map((c,i)=>[c,i]));
+
+const LOCATIONS = {
+ "Paradise Island": [
+  { name:"bluefish", category:"Common", min:6.61, max:31.75 },
+  { name:"largetooth flounder", category:"Common", min:2.2, max:6.61 },
+  { name:"blue trevally", category:"Common", min:4.41, max:17.64 },
+  { name:"bonefish", category:"Common", min:2.2, max:22.05 },
+  { name:"longtail tuna", category:"Common", min:11.02, max:79.15 },
+  { name:"clownfish", category:"Common", min:0.02, max:0.11 },
+  { name:"white tuna", category:"Rare", min:88.18, max:288.81 },
+  { name:"humphead parrotfish", category:"Rare", min:4.41, max:94.8 },
+  { name:"pelagic stingray", category:"Epic", min:8.82, max:108.03 },
+  { name:"pacific footballfish", category:"Epic", min:2.2, max:4.41 },
+  { name:"shredder", category:"Legendary", min:330.69, max:440.92 },
+  { name:"spotfin porcupinefish", category:"Common", min:2.2, max:6.17 },
+  { name:"snubnose pompano", category:"Common", min:2.2, max:19.84 }
+ ],
+ "Great Lakes": [
+  { name:"alewife", category:"Common", min:0.22, max:0.44 },
+  { name:"brook trout", category:"Common", min:4.41, max:17.64 },
+  { name:"brown trout", category:"Common", min:8.82, max:110.23 },
+  { name:"largemouth bass", category:"Common", min:4.41, max:22.05 },
+  { name:"yellow perch", category:"Common", min:1.1, max:4.19 },
+  { name:"white crappie", category:"Common", min:2.2, max:5.29 },
+  { name:"white bass", category:"Common", min:2.2, max:7.05 },
+  { name:"walleye", category:"Common", min:4.41, max:24.91 },
+  { name:"sea lamprey", category:"Common", min:1.1, max:5.51 },
+  { name:"pink salmon", category:"Common", min:4.41, max:15.43 },
+  { name:"smallmouth bass", category:"Common", min:2.2, max:11.9 },
+  { name:"round whitefish", category:"Common", min:2.2, max:5.95 },
+  { name:"redear sunfish", category:"Common", min:0.22, max:6.61 },
+  { name:"channel catfish", category:"Common", min:11.02, max:57.32 },
+  { name:"bloater", category:"Common", min:0.22, max:1.1 },
+  { name:"coho salmon", category:"Common", min:2.2, max:33.07 },
+  { name:"chinook salmon", category:"Rare", min:11.02, max:134.48 },
+  { name:"muskie", category:"Rare", min:4.41, max:68.34 },
+  { name:"flathead catfish", category:"Rare", min:11.02, max:121.25 },
+  { name:"lake trout", category:"Rare", min:11.02, max:70.55 },
+  { name:"longnose gar", category:"Epic", min:11.02, max:48.5 },
+  { name:"american eel", category:"Epic", min:4.41, max:16.09 },
+  { name:"goldfish", category:"Epic", min:0.22, max:1.54 },
+  { name:"lake sturgeon", category:"Epic", min:11.02, max:275.58 },
+  { name:"bessie", category:"Legendary", min:440.92, max:1102.31 }
+ ],
+ "Costa Rica": [
+  { name:"barracuda", category:"Common", min:6.61, max:110.23 },
+  { name:"roosterfish", category:"Common", min:11.02, max:112.44 },
+  { name:"dorado", category:"Common", min:11.02, max:88.18 },
+  { name:"pompano", category:"Common", min:2.2, max:19.84 },
+  { name:"wahoo", category:"Common", min:11.02, max:551.16 },
+  { name:"tripletail", category:"Common", min:2.2, max:41.89 },
+  { name:"tarpon", category:"Common", min:22.05, max:354.94 },
+  { name:"yellowfin tuna", category:"Common", min:22.05, max:440.92 },
+  { name:"sierra mackerel", category:"Common", min:4.41, max:19.62 },
+  { name:"pacific sailfish", category:"Common", min:22.05, max:220.46 },
+  { name:"jack crevalle", category:"Common", min:11.02, max:70.55 },
+  { name:"cubera snapper", category:"Common", min:22.05, max:125.66 },
+  { name:"broomtail grouper", category:"Common", min:22.05, max:200.62 },
+  { name:"snook", category:"Common", min:4.41, max:52.91 },
+  { name:"blue marlin", category:"Rare", min:110.23, max:1402.14 },
+  { name:"striped marlin", category:"Rare", min:110.23, max:970.03 },
+  { name:"nurse shark", category:"Rare", min:44.09, max:240.3 },
+  { name:"black marlin", category:"Rare", min:110.23, max:1653.47 },
+  { name:"bull shark", category:"Epic", min:22.05, max:696.66 },
+  { name:"hammerhead shark", category:"Epic", min:44.09, max:335.1 },
+  { name:"whale shark", category:"Epic", min:440.92, max:7495.72 },
+  { name:"whitetooth shark", category:"Epic", min:44.09, max:368.19 },
+  { name:"don pedro", category:"Legendary", min:1873.93, max:3086.47 }
+ ],
+ "Alaska": [
+  { name:"arctic char", category:"Common", min:6.61, max:33.07 },
+  { name:"atka mackerel", category:"Common", min:2.2, max:4.41 },
+  { name:"yellow irish lord", category:"Common", min:2.2, max:6.61 },
+  { name:"lancetfish", category:"Common", min:2.2, max:19.84 },
+  { name:"steelhead", category:"Common", min:6.61, max:55.12 },
+  { name:"silver salmon", category:"Common", min:2.2, max:33.07 },
+  { name:"rougheye rockfish", category:"Common", min:4.41, max:15.43 },
+  { name:"pacific herring", category:"Common", min:0.22, max:0.66 },
+  { name:"sockeye salmon", category:"Common", min:4.41, max:17.64 },
+  { name:"dolly varden", category:"Common", min:6.61, max:39.68 },
+  { name:"coalfish", category:"Common", min:11.02, max:68.34 },
+  { name:"chum salmon", category:"Common", min:4.41, max:35.27 },
+  { name:"capelin", category:"Common", min:0.02, max:0.22 },
+  { name:"burbot", category:"Common", min:11.02, max:74.96 },
+  { name:"bigmouth sculpin", category:"Common", min:1.1, max:6.61 },
+  { name:"arctic grayling", category:"Common", min:4.41, max:8.82 },
+  { name:"humpback salmon", category:"Common", min:4.41, max:15.43 },
+  { name:"halibut", category:"Common", min:44.09, max:800.28 },
+  { name:"blue lingcod", category:"Rare", min:11.02, max:130.07 },
+  { name:"spiny skate", category:"Rare", min:2.2, max:132.28 },
+  { name:"wolf eel", category:"Rare", min:6.61, max:39.68 },
+  { name:"king salmon", category:"Epic", min:11.02, max:134.48 },
+  { name:"salmon shark", category:"Epic", min:88.18, max:385.81 },
+  { name:"pacific sleeper shark", category:"Epic", min:22.05, max:800.28 },
+  { name:"sunfish", category:"Epic", min:220.46, max:5291.09 },
+  { name:"kraken", category:"Legendary", min:400.92, max:1102.31 }
+ ],
+ "Australia": [
+  { name:"black bream", category:"Common", min:2.2, max:8.82 },
+  { name:"dusky flathead", category:"Common", min:6.62, max:33.07 },
+  { name:"red emperor snapper", category:"Common", min:26.46, max:70.55 },
+  { name:"shortfin mako shark", category:"Common", min:251.33, max:1113.33 },
+  { name:"carpet shark", category:"Common", min:33.07, max:154.32 },
+  { name:"port jackson shark", category:"Common", min:11.02, max:35.27 },
+  { name:"spanish mackerel", category:"Common", min:44.09, max:154.32 },
+  { name:"albacore", category:"Common", min:26.46, max:132.28 },
+  { name:"barramundi", category:"Common", min:26.46, max:132.28 },
+  { name:"unicorn leatherjacket", category:"Common", min:1.1, max:5.95 },
+  { name:"tailor", category:"Common", min:6.61, max:31.75 },
+  { name:"leafy seadragon", category:"Common", min:0.11, max:0.22 },
+  { name:"rock flatgal", category:"Common", min:2.2, max:5.29 },
+  { name:"saddled coral grouper", category:"Common", min:17.64, max:52.91 },
+  { name:"common stargazer", category:"Common", min:4.41, max:19.84 },
+  { name:"skipjack tuna", category:"Common", min:22.05, max:88.18 },
+  { name:"fingermark", category:"Common", min:4.41, max:22.05 },
+  { name:"coral trout", category:"Common", min:22.05, max:50.71 },
+  { name:"john dory", category:"Common", min:4.41, max:17.64 },
+  { name:"luderick", category:"Common", min:2.2, max:8.82 },
+  { name:"mangrove jack", category:"Common", min:6.61, max:19.18 },
+  { name:"golden trevally", category:"Common", min:8.82, max:33.07 },
+  { name:"queensland grouper", category:"Rare", min:440.92, max:1322.77 },
+  { name:"smooth oreo dory", category:"Rare", min:4.41, max:11.02 },
+  { name:"swordfish", category:"Rare", min:330.69, max:1433.01 },
+  { name:"spotted handfish", category:"Rare", min:0.44, max:1.32 },
+  { name:"giant trevally", category:"Rare", min:46.3, max:176.37 },
+  { name:"tiger shark", category:"Epic", min:661.39, max:1779.13 },
+  { name:"manta ray", category:"Epic", min:881.85, max:6613.87 },
+  { name:"hoodwinker sunfish", category:"Epic", min:661.39, max:4409.25 },
+  { name:"bunyip", category:"Legendary", min:165.35, max:440.92 }
+ ],
+ "Scotland": [
+  { name:"carp", category:"Common", min:4.41, max:88.18 },
+  { name:"sea trout", category:"Common", min:33.07, max:110.23 },
+  { name:"grey trout", category:"Common", min:22.05, max:70.55 },
+  { name:"twaite shad", category:"Common", min:0.66, max:3.31 },
+  { name:"powan", category:"Common", min:8.82, max:24.25 },
+  { name:"freshwater bream", category:"Common", min:2.2, max:13.23 },
+  { name:"three spined stickleback", category:"Common", min:0.22, max:0.66 },
+  { name:"chub", category:"Common", min:2.2, max:17.64 },
+  { name:"tench", category:"Common", min:4.41, max:16.53 },
+  { name:"allis shad", category:"Common", min:2.2, max:8.82 },
+  { name:"northern pike", category:"Common", min:19.84, max:61.73 },
+  { name:"rainbow trout", category:"Common", min:19.84, max:55.12 },
+  { name:"gudgeon", category:"Common", min:0.22, max:0.44 },
+  { name:"vendace", category:"Common", min:0.44, max:2.2 },
+  { name:"roach", category:"Common", min:0.44, max:3.97 },
+  { name:"rudd", category:"Common", min:0.88, max:2.65 },
+  { name:"lamprey", category:"Common", min:1.1, max:5.51 },
+  { name:"european perch", category:"Common", min:2.2, max:10.58 },
+  { name:"dace", category:"Common", min:0.44, max:2.2 },
+  { name:"european smelt", category:"Common", min:0.22, max:0.37 },
+  { name:"european eel", category:"Rare", min:4.41, max:19.84 },
+  { name:"european grayling", category:"Rare", min:2.2, max:14.77 },
+  { name:"european whitefish", category:"Rare", min:2.2, max:22.05 },
+  { name:"bull trout", category:"Epic", min:8.82, max:31.97 },
+  { name:"scottish salmon", category:"Epic", min:26.46, max:101.41 },
+  { name:"common sturgeon", category:"Epic", min:246.92, max:881.85 },
+  { name:"nessie", category:"Legendary", min:551.0, max:771.62 }
+ ],
+"Thailand": [
+  { name:"pla kad thong", category:"Common", min:0.22, max:1.1 },
+  { name:"rice eel", category:"Common", min:0.22, max:1.1 },
+  { name:"bighead carp", category:"Common", min:11.02, max:101.41 },
+  { name:"alligator gar", category:"Common", min:22.05, max:302.03 },
+  { name:"spotted sorubim", category:"Common", min:22.05, max:220.46 },
+  { name:"marbled sand goby", category:"Common", min:1.1, max:6.61 },
+  { name:"tapah", category:"Common", min:22.05, max:189.6 },
+  { name:"red tail tiger catfish", category:"Common", min:22.05, max:176.37 },
+  { name:"giant devil catfish", category:"Common", min:74.96, max:198.42 },
+  { name:"empurau", category:"Common", min:6.61, max:44.09 },
+  { name:"great snakehead", category:"Common", min:11.02, max:66.14 },
+  { name:"yellow mystus", category:"Common", min:0.22, max:1.1 },
+  { name:"wallago", category:"Common", min:48.5, max:99.21 },
+  { name:"black ear catfish", category:"Common", min:2.2, max:9.48 },
+  { name:"rohu", category:"Common", min:11.02, max:99.21 },
+  { name:"ripsaw catfish", category:"Common", min:4.41, max:24.25 },
+  { name:"malayan leaffish", category:"Common", min:0.44, max:1.1 },
+  { name:"bambusa", category:"Common", min:8.82, max:114.64 },
+  { name:"fire eel", category:"Common", min:1.1, max:4.41 },
+  { name:"giant freshwater whipray", category:"Rare", min:319.67, max:1322.77 },
+  { name:"striped catfish", category:"Rare", min:46.3, max:97.0 },
+  { name:"giant pangasius", category:"Rare", min:220.46, max:661.39 },
+  { name:"mekong giant catfish", category:"Epic", min:264.55, max:771.62 },
+  { name:"juliens golden prize carp", category:"Epic", min:22.05, max:154.32 },
+  { name:"giant siamese", category:"Epic", min:44.09, max:661.39 },
+  { name:"naga", category:"Legendary", min:2204.62, max:6613.86 }
+ ],
+ "Amazon": [
+  { name:"amazon pellona", category:"Common", min:2.2, max:15.65 },
+  { name:"bass tunacare", category:"Common", min:2.2, max:19.84 },
+  { name:"curimbata", category:"Common", min:2.2, max:15.43 },
+  { name:"corvina", category:"Common", min:2.2, max:9.62 },
+  { name:"jatuarana", category:"Common", min:1.1, max:9.7 },
+  { name:"redtail catfish", category:"Common", min:22.05, max:97 },
+  { name:"tiger sorubim", category:"Common", min:4.41, max:37.48 },
+  { name:"redhook myleus", category:"Common", min:2.2, max:5.51 },
+  { name:"peacock bass", category:"Common", min:2.2, max:14.99 },
+  { name:"lambari", category:"Common", min:0.22, max:0.66 },
+  { name:"zungaro", category:"Common", min:11.02, max:110.23 },
+  { name:"pacu", category:"Common", min:6.61, max:44.09 },
+  { name:"giant trahira", category:"Common", min:2.2, max:28.66 },
+  { name:"redeye piranha", category:"Common", min:1.1, max:6.61 },
+  { name:"red piranha", category:"Common", min:1.1, max:8.6 },
+  { name:"speckled pavon", category:"Common", min:4.41, max:26.46 },
+  { name:"freshwater barracuda", category:"Common", min:0.22, max:0.66 },
+  { name:"bicuda", category:"Common", min:4.41, max:13.23 },
+  { name:"arowana", category:"Common", min:8.82, max:13.23 },
+  { name:"amazon puffer", category:"Common", min:0.22, max:0.44 },
+  { name:"pirapitinga", category:"Common", min:6.61, max:55.12 },
+  { name:"electric eel", category:"Rare", min:4.41, max:44.09 },
+  { name:"flatwhiskered catfish", category:"Rare", min:2.2, max:16.98 },
+  { name:"lau lau", category:"Rare", min:0.66, max:2.87 },
+  { name:"rock bacu", category:"Rare", min:6.61, max:33.07 },
+  { name:"cachama", category:"Epic", min:11.02, max:88.18 },
+  { name:"arapaima", category:"Epic", min:44.09, max:440.92 },
+  { name:"payara", category:"Epic", min:6.61, max:37.48 },
+  { name:"boiuna", category:"Legendary", min:2204.62, max:6613.86 }
+ ]
+};
+
+function calculatePoints(w,f){
+ if(!w||w<f.min||w>f.max) return 0;
+ return Math.round(CATEGORY_MIN_POINTS[f.category]*(1+(w-f.min)/(f.max-f.min)));
+}
+
+function calculateStars(cat,p){
+ if(!p) return 0;
+ if(cat==="Common") return p<359?1:p<420?2:p<480?3:p<540?4:5;
+ if(cat==="Rare") return p<480?1:p<560?2:p<640?3:p<720?4:5;
+ if(cat==="Epic") return p<600?1:p<700?2:p<800?3:p<900?4:5;
+ if(cat==="Legendary") return p<6000?1:p<7000?2:p<8000?3:p<9000?4:5;
+ return 0;
+}
+
+const tbody=document.querySelector("tbody");
+const locationSelect=document.getElementById("locationSelect");
+const theadRow = document.querySelector("thead tr");
+
+const totalFishCountEl = document.getElementById("totalFishCount");
+const totalFishCountAllEl = document.getElementById("totalFishCountAll");
+
+// Dashboard elements
+const locationButtonsEl = document.getElementById("locationButtons");
+const bestiaryProgressEl = document.getElementById("bestiaryProgress");
+const donutEl = document.querySelector(".donut");
+
+const avgStarsEl = document.getElementById("avgStars");
+const totalPointsEl = document.getElementById("totalPoints");
+const pct4El = document.getElementById("pct4");
+const pct5El = document.getElementById("pct5");
+const bestMapEl = document.getElementById("bestMap");
+
+// (Global error banner removed; we now use inline errors next to inputs.)
+function showError(){ /* no-op */ }
+
+function populateLocationOptions(){
+  // Build dropdown from LOCATIONS and include fish counts in the label
+  locationSelect.innerHTML = "";
+
+  // Combined view
+  const allCount = Object.values(LOCATIONS).reduce((sum,arr)=>sum+arr.length,0);
+  const allOpt = document.createElement("option");
+  allOpt.value = "__ALL__";
+  allOpt.textContent = `All Locations (${allCount})`;
+  locationSelect.appendChild(allOpt);
+
+  Object.keys(LOCATIONS).forEach(loc=>{
+    const opt=document.createElement("option");
+    opt.value=loc;
+    opt.textContent = `${loc} (${LOCATIONS[loc].length})`;
+    locationSelect.appendChild(opt);
+  });
+
+  // Total fish across all locations
+  if(totalFishCountAllEl){
+    totalFishCountAllEl.textContent = allCount;
+  }
+}
+populateLocationOptions();
+
+function buildLocationButtons(){
+  if(!locationButtonsEl) return;
+  locationButtonsEl.innerHTML = "";
+
+  // Mirror the dropdown order
+  const allBtn = document.createElement("button");
+  allBtn.type = "button";
+  allBtn.className = "loc-btn";
+  allBtn.dataset.value = "__ALL__";
+  allBtn.textContent = "All Locations";
+  locationButtonsEl.appendChild(allBtn);
+
+  Object.keys(LOCATIONS).forEach((loc, i)=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "loc-btn";
+    b.dataset.value = loc;
+    b.textContent = `${i+1}. ${loc}`;
+    locationButtonsEl.appendChild(b);
+  });
+
+  locationButtonsEl.addEventListener("click", (e)=>{
+    const btn = e.target.closest("button.loc-btn");
+    if(!btn) return;
+    locationSelect.value = btn.dataset.value;
+    renderTable();
+  });
+}
+
+function toTitleCase(str){
+  return String(str)
+    .toLowerCase()
+    .replace(/\b([a-z])/g, (m)=>m.toUpperCase());
+}
+
+// Persisted records per location (and in the combined view)
+const STORAGE_KEY = "fishmetrics_records_v1"; // legacy (localStorage) key used only for one-time migration
+const IDB_DB_NAME = "fishmetrics";
+const IDB_DB_VERSION = 1;
+const IDB_STORE = "location_records";
+
+let recordsByLocation = {}; // in-memory cache, persisted to IndexedDB
+
+function openIdb(){
+  if (openIdb._p) return openIdb._p;
+  openIdb._p = new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_DB_NAME, IDB_DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: "location" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return openIdb._p;
+}
+
+async function idbLoadAllRecords(){
+  const db = await openIdb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readonly");
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.getAll();
+    req.onsuccess = () => {
+      const out = {};
+      (req.result || []).forEach(row => { out[row.location] = row.records || {}; });
+      resolve(out);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSaveAllRecords(records){
+  const db = await openIdb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    const store = tx.objectStore(IDB_STORE);
+    // Clear + re-add keeps behavior identical to previous single-key localStorage save
+    const clearReq = store.clear();
+    clearReq.onerror = () => reject(clearReq.error);
+    clearReq.onsuccess = () => {
+      const entries = Object.entries(records || {});
+      if (entries.length === 0) { resolve(); return; }
+      let pending = entries.length;
+      entries.forEach(([location, rec]) => {
+        const putReq = store.put({ location, records: rec || {} });
+        putReq.onerror = () => reject(putReq.error);
+        putReq.onsuccess = () => {
+          pending -= 1;
+          if (pending === 0) resolve();
+        };
+      });
+    };
+    tx.onabort = () => reject(tx.error);
+  });
+}
+
+// One-time migration from localStorage (older builds) to IndexedDB
+async function loadRecords(){
+  let existing = {};
+  try { existing = await idbLoadAllRecords(); } catch { existing = {}; }
+
+  if (existing && Object.keys(existing).length) return existing;
+
+  // If IDB is empty, try migrating legacy localStorage data (if present)
+  let legacy = {};
+  try { legacy = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { legacy = {}; }
+
+  if (legacy && Object.keys(legacy).length){
+    try { await idbSaveAllRecords(legacy); } catch {}
+    // keep localStorage as a fallback backup, but IndexedDB becomes source of truth
+    return legacy;
+  }
+  return {};
+}
+
+// Save is "fire-and-forget" to keep the rest of the app logic synchronous
+function saveRecords(records){
+  idbSaveAllRecords(records).catch(()=>{});
+}
+
+
+let currentFish=[];
+
+// -----------------------------
+// Dashboard (Chart.js)
+// -----------------------------
+let pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart, legendaryChart, fearsomeChart;
+
+function fmtNumber(n){
+  const x = Number(n) || 0;
+  return x.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
+function clamp01(v){ return Math.max(0, Math.min(1, v)); }
+
+function setDonutProgress(pct){
+  if(!donutEl || !bestiaryProgressEl) return;
+  const p = clamp01((Number(pct) || 0) / 100);
+  const deg = Math.round(360 * p);
+  donutEl.style.background = `conic-gradient(#9ad54d 0deg, #9ad54d ${deg}deg, rgba(255,255,255,.14) ${deg}deg)`;
+  bestiaryProgressEl.textContent = `${Math.round(p * 100)}%`;
+}
+
+function setTableHeaders(isAll){
+  if(!theadRow) return;
+  if(isAll){
+    theadRow.innerHTML = `
+      <th>Location</th>
+      <th>Category</th>
+      <th>Fish</th>
+      <th>Your Record (lbs)</th>
+      <th>Points</th>
+      <th>Stars</th>
+    `;
+  }else{
+    theadRow.innerHTML = `
+      <th>Category</th>
+      <th>Fish</th>
+      <th>Your Record (lbs)</th>
+      <th>Points</th>
+      <th>Stars</th>
+    `;
+  }
+}
+
+function getStoredWeight(loc, fishName){
+  return recordsByLocation?.[loc]?.[fishName] ?? "";
+}
+
+function setStoredWeight(loc, fishName, value){
+  if(!recordsByLocation[loc]) recordsByLocation[loc] = {};
+  if(value === "" || value == null){
+    delete recordsByLocation[loc][fishName];
+  }else{
+    recordsByLocation[loc][fishName] = value;
+  }
+  saveRecords(recordsByLocation);
+}
+
+function recomputeFromDOM(){
+  document.querySelectorAll("tbody tr").forEach((row)=>{
+    const idx = Number(row.dataset.idx);
+    const fish = currentFish[idx];
+    const inp = row.querySelector("input");
+    const pointsCell = row.querySelector(".points");
+    const starsCell = row.querySelector(".stars");
+
+    // Reset
+    inp.className = "";
+    if(pointsCell) pointsCell.textContent = "";
+    if(starsCell) starsCell.textContent = "";
+
+    // Validation
+    if(!/^(\d*(\.\d{0,2})?)?$/.test(inp.value)){
+      inp.classList.add("invalid");
+      return;
+    }
+    const w = parseFloat(inp.value);
+    if(!w){
+      return;
+    }
+    if(w < fish.min || w > fish.max){
+      inp.classList.add("outofrange");
+      return;
+    }
+
+    const pts = calculatePoints(w, fish);
+    const stars = calculateStars(fish.category, pts);
+
+    if(pointsCell) pointsCell.textContent = pts;
+    if(starsCell) starsCell.textContent = "⭐".repeat(stars);
+
+  });
+
+  updateDashboard();
+}
+
+function renderTable(){
+ tbody.innerHTML="";
+ showError("");
+
+ const selected = locationSelect.value;
+ const isAll = selected === "__ALL__";
+ setTableHeaders(isAll);
+
+ if(isAll){
+  currentFish = Object.keys(LOCATIONS).flatMap(loc=>
+    LOCATIONS[loc].map(f=>({ ...f, location: loc }))
+  ).sort((a,b)=>{
+    const ra=CATEGORY_RANK[a.category] ?? 999;
+    const rb=CATEGORY_RANK[b.category] ?? 999;
+    if(ra!==rb) return ra-rb;
+    const la = a.location.localeCompare(b.location);
+    if(la!==0) return la;
+    return a.name.localeCompare(b.name);
+  });
+ }else{
+  currentFish=[...LOCATIONS[selected]].map(f=>({ ...f, location: selected })).sort((a,b)=>{
+    const ra=CATEGORY_RANK[a.category] ?? 999;
+    const rb=CATEGORY_RANK[b.category] ?? 999;
+    if(ra!==rb) return ra-rb;
+    return a.name.localeCompare(b.name);
+  });
+ }
+
+ if(totalFishCountEl) totalFishCountEl.textContent = currentFish.length;
+
+ currentFish.forEach((f, idx)=>{
+  const r=document.createElement("tr");
+  r.classList.add(f.category.toLowerCase());
+  r.dataset.idx = String(idx);
+
+  const rangeTip = `Min: ${f.min} lbs  •  Max: ${f.max} lbs`;
+  const fishLabel = `<span class="fish-name" title="${rangeTip}">${toTitleCase(f.name)}</span>`;
+  if(isAll){
+    r.innerHTML=`<td>${f.location}</td><td>${f.category}</td><td>${fishLabel}</td>`;
+  }else{
+    r.innerHTML=`<td>${f.category}</td><td>${fishLabel}</td>`;
+  }
+
+  const i=document.createElement("input");
+  const p=document.createElement("td");
+  const s=document.createElement("td");
+
+  p.classList.add("points");
+  s.classList.add("stars");
+
+  // Prefill persisted record for this location+fish
+  i.value = getStoredWeight(f.location, f.name);
+
+  
+  let suppress = false;
+
+  // Inline error message (shown next to this input)
+  const inlineErr = document.createElement("div");
+  inlineErr.classList.add("inline-error");
+
+  function setInlineError(msg){
+    if(!msg){
+      inlineErr.textContent = "";
+      inlineErr.classList.remove("show");
+      i.classList.remove("outofrange");
+      return;
+    }
+    inlineErr.textContent = msg;
+    inlineErr.classList.add("show");
+    i.classList.add("outofrange");
+  }
+
+  // While typing: don't validate yet (wait for Enter or blur). Just clear inline errors.
+  i.addEventListener("input", ()=>{
+    if(suppress) return;
+    setInlineError("");
+  });
+
+  function commitInput(){
+    if(suppress) return;
+
+    const raw = String(i.value ?? "").trim();
+    const num = parseFloat(raw);
+
+    // Empty or 0 clears stored record + clears points/stars
+    if(raw === "" || raw === "0" || (!Number.isNaN(num) && num === 0)){
+      suppress = true;
+      i.value = "";
+      suppress = false;
+      setStoredWeight(f.location, f.name, "");
+      setInlineError("");
+      recomputeFromDOM();
+      return;
+    }
+
+    // Only validate when we have a numeric value
+    if(Number.isNaN(num)){
+      // Leave the value as-is; recompute will mark invalid formats if needed
+      recomputeFromDOM();
+      return;
+    }
+
+    // Range check on commit
+    if(num < f.min || num > f.max){
+      setInlineError(`Must be between ${f.min} and ${f.max} lbs`);
+      suppress = true;
+      i.value = "";
+      suppress = false;
+      setStoredWeight(f.location, f.name, "");
+      recomputeFromDOM();
+      return;
+    }
+
+    setInlineError("");
+    setStoredWeight(f.location, f.name, raw);
+    recomputeFromDOM();
+  }
+
+  i.addEventListener("blur", commitInput);
+  i.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){
+      e.preventDefault();
+      i.blur(); // triggers commitInput()
+    }
+  });
+
+  const ic = document.createElement("td");
+  ic.classList.add("input-cell");
+  ic.appendChild(i);
+  ic.appendChild(inlineErr);
+r.append(ic,p,s);
+  tbody.appendChild(r);
+ });
+
+ // Compute totals/points/stars from any persisted values
+ recomputeFromDOM();
+}
+
+function makeCharts(){
+  const common = getComputedStyle(document.documentElement).getPropertyValue('--common').trim();
+  const rare = getComputedStyle(document.documentElement).getPropertyValue('--rare').trim();
+  const epic = getComputedStyle(document.documentElement).getPropertyValue('--epic').trim();
+  const legendary = getComputedStyle(document.documentElement).getPropertyValue('--legendary').trim();
+
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: 'rgba(255,255,255,.85)' } },
+      tooltip: { enabled: true }
+    },
+    scales: {
+      x: { ticks: { color: 'rgba(255,255,255,.75)' }, grid: { color: 'rgba(255,255,255,.08)' } },
+      y: { ticks: { color: 'rgba(255,255,255,.75)' }, grid: { color: 'rgba(255,255,255,.08)' } }
+    }
+  };
+
+  pointsByRarityChart = new Chart(document.getElementById("pointsByRarityChart"), {
+    type: "bar",
+    data: { labels: [], datasets: [
+      { label: "Common", data: [], backgroundColor: common },
+      { label: "Rare", data: [], backgroundColor: rare },
+      { label: "Epic", data: [], backgroundColor: epic },
+      { label: "Legendary", data: [], backgroundColor: legendary },
+    ]},
+    options: {
+      ...baseOpts,
+      plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: baseOpts.plugins.legend.labels } },
+    }
+  });
+
+  starsByRarityChart = new Chart(document.getElementById("starsByRarityChart"), {
+    type: "bar",
+    data: { labels: [], datasets: [
+      { label: "Common", data: [], backgroundColor: common },
+      { label: "Rare", data: [], backgroundColor: rare },
+      { label: "Epic", data: [], backgroundColor: epic },
+      { label: "Legendary", data: [], backgroundColor: legendary },
+    ]},
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: baseOpts.plugins.legend.labels } } }
+  });
+
+  starCatchesChart = new Chart(document.getElementById("starCatchesChart"), {
+    type: "bar",
+    data: { labels: [], datasets: [
+      { label: "1★", data: [], backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--red1").trim() || "rgba(255,80,80,.85)" },
+      { label: "2★", data: [], backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--red2").trim() || "rgba(255,60,60,.85)" },
+      { label: "3★", data: [], backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--red3").trim() || "rgba(255,40,40,.85)" },
+      { label: "4★", data: [], backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--red4").trim() || "rgba(255,20,20,.85)" },
+      { label: "5★", data: [], backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--red5").trim() || "rgba(200,0,0,.90)" },
+    ]},
+    options: {
+      ...baseOpts,
+      plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: baseOpts.plugins.legend.labels } },
+      scales: { ...baseOpts.scales, x: { ...baseOpts.scales.x, stacked: true }, y: { ...baseOpts.scales.y, stacked: true } }
+    }
+  });
+
+  pointsByMapChart = new Chart(document.getElementById("pointsByMapChart"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Points", data: [] }] },
+    options: {
+      ...baseOpts,
+      indexAxis: 'y',
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+    }
+  });
+
+  legendaryChart = new Chart(document.getElementById("legendaryChart"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Legendary Points", data: [], backgroundColor: legendary }] },
+    options: {
+      ...baseOpts,
+      indexAxis: 'y',
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+    }
+  });
+
+  fearsomeChart = new Chart(document.getElementById("fearsomeChart"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Epic Points", data: [], backgroundColor: epic }] },
+    options: {
+      ...baseOpts,
+      indexAxis: 'y',
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+    }
+  });
+}
+
+function computeAggregates(){
+  const byLoc = {};
+  const allFish = [];
+  Object.keys(LOCATIONS).forEach(loc=>{
+    byLoc[loc] = {
+      pointsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
+      starsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
+      starCounts: [0,0,0,0,0],
+      totalPoints: 0,
+      totalStars: 0,
+      caught: 0,
+    };
+
+    for (const fish of LOCATIONS[loc]){
+      const raw = recordsByLocation?.[loc]?.[fish.name];
+      const w = Number.parseFloat(raw);
+      const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
+      if(!valid) continue;
+      const pts = calculatePoints(w, fish);
+      const stars = calculateStars(fish.category, pts);
+      byLoc[loc].pointsByCat[fish.category] += pts;
+      byLoc[loc].starsByCat[fish.category] += stars;
+      if(stars>=1 && stars<=5) byLoc[loc].starCounts[stars-1] += 1;
+      byLoc[loc].totalPoints += pts;
+      byLoc[loc].totalStars += stars;
+      byLoc[loc].caught += 1;
+      allFish.push({ ...fish, location: loc, points: pts, stars });
+    }
+  });
+  return { byLoc, allFish };
+}
+
+function updateDashboard(){
+  if(!pointsByRarityChart) return;
+  const { byLoc, allFish } = computeAggregates();
+
+  const locs = Object.keys(LOCATIONS);
+  const pointsCommon = locs.map(l=>byLoc[l].pointsByCat.Common);
+  const pointsRare = locs.map(l=>byLoc[l].pointsByCat.Rare);
+  const pointsEpic = locs.map(l=>byLoc[l].pointsByCat.Epic);
+  const pointsLegendary = locs.map(l=>byLoc[l].pointsByCat.Legendary);
+
+  pointsByRarityChart.data.labels = locs;
+  pointsByRarityChart.data.datasets[0].data = pointsCommon;
+  pointsByRarityChart.data.datasets[1].data = pointsRare;
+  pointsByRarityChart.data.datasets[2].data = pointsEpic;
+  pointsByRarityChart.data.datasets[3].data = pointsLegendary;
+  pointsByRarityChart.update();
+
+  const starsCommon = locs.map(l=>byLoc[l].starsByCat.Common);
+  const starsRare = locs.map(l=>byLoc[l].starsByCat.Rare);
+  const starsEpic = locs.map(l=>byLoc[l].starsByCat.Epic);
+  const starsLegendary = locs.map(l=>byLoc[l].starsByCat.Legendary);
+
+  starsByRarityChart.data.labels = locs;
+  starsByRarityChart.data.datasets[0].data = starsCommon;
+  starsByRarityChart.data.datasets[1].data = starsRare;
+  starsByRarityChart.data.datasets[2].data = starsEpic;
+  starsByRarityChart.data.datasets[3].data = starsLegendary;
+  starsByRarityChart.update();
+
+  // Star catches (stacked)
+  starCatchesChart.data.labels = locs;
+  for(let s=1;s<=5;s++){
+    starCatchesChart.data.datasets[s-1].data = locs.map(l=>byLoc[l].starCounts[s-1]);
+  }
+  starCatchesChart.update();
+
+  // Points per map (sorted)
+  const locSorted = [...locs].sort((a,b)=>byLoc[b].totalPoints - byLoc[a].totalPoints);
+  pointsByMapChart.data.labels = locSorted;
+  pointsByMapChart.data.datasets[0].data = locSorted.map(l=>byLoc[l].totalPoints);
+  pointsByMapChart.update();
+
+  // Legendary (top 8 by points)
+  const legendary = allFish.filter(f=>f.category === 'Legendary')
+    .sort((a,b)=>b.points - a.points)
+    .slice(0, 8);
+  legendaryChart.data.labels = legendary.map(f=>toTitleCase(f.name));
+  legendaryChart.data.datasets[0].data = legendary.map(f=>f.points);
+  legendaryChart.update();
+
+  // Fearsome four (top 4 epic by points)
+  const fearsome = allFish.filter(f=>f.category === 'Epic')
+    .sort((a,b)=>b.points - a.points)
+    .slice(0, 4);
+  fearsomeChart.data.labels = fearsome.map(f=>toTitleCase(f.name));
+  fearsomeChart.data.datasets[0].data = fearsome.map(f=>f.points);
+  fearsomeChart.update();
+
+  // KPIs
+  const totalPoints = locs.reduce((s,l)=>s+byLoc[l].totalPoints,0);
+  const totalStars = locs.reduce((s,l)=>s+byLoc[l].totalStars,0);
+  const totalCaught = locs.reduce((s,l)=>s+byLoc[l].caught,0);
+  const star4 = locs.reduce((s,l)=>s+byLoc[l].starCounts[3],0);
+  const star5 = locs.reduce((s,l)=>s+byLoc[l].starCounts[4],0);
+
+  if(totalPointsEl) totalPointsEl.textContent = fmtNumber(totalPoints);
+  const avg = totalCaught ? (totalStars / totalCaught) : 0;
+  if(avgStarsEl){
+    const full = Math.floor(avg);
+    const half = (avg - full) >= 0.5;
+    const starsTxt = '★'.repeat(full) + (half ? '☆' : '') + '☆'.repeat(Math.max(0, 5 - full - (half?1:0)));
+    avgStarsEl.textContent = starsTxt;
+  }
+  if(pct4El) pct4El.textContent = totalCaught ? `${(100*star4/totalCaught).toFixed(1)}%` : '0.0%';
+  if(pct5El) pct5El.textContent = totalCaught ? `${(100*star5/totalCaught).toFixed(1)}%` : '0.0%';
+
+  const best = totalCaught ? (locSorted[0] || '') : '';
+  if(bestMapEl) bestMapEl.textContent = best;
+
+  // Bestiary progress = how many unique fish have a stored (valid) record
+  const totalFish = Object.values(LOCATIONS).reduce((sum,arr)=>sum+arr.length,0);
+  const caughtUnique = new Set(allFish.map(f=>`${f.location}|${f.name}`)).size;
+  const pct = totalFish ? (100 * caughtUnique / totalFish) : 0;
+  setDonutProgress(pct);
+
+  // Sidebar active button
+  if(locationButtonsEl){
+    [...locationButtonsEl.querySelectorAll('button.loc-btn')].forEach(b=>{
+      b.classList.toggle('active', b.dataset.value === locationSelect.value);
+    });
+  }
+}
+
+async function initApp(){
+  recordsByLocation = await loadRecords();
+  buildLocationButtons();
+  makeCharts();
+  locationSelect.onchange = renderTable;
+  renderTable();
+}
+initApp();

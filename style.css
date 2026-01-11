@@ -369,3 +369,85 @@ html, body { width: 100%; overflow-x: hidden; }
 .brand{
   text-align:center;
 }
+
+
+/* Responsive overhaul */
+*{ box-sizing:border-box; }
+img{ max-width:100%; height:auto; }
+
+:root{
+  --page-max: 1100px;
+}
+
+html, body{ width:100%; overflow-x:hidden; }
+
+/* Main content fluid */
+.content{
+  width: 100%;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Panels & charts */
+.panel{ min-width: 0; }
+.panel canvas{
+  width:100% !important;
+  height:260px !important;
+}
+
+/* Tabs wrap */
+.top-tabs{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.tab-btn{
+  flex: 1 1 auto;
+  min-width: 140px;
+}
+
+/* Header: stacked centered on mobile */
+.topbar{
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+.topbar-inner{
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 10px 16px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+.brand{ text-align:center; }
+.brand-logo{
+  transform: none !important;
+  max-width: 160px;
+}
+
+/* Break grids earlier */
+@media (max-width: 900px){
+  .kpis{ grid-template-columns: 1fr 1fr !important; }
+  .grid{ grid-template-columns: 1fr !important; }
+  .panel.span-2{ grid-column: auto !important; }
+}
+
+@media (max-width: 520px){
+  .kpis{ grid-template-columns: 1fr !important; }
+  .tab-btn{ min-width: 120px; padding: 10px 12px; }
+  .brand-title{ font-size: 32px; letter-spacing: 1.5px; }
+  .brand-sub{ font-size: 10px; }
+  .panel canvas{ height: 240px !important; }
+  .table-wrap{ overflow-x:auto; }
+  table{ min-width: 560px; }
+}
+
+@media (max-width: 740px) and (orientation: landscape){
+  .panel canvas{ height: 220px !important; }
+}

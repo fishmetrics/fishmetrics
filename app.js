@@ -715,10 +715,9 @@ function makeCharts(){
 
   pointsByMapChart = new Chart(document.getElementById("pointsByMapChart"), {
     type: "bar",
-    data: { labels: [], datasets: [{ label: "Points", data: [] }] },
+    data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: rare }] },
     options: {
       ...baseOpts,
-      indexAxis: 'y',
       plugins: { ...baseOpts.plugins, legend: { display: false } },
     }
   });

@@ -676,9 +676,11 @@ function makeCharts(){
       { label: "Epic", data: [], backgroundColor: epic },
       { label: "Legendary", data: [], backgroundColor: legendary },
     ]},
-    options: {layout:{ padding:{ bottom: 0 } },
+    options: {scales: { ...baseOpts.scales, x: { ...baseOpts.scales.x, ticks: { ...baseOpts.scales.x.ticks, padding: 2, autoSkip: false, maxRotation: 45, minRotation: 45 } } },
+      layout:{ padding:{ bottom: 0 } },
       
       ...baseOpts,
+      
       plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: baseOpts.plugins.legend.labels } },
     }
   });

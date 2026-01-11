@@ -681,7 +681,7 @@ function makeCharts(){
       
       ...baseOpts,
       
-      plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: baseOpts.plugins.legend.labels } },
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
     }
   });
 
@@ -693,7 +693,7 @@ function makeCharts(){
       { label: "Epic", data: [], backgroundColor: epic },
       { label: "Legendary", data: [], backgroundColor: legendary },
     ]},
-    options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: baseOpts.plugins.legend.labels } } }
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { display: false } } }
   });
 
   starCatchesChart = new Chart(document.getElementById("starCatchesChart"), {

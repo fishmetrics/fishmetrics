@@ -26,8 +26,8 @@
   <button class="tab-btn active" id="tabOverview" type="button" data-view="dashboardView">Snapshot</button>
   <button class="tab-btn" id="tabFish" type="button" data-view="fishView">Analytics (Fish)</button>
   <button class="tab-btn" id="tabMap" type="button" data-view="mapView">Analytics (Map)</button>
+    <button class="tab-btn" id="tabRecords" type="button" data-view="recordsView">Record Entry</button>
   <button class="tab-btn" id="tabInstructions" type="button" data-view="instructionsView">Instructions</button>
-  <button class="tab-btn" id="tabRecords" type="button" data-view="recordsView">Record Entry</button>
 </nav>
 
 <main class="layout">
@@ -125,7 +125,12 @@
       <div class="panel-title">Epic Points Range</div>
       <canvas id="epicDumbbellChart"></canvas>
     </div>
-  </section>
+  
+    <div class="panel">
+      <div class="panel-title">Points Range by Type</div>
+      <canvas id="typeDumbbellChart"></canvas>
+    </div>
+</section>
 </div>
 
 

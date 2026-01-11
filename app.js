@@ -723,6 +723,16 @@ function makeCharts(){
     }
   });
 
+  typeDumbbellChart = new Chart(document.getElementById("typeDumbbellChart"), {
+    type: "line",
+    data: { labels: ["Common","Rare","Epic","Legendary"], datasets:[
+      {label:"Range", type:"line", data:[], pointRadius:0, borderWidth:3},
+      {label:"Lowest", type:"scatter", data:[], pointRadius:5},
+      {label:"Highest", type:"scatter", data:[], pointRadius:5},
+    ]},
+    options:{ ...baseOpts, indexAxis:'y', plugins:{...baseOpts.plugins, legend:{display:false}} }
+  });
+
   commonDumbbellChart = new Chart(document.getElementById("commonDumbbellChart"), {
     type: "line",
     data: {
@@ -888,6 +898,40 @@ function updateDashboard(){
   pointsByMapChart.data.labels = locSorted;
   pointsByMapChart.data.datasets[0].data = locSorted.map(l=>byLoc[l].totalPoints);
   pointsByMapChart.update();
+
+  // Dumbbell by type (all maps combined)
+  const cats = ["Common","Rare","Epic","Legendary"];
+  const mins = {}, maxs = {};
+  cats.forEach(c=>{ mins[c]=Infinity; maxs[c]=-Infinity; });
+
+  getLocationList().forEach(loc=>{
+    (LOCATIONS[loc]||[]).forEach(f=>{
+      const raw = recordsByLocation?.[loc]?.[f.name];
+      const w = Number.parseFloat(raw);
+      if(!Number.isFinite(w)) return;
+      const pts = calculatePoints(w,f);
+      if(!pts) return;
+      if(pts < mins[f.category]) mins[f.category]=pts;
+      if(pts > maxs[f.category]) maxs[f.category]=pts;
+    });
+  });
+
+  if(typeDumbbellChart){
+    const seg=[], lo=[], hi=[];
+    cats.forEach(c=>{
+      if(mins[c]!==Infinity){
+        seg.push({x:mins[c], y:c},{x:maxs[c], y:c},null);
+        lo.push({x:mins[c], y:c});
+        hi.push({x:maxs[c], y:c});
+      }
+    });
+    typeDumbbellChart.data.labels=cats;
+    typeDumbbellChart.data.datasets[0].data=seg;
+    typeDumbbellChart.data.datasets[1].data=lo;
+    typeDumbbellChart.data.datasets[2].data=hi;
+    typeDumbbellChart.update();
+  }
+
 
   function updateDumbbellForCategory(category, chart){
     if(!chart) return;

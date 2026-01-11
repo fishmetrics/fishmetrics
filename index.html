@@ -21,6 +21,15 @@
 <img alt="FishMetrics logo" class="brand-logo" src="logo.png"/>
 </div>
 </header>
+
+<nav class="top-tabs" aria-label="Primary">
+  <button class="tab-btn active" id="tabOverview" type="button" data-view="dashboardView">Snapshot</button>
+  <button class="tab-btn" id="tabFish" type="button" data-view="fishView">Analytics (Fish)</button>
+  <button class="tab-btn" id="tabMap" type="button" data-view="mapView">Analytics (Map)</button>
+  <button class="tab-btn" id="tabInstructions" type="button" data-view="instructionsView">Instructions</button>
+  <button class="tab-btn" id="tabRecords" type="button" data-view="recordsView">Record Entry</button>
+</nav>
+
 <main class="layout">
 <aside class="sidebar">
 <div class="sidebar-section">
@@ -44,6 +53,7 @@
 </div>
 </aside>
 <section class="content">
+<div class="tab-view active" id="dashboardView">
 <section aria-label="Summary" class="kpis">
 <div class="kpi">
 <div class="kpi-label">Average Star Rating</div>
@@ -82,15 +92,54 @@
 <div class="panel-title">Points / Map</div>
 <canvas id="pointsByMapChart"></canvas>
 </div>
-<div class="panel">
+</section>
+</div>
+
+
+<div class="tab-view" id="fishView">
+  <section class="grid">
+    <div class="panel">
 <div class="panel-title">The Legendary</div>
 <canvas id="legendaryChart"></canvas>
 </div>
-<div class="panel">
-<div class="panel-title">The Fearsome Four</div>
-<canvas id="fearsomeChart"></canvas>
+
+    <div class="panel">
+  <div class="panel-title">The Fearsome Four</div>
+  <canvas id="fearsomeChart"></canvas>
 </div>
-</section>
+  </section>
+</div>
+
+<div class="tab-view" id="mapView">
+  <section class="grid">
+
+    <div class="panel">
+      <div class="panel-title">Common Points Range</div>
+      <canvas id="commonDumbbellChart"></canvas>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Rare Points Range</div>
+      <canvas id="rareDumbbellChart"></canvas>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Epic Points Range</div>
+      <canvas id="epicDumbbellChart"></canvas>
+    </div>
+  </section>
+</div>
+
+
+<div class="tab-view" id="instructionsView">
+  <section class="panel">
+    <div class="panel-title">How to Use FishMetrics</div>
+    <div class="muted" style="line-height:1.6">
+      <p>1) Go to <strong>Record Entry</strong> to enter fish weights for each location.</p>
+      <p>2) Snapshot shows your overall progress and KPIs.</p>
+      <p>3) Analytics tabs break down performance by fish and by map.</p>
+    </div>
+  </section>
+</div>
+<div class="tab-view" id="recordsView">
 <section class="table-wrap">
 <div class="table-head">
 <div class="table-title">Records</div>
@@ -116,6 +165,7 @@
 </table>
 </div>
 </section>
+</div>
 </section>
 </main>
 <script src="app.js"></script>

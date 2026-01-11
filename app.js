@@ -723,6 +723,69 @@ function makeCharts(){
     }
   });
 
+  commonDumbbellChart = new Chart(document.getElementById("commonDumbbellChart"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3 },
+        { label: "Lowest", type: "scatter", data: [], pointRadius: 5 },
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5 },
+      ]
+    },
+    options: {
+      ...baseOpts,
+      indexAxis: 'y',
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      scales: {
+        x: { ...baseOpts.scales.x, type: 'linear' },
+        y: { ...baseOpts.scales.y, type: 'category' }
+      }
+    }
+  });
+
+  rareDumbbellChart = new Chart(document.getElementById("rareDumbbellChart"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3 },
+        { label: "Lowest", type: "scatter", data: [], pointRadius: 5 },
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5 },
+      ]
+    },
+    options: {
+      ...baseOpts,
+      indexAxis: 'y',
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      scales: {
+        x: { ...baseOpts.scales.x, type: 'linear' },
+        y: { ...baseOpts.scales.y, type: 'category' }
+      }
+    }
+  });
+
+  epicDumbbellChart = new Chart(document.getElementById("epicDumbbellChart"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3 },
+        { label: "Lowest", type: "scatter", data: [], pointRadius: 5 },
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5 },
+      ]
+    },
+    options: {
+      ...baseOpts,
+      indexAxis: 'y',
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      scales: {
+        x: { ...baseOpts.scales.x, type: 'linear' },
+        y: { ...baseOpts.scales.y, type: 'category' }
+      }
+    }
+  });
+
   legendaryChart = new Chart(document.getElementById("legendaryChart"), {
     type: "bar",
     data: { labels: [], datasets: [{ label: "Legendary Points", data: [], backgroundColor: legendary }] },
@@ -826,6 +889,53 @@ function updateDashboard(){
   pointsByMapChart.data.datasets[0].data = locSorted.map(l=>byLoc[l].totalPoints);
   pointsByMapChart.update();
 
+  function updateDumbbellForCategory(category, chart){
+    if(!chart) return;
+
+    const mins = [];
+    const maxs = [];
+    locSorted.forEach(loc=>{
+      let minP = Infinity;
+      let maxP = -Infinity;
+      for (const fish of (LOCATIONS[loc] || [])){
+        if(fish.category !== category) continue;
+        const raw = recordsByLocation?.[loc]?.[fish.name];
+        const w = Number.parseFloat(raw);
+        if(!Number.isFinite(w)) continue;
+        const pts = calculatePoints(w, fish);
+        if(!pts) continue;
+        if(pts < minP) minP = pts;
+        if(pts > maxP) maxP = pts;
+      }
+      mins.push(minP === Infinity ? null : minP);
+      maxs.push(maxP === -Infinity ? null : maxP);
+    });
+
+    chart.data.labels = locSorted;
+
+    const seg = [];
+    const minPts = [];
+    const maxPts = [];
+    for(let i=0;i<locSorted.length;i++){
+      const loc = locSorted[i];
+      const lo = mins[i];
+      const hi = maxs[i];
+      if(lo == null || hi == null) continue;
+      seg.push({ x: lo, y: loc }, { x: hi, y: loc }, null);
+      minPts.push({ x: lo, y: loc });
+      maxPts.push({ x: hi, y: loc });
+    }
+
+    chart.data.datasets[0].data = seg;
+    chart.data.datasets[1].data = minPts;
+    chart.data.datasets[2].data = maxPts;
+    chart.update();
+  }
+
+  updateDumbbellForCategory("Common", commonDumbbellChart);
+  updateDumbbellForCategory("Rare", rareDumbbellChart);
+  updateDumbbellForCategory("Epic", epicDumbbellChart);
+
   // Legendary (all Legendary fish, arranged by location order)
   const pointsByFish = new Map(allFish.map(f=>[`${f.location}|${f.name}`, {points:f.points, stars:f.stars}]));
   const legendaryList = [];
@@ -891,9 +1001,38 @@ fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
 
 async function initApp(){
   recordsByLocation = await loadRecords();
+  setupTabs();
   buildLocationButtons();
   makeCharts();
   locationSelect.onchange = renderTable;
   renderTable();
 }
 initApp();
+
+function setupTabs(){
+  const buttons = Array.from(document.querySelectorAll('.top-tabs .tab-btn[data-view]'));
+  if(!buttons.length) return;
+
+  const views = Array.from(document.querySelectorAll('.tab-view'));
+  function setActive(viewId){
+    buttons.forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-view') === viewId));
+    views.forEach(v => v.classList.toggle('active', v.id === viewId));
+
+    // Chart.js doesn't always recalc size when a canvas goes from display:none -> block.
+    setTimeout(()=>{
+      try{
+        [pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart, legendaryChart, fearsomeChart, commonDumbbellChart, rareDumbbellChart, epicDumbbellChart]
+          .forEach(c=>{ try{ c && c.resize(); }catch(_){} });
+      }catch(_){}
+    }, 50);
+
+    if(viewId === 'recordsView'){
+      try{ renderTable(); }catch(_){}
+    }
+  }
+
+  buttons.forEach(btn => btn.addEventListener('click', ()=>setActive(btn.getAttribute('data-view'))));
+
+  // Default: Overview
+  setActive('dashboardView');
+}

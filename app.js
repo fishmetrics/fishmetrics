@@ -4,6 +4,9 @@ const CATEGORY_MIN_POINTS = { Common:300, Rare:400, Epic:500, Legendary:5000 };
 const CATEGORY_ORDER = ["Common","Rare","Epic","Legendary"];
 const CATEGORY_RANK = Object.fromEntries(CATEGORY_ORDER.map((c,i)=>[c,i]));
 
+const LOCATION_ORDER = ["Paradise Island","Great Lakes","Costa Rica","Alaska","Australia","Scotland","Thailand","Amazon"];
+const LOCATION_RANK = Object.fromEntries(LOCATION_ORDER.map((l,i)=>[l,i]));
+
 const LOCATIONS = {
  "Paradise Island": [
   { name:"bluefish", category:"Common", min:6.61, max:31.75 },
@@ -269,7 +272,7 @@ function populateLocationOptions(){
   allOpt.textContent = `All Locations (${allCount})`;
   locationSelect.appendChild(allOpt);
 
-  Object.keys(LOCATIONS).forEach(loc=>{
+  getLocationList().forEach(loc=>{
     const opt=document.createElement("option");
     opt.value=loc;
     opt.textContent = `${loc} (${LOCATIONS[loc].length})`;
@@ -295,7 +298,7 @@ function buildLocationButtons(){
   allBtn.textContent = "All Locations";
   locationButtonsEl.appendChild(allBtn);
 
-  Object.keys(LOCATIONS).forEach((loc, i)=>{
+  getLocationList().forEach((loc, i)=>{
     const b = document.createElement("button");
     b.type = "button";
     b.className = "loc-btn";
@@ -316,6 +319,11 @@ function toTitleCase(str){
   return String(str)
     .toLowerCase()
     .replace(/\b([a-z])/g, (m)=>m.toUpperCase());
+}
+
+function getLocationList(){
+  // Preserve desired location order even if object key order changes
+  return LOCATION_ORDER.filter(l=>Object.prototype.hasOwnProperty.call(LOCATIONS,l));
 }
 
 // Persisted records per location (and in the combined view)
@@ -512,13 +520,13 @@ function renderTable(){
  setTableHeaders(isAll);
 
  if(isAll){
-  currentFish = Object.keys(LOCATIONS).flatMap(loc=>
+  currentFish = getLocationList().flatMap(loc=>
     LOCATIONS[loc].map(f=>({ ...f, location: loc }))
   ).sort((a,b)=>{
     const ra=CATEGORY_RANK[a.category] ?? 999;
     const rb=CATEGORY_RANK[b.category] ?? 999;
     if(ra!==rb) return ra-rb;
-    const la = a.location.localeCompare(b.location);
+    const la = (LOCATION_RANK[a.location] ?? 999) - (LOCATION_RANK[b.location] ?? 999);
     if(la!==0) return la;
     return a.name.localeCompare(b.name);
   });
@@ -668,7 +676,8 @@ function makeCharts(){
       { label: "Epic", data: [], backgroundColor: epic },
       { label: "Legendary", data: [], backgroundColor: legendary },
     ]},
-    options: {
+    options: {layout:{ padding:{ bottom: 0 } },
+      
       ...baseOpts,
       plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: baseOpts.plugins.legend.labels } },
     }
@@ -694,7 +703,8 @@ function makeCharts(){
       { label: "4★", data: [], backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--red4").trim() || "rgba(255,20,20,.85)" },
       { label: "5★", data: [], backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--red5").trim() || "rgba(200,0,0,.90)" },
     ]},
-    options: {
+    options: {layout:{ padding:{ bottom: 0 } },
+      
       ...baseOpts,
       plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: baseOpts.plugins.legend.labels } },
       scales: { ...baseOpts.scales, x: { ...baseOpts.scales.x, stacked: true }, y: { ...baseOpts.scales.y, stacked: true } }
@@ -714,7 +724,11 @@ function makeCharts(){
   legendaryChart = new Chart(document.getElementById("legendaryChart"), {
     type: "bar",
     data: { labels: [], datasets: [{ label: "Legendary Points", data: [], backgroundColor: legendary }] },
-    options: {
+    options: {layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } },
+       scales:{y:{
+          afterFit: (scale) => { scale.width = 260; },ticks:{
+            align: "start",
+            padding: 6,autoSkip:false}}}, barThickness: 18, categoryPercentage: 0.8,
       ...baseOpts,
       indexAxis: 'y',
       plugins: { ...baseOpts.plugins, legend: { display: false } },
@@ -724,7 +738,11 @@ function makeCharts(){
   fearsomeChart = new Chart(document.getElementById("fearsomeChart"), {
     type: "bar",
     data: { labels: [], datasets: [{ label: "Epic Points", data: [], backgroundColor: epic }] },
-    options: {
+    options: {layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } },
+       scales: { y: {
+          afterFit: (scale) => { scale.width = 260; }, ticks: {
+            align: "start",
+            padding: 6, autoSkip:false, callback: function(value){ const l = this.getLabelForValue(value); return String(l).split(" "); } } }, y:{ticks:{autoSkip:false}}}, barThickness: 18, categoryPercentage: 0.8,
       ...baseOpts,
       indexAxis: 'y',
       plugins: { ...baseOpts.plugins, legend: { display: false } },
@@ -735,7 +753,7 @@ function makeCharts(){
 function computeAggregates(){
   const byLoc = {};
   const allFish = [];
-  Object.keys(LOCATIONS).forEach(loc=>{
+  getLocationList().forEach(loc=>{
     byLoc[loc] = {
       pointsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
       starsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
@@ -768,7 +786,7 @@ function updateDashboard(){
   if(!pointsByRarityChart) return;
   const { byLoc, allFish } = computeAggregates();
 
-  const locs = Object.keys(LOCATIONS);
+  const locs = getLocationList();
   const pointsCommon = locs.map(l=>byLoc[l].pointsByCat.Common);
   const pointsRare = locs.map(l=>byLoc[l].pointsByCat.Rare);
   const pointsEpic = locs.map(l=>byLoc[l].pointsByCat.Epic);
@@ -806,20 +824,32 @@ function updateDashboard(){
   pointsByMapChart.data.datasets[0].data = locSorted.map(l=>byLoc[l].totalPoints);
   pointsByMapChart.update();
 
-  // Legendary (top 8 by points)
-  const legendary = allFish.filter(f=>f.category === 'Legendary')
-    .sort((a,b)=>b.points - a.points)
-    .slice(0, 8);
-  legendaryChart.data.labels = legendary.map(f=>toTitleCase(f.name));
-  legendaryChart.data.datasets[0].data = legendary.map(f=>f.points);
+  // Legendary (all Legendary fish, arranged by location order)
+  const pointsByFish = new Map(allFish.map(f=>[`${f.location}|${f.name}`, {points:f.points, stars:f.stars}]));
+  const legendaryList = [];
+  getLocationList().forEach(loc=>{
+    const legFish = (LOCATIONS[loc] || []).filter(f=>f.category === 'Legendary');
+    legFish.forEach(f=>{
+      const rec = pointsByFish.get(`${loc}|${f.name}`);
+      const pts = rec ? (rec.points + (rec.stars||0)) : 0;
+      legendaryList.push({ name: f.name, value: pts });
+    });
+  });
+
+  legendaryChart.data.labels = legendaryList.map(f=>toTitleCase(f.name));
+  legendaryChart.data.datasets[0].data = legendaryList.map(f=>f.value);
   legendaryChart.update();
 
-  // Fearsome four (top 4 epic by points)
-  const fearsome = allFish.filter(f=>f.category === 'Epic')
-    .sort((a,b)=>b.points - a.points)
-    .slice(0, 4);
-  fearsomeChart.data.labels = fearsome.map(f=>toTitleCase(f.name));
-  fearsomeChart.data.datasets[0].data = fearsome.map(f=>f.points);
+  // Fearsome four (fixed list)
+  const fearsomeNames = ["whale shark","ocean sunfish","hoodwinker sunfish","manta ray"];
+  const fearMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
+  const fearList = fearsomeNames.map(n=>{
+    const rec = fearMap.get(n);
+    const val = rec ? (rec.points + (rec.stars||0)) : 0;
+    return { name: n, value: val };
+  });
+  fearsomeChart.data.labels = fearList.map(f=>toTitleCase(f.name));
+fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
   fearsomeChart.update();
 
   // KPIs

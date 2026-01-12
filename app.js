@@ -718,6 +718,7 @@ function makeCharts(){
     data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: rare }] },
     options: {
       ...baseOpts,
+      datasets: { barPercentage: 0.45, categoryPercentage: 0.6 },
       plugins: { ...baseOpts.plugins, legend: { display: false } },
     }
   });

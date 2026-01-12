@@ -445,7 +445,7 @@ html, body{ width:100%; overflow-x:hidden; }
   .brand-sub{ font-size: 10px; }
   .panel canvas{ height: 240px !important; }
   .table-wrap{ overflow-x:auto; }
-  table{ min-width: 560px; }
+  
 }
 
 @media (max-width: 740px) and (orientation: landscape){
@@ -507,4 +507,26 @@ html, body{ width:100%; overflow-x:hidden; }
 @media (max-width: 520px){
   .sidebar-section{ margin-bottom: 12px; }
   .sidebar-title{ margin-bottom: 8px; }
+}
+
+/* Mobile: Record Entry table should stay within viewport and allow horizontal scroll */
+.table-scroll{
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling: touch;
+  width:100%;
+}
+.table-wrap{
+  min-width:0;
+}
+table{
+  width:100%;
+}
+@media (max-width: 520px){
+  .table-wrap{ padding: 12px 10px !important; }
+  .table-head{ flex-wrap: wrap; gap: 8px; }
+  .location-select{ width:100%; }
+  .location-select select{ width:100%; }
+  td input{ width: 92px !important; }
+  th, td{ padding: 10px 10px !important; }
 }

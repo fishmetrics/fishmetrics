@@ -24,9 +24,7 @@
 }
 
 *{box-sizing:border-box}
-html,body{height:100%
-  font-family: var(--font-sans);
-}
+html,body{height:100%; font-family: var(--font-sans);}
 
 body{
   margin:0;
@@ -230,7 +228,8 @@ canvas{width:100% !important; height:260px !important;}
   background:linear-gradient(180deg, rgba(4,12,34,.86), rgba(3,10,28,.86));
   border:1px solid rgba(255,255,255,.09);
   border-radius:22px;
-  overflow:hidden;
+  /* Keep rounded corners but allow the inner horizontal scrollbar to be usable on mobile */
+  overflow: hidden;
   box-shadow:0 18px 40px rgba(0,0,0,.22);
 }
 
@@ -255,8 +254,24 @@ select{
 .total-fish{font-size:12px; color:rgba(255,255,255,.82)}
 .total-fish strong{color:var(--accent)}
 
-.table-scroll{max-height:380px; overflow:auto}
-table{width:100%; border-collapse:collapse; font-size:13px}
+.table-scroll{
+  max-height:380px;
+  overflow:auto;
+  width:100%;
+  max-width:100%;
+  padding-bottom: 8px; /* room for scrollbar */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+/* Let the table size to its content so we don't create empty space after the last column */
+.table-scroll table{
+  display: inline-table;
+  width: max-content;
+  min-width: 100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+table{border-collapse:collapse; font-size:13px}
 thead th{
   position:sticky;
   top:0;
@@ -439,10 +454,8 @@ html, body{ width:100%; overflow-x:hidden; }
   .kpis{ grid-template-columns: 1fr 1fr !important; }
   .grid{ grid-template-columns: 1fr !important; }
   .panel.span-2{ grid-column: auto !important; }
-  /* Records table: prevent horizontal clipping on mobile widths */
-  .table-wrap{ overflow-x:auto !important; }
+  /* Records table: ensure the inner scroller is usable on mobile widths */
   .table-scroll{ overflow-x:auto !important; -webkit-overflow-scrolling:touch; }
-  .table-scroll table{ min-width: 720px; }
   thead th, tbody td{ padding-left: 14px !important; padding-right: 14px !important; }
 
 }
@@ -453,8 +466,7 @@ html, body{ width:100%; overflow-x:hidden; }
   .brand-title{ font-size: 32px; letter-spacing: 1.5px; }
   .brand-sub{ font-size: 10px; }
   .panel canvas{ height: 240px !important; }
-  .table-wrap{ overflow-x:auto; }
-  table{ min-width: 560px; }
+  /* Keep inner table scroll usable */
 }
 
 @media (max-width: 740px) and (orientation: landscape){
@@ -527,15 +539,5 @@ body.no-sidebar .sidebar{
   display:none !important;
 }
 
-/* Records table scroll region */
-.table-scroll{
-  width:100%;
-  padding-bottom: 6px;
-  max-width:100%;
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-}
-.table-scroll table{
-  min-width: 760px;
-}
+/* (Records table scrolling is handled by the main .table-scroll rules above.) */
 

@@ -1022,10 +1022,11 @@ fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
     const starsTxt = '★'.repeat(full) + (half ? '☆' : '') + '☆'.repeat(Math.max(0, 5 - full - (half?1:0)));
     avgStarsEl.textContent = starsTxt;
   }
+  if(avgStarsEl && !avgStarsEl.textContent) avgStarsEl.textContent = '☆☆☆☆☆';
   if(pct4El) pct4El.textContent = totalCaught ? `${(100*star4/totalCaught).toFixed(1)}%` : '0.0%';
   if(pct5El) pct5El.textContent = totalCaught ? `${(100*star5/totalCaught).toFixed(1)}%` : '0.0%';
 
-  const best = totalCaught ? (locSorted[0] || '') : '';
+  const best = totalCaught ? (locSorted[0] || '') : '—';
   if(bestMapEl) bestMapEl.textContent = best;
 
   // Bestiary progress = how many unique fish have a stored (valid) record
@@ -1049,6 +1050,7 @@ async function initApp(){
   makeCharts();
   locationSelect.onchange = renderTable;
   renderTable();
+  try{ updateDashboard(); }catch(e){}
 }
 initApp();
 

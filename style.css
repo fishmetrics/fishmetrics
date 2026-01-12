@@ -530,3 +530,25 @@ table{
   td input{ width: 92px !important; }
   th, td{ padding: 10px 10px !important; }
 }
+
+
+/* Record Entry: keep table usable on phones */
+.table-scroll{
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+
+.table-scroll table{
+  width: max-content;
+  min-width: 100%;
+}
+
+@media (max-width: 600px){
+  td input{
+    width: 80px !important;
+    max-width: 80px !important;
+  }
+}

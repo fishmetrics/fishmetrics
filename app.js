@@ -715,7 +715,7 @@ function makeCharts(){
 
   pointsByMapChart = new Chart(document.getElementById("pointsByMapChart"), {
     type: "bar",
-    data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: rare }] },
+    data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: rare, barThickness: 10 }] },
     options: {
       ...baseOpts,
       datasets: { barPercentage: 0.45, categoryPercentage: 0.6 },
@@ -1027,8 +1027,41 @@ fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
   if(pct4El) pct4El.textContent = totalCaught ? `${(100*star4/totalCaught).toFixed(1)}%` : '0.0%';
   if(pct5El) pct5El.textContent = totalCaught ? `${(100*star5/totalCaught).toFixed(1)}%` : '0.0%';
 
-  const best = totalCaught ? (locSorted[0] || '') : '—';
-  if(bestMapEl) bestMapEl.textContent = best;
+  
+  // Best Map = best average fish score (points only).
+  // Best average fish score per map = average( avg(Common points) + avg(Rare points) + avg(Epic points) + avg(Legendary points) )
+  const categories = ["Common","Rare","Epic","Legendary"];
+  let bestMap = "—";
+  let bestScore = -Infinity;
+
+  for (const loc of locs){
+    let sum = 0;
+    let denom = 0;
+    for (const cat of categories){
+      const ptsArr = [];
+      for (const fish of (LOCATIONS[loc] || [])){
+        if(fish.category !== cat) continue;
+        const raw = recordsByLocation?.[loc]?.[fish.name];
+        const w = Number.parseFloat(raw);
+        if(!Number.isFinite(w)) continue;
+        const pts = calculatePoints(w, fish);
+        if(!pts) continue;
+        ptsArr.push(pts);
+      }
+      const avg = ptsArr.length ? (ptsArr.reduce((a,b)=>a+b,0) / ptsArr.length) : 0;
+      sum += avg;
+      denom += 1;
+    }
+    const score = denom ? (sum / denom) : 0;
+    if(score > bestScore){
+      bestScore = score;
+      bestMap = loc;
+    }
+  }
+
+  if(totalCaught === 0) bestMap = "—";
+  if(bestMapEl) bestMapEl.textContent = bestMap;
+
 
   // Bestiary progress = how many unique fish have a stored (valid) record
   const totalFish = Object.values(LOCATIONS).reduce((sum,arr)=>sum+arr.length,0);

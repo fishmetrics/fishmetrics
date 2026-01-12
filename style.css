@@ -451,3 +451,33 @@ html, body{ width:100%; overflow-x:hidden; }
 @media (max-width: 740px) and (orientation: landscape){
   .panel canvas{ height: 220px !important; }
 }
+
+
+/* Mobile: collapse left panel and stack charts */
+@media (max-width: 900px) {
+  .dashboard-grid,
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .left-panel,
+  .kpis,
+  .panel.kpi-panel {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .panel,
+  .panel.span-2 {
+    grid-column: auto !important;
+    width: 100%;
+  }
+
+  .kpis {
+    gap: 10px;
+  }
+
+  .panel canvas {
+    height: 240px !important;
+  }
+}

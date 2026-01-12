@@ -436,6 +436,12 @@ html, body{ width:100%; overflow-x:hidden; }
   .kpis{ grid-template-columns: 1fr 1fr !important; }
   .grid{ grid-template-columns: 1fr !important; }
   .panel.span-2{ grid-column: auto !important; }
+  /* Records table: prevent horizontal clipping on mobile widths */
+  .table-wrap{ overflow-x:auto !important; }
+  .table-scroll{ overflow-x:auto !important; -webkit-overflow-scrolling:touch; }
+  .table-scroll table{ min-width: 720px; }
+  thead th, tbody td{ padding-left: 14px !important; padding-right: 14px !important; }
+
 }
 
 @media (max-width: 520px){

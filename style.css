@@ -235,7 +235,7 @@ canvas{width:100% !important; height:260px !important;}
 }
 
 /* allow inner scroller to show on iOS */
-.table-wrap .table-scroll{ border-radius:0 0 22px 22px; }
+.table-wrap .table-scroll{max-height:380px; max-width:100%; overflow-x:auto; overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-gutter:stable both-edges}
 .table-head{
   display:flex;
   justify-content:space-between;
@@ -256,7 +256,7 @@ select{
 .total-fish strong{color:var(--accent)}
 
 .table-scroll{max-height:380px; overflow:auto}
-table{width:100%; border-collapse:collapse; font-size:13px}
+table{width:max-content; min-width:100%; border-collapse:collapse; font-size:13px}
 thead th{
   position:sticky;
   top:0;
@@ -539,3 +539,12 @@ body.no-sidebar .sidebar{
   min-width: 760px;
 }
 
+
+
+/* records horizontal scroll */
+.table-wrap{max-width:100%}
+.table-scroll{touch-action:pan-x pan-y}
+.table-scroll table{min-width:720px}
+th, td{white-space:nowrap}
+th:nth-child(1), td:nth-child(1){white-space:normal; min-width:110px}
+th:nth-child(2), td:nth-child(2){white-space:normal; min-width:160px}

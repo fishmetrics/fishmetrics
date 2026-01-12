@@ -1120,6 +1120,7 @@ function setupTabs(){
   function setActive(viewId){
     buttons.forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-view') === viewId));
     views.forEach(v => v.classList.toggle('active', v.id === viewId));
+    document.body.classList.toggle('no-sidebar', (viewId === 'recordsView' || viewId === 'instructionsView'));
 
     // Chart.js doesn't always recalc size when a canvas goes from display:none -> block.
     setTimeout(()=>{

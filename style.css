@@ -541,3 +541,161 @@ body.no-sidebar .sidebar{
 
 /* (Records table scrolling is handled by the main .table-scroll rules above.) */
 
+
+
+/* --- Header brand/logo alignment (v8 logo update) --- */
+.topbar-inner{
+  display:flex;
+  justify-content:center; /* center the group within header */
+  align-items:center;
+  width:100%;
+}
+
+.brand-group{
+  display:flex;
+  align-items:center;
+  gap:14px; /* space between text and logo */
+  text-align:left;
+}
+
+/* Keep text block compact so the group centers nicely */
+.brand{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  line-height:1;
+}
+
+/* New logo sizing: adjust as needed, but keep responsive */
+.brand-logo{
+  height:40px;
+  width:auto;
+  display:block;
+}
+
+/* On small screens, scale logo down a bit */
+@media (max-width: 480px){
+  .brand-logo{ height:31px; }
+  .brand-group{ gap:10px; }
+}
+
+
+/* --- Responsive Records table (stacked rows on mobile) --- */
+@media (max-width: 640px){
+  #recordsView .table-scroll{
+    overflow: visible;
+    max-height: none;
+    padding-bottom: 0;
+  }
+  #recordsView .table-scroll table{
+    width: 100%;
+    min-width: 0;
+    display: block;
+  }
+  #recordsView .table-scroll thead{ display:none; }
+  #recordsView .table-scroll tbody{ display:block; }
+  #recordsView .table-scroll tr{
+    display:block;
+    margin: 10px 0;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(0,0,0,.10);
+  }
+  #recordsView .table-scroll td{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    width:100%;
+    padding: 12px 14px;
+    border: none;
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  #recordsView .table-scroll td:first-child{ border-top:none; }
+  #recordsView .table-scroll td::before{
+    content: attr(data-label);
+    font-weight: 700;
+    color: rgba(255,255,255,.78);
+    flex: 0 0 auto;
+    max-width: 48%;
+  }
+  #recordsView .table-scroll td.input-cell{
+    align-items:flex-start;
+  }
+  #recordsView .table-scroll td.input-cell input{
+    width: 100%;
+    max-width: 160px;
+  }
+  #recordsView .table-scroll .inline-error{
+    margin-top: 6px;
+  }
+}
+
+
+/* --- Records responsive sizing fix (prevent off-screen width) --- */
+@media (max-width: 640px){
+  #recordsView, #recordsView *{ box-sizing: border-box; }
+  #recordsView .table-wrap{ width:100%; max-width:100%; }
+  #recordsView .table-scroll{ width:100%; max-width:100%; overflow:hidden !important; }
+  #recordsView .table-scroll table{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+  }
+  #recordsView .table-scroll tr{
+    width:100%;
+    max-width:100%;
+  }
+  #recordsView .table-scroll td{
+    width:100%;
+    max-width:100%;
+    overflow-wrap:anywhere;
+  }
+  #recordsView .table-scroll .fish-name{ display:inline-block; max-width:100%; }
+  #recordsView .table-scroll td::before{ max-width: 52%; }
+}
+
+
+/* --- Records mobile overflow + header wrap fix --- */
+@media (max-width: 640px){
+  /* Allow the Records view itself to scroll if anything still overflows */
+  #recordsView{
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent padding from making the card exceed viewport */
+  #recordsView .table-wrap{
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Stack the Records header controls to avoid horizontal overflow */
+  #recordsView .table-head{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  #recordsView .location-select{
+    display:flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+  }
+  #recordsView .location-select select{
+    width: 100%;
+    max-width: 100%;
+  }
+  #recordsView .total-fish{
+    display:block;
+    width: 100%;
+    max-width: 100%;
+    white-space: normal;
+  }
+}

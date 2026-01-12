@@ -641,6 +641,13 @@ function commitInput(){
   ic.appendChild(i);
   ic.appendChild(inlineErr);
 r.append(ic,p,s);
+
+  // Mobile responsive table: add header labels to each cell for stacked layout
+  const headers = Array.from(theadRow.querySelectorAll("th")).map(th=>th.textContent.trim());
+  Array.from(r.children).forEach((td, i2)=>{
+    if(td && headers[i2]) td.setAttribute("data-label", headers[i2]);
+  });
+
   tbody.appendChild(r);
  });
 
@@ -725,7 +732,7 @@ function makeCharts(){
 
   pointsByMapChart = safeChart("pointsByMapChart", {
     type: "bar",
-    data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: rare }] },
+    data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: rare, barPercentage: 0.5, categoryPercentage: 0.5 }] },
     options: {
       ...baseOpts,
       plugins: { ...baseOpts.plugins, legend: { display: false } },
@@ -736,9 +743,9 @@ function makeCharts(){
     type: "line",
     data: { labels: ["Common","Rare","Epic","Legendary"], datasets:[
       // Use scatter controller with showLine=true for stability on iOS Safari
-      {label:"Range", type:"scatter", showLine:true, data:[], pointRadius:0, borderWidth:3, parsing:false, spanGaps:false},
-      {label:"Lowest", type:"scatter", data:[], pointRadius:5},
-      {label:"Highest", type:"scatter", data:[], pointRadius:5},
+      {label: "Range", type: "line", data:[], pointRadius:0, borderWidth:3, parsing:false, spanGaps:false},
+      {label:"Lowest", type:"scatter", data:[], pointRadius:5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+      {label:"Highest", type:"scatter", data:[], pointRadius:5, pointBackgroundColor:"#43a047", pointBorderColor:"#43a047", pointHoverBackgroundColor:"#43a047", pointHoverBorderColor:"#43a047", backgroundColor:"#43a047", borderColor:"#43a047"},
     ]},
     options:{
       ...baseOpts,
@@ -758,9 +765,9 @@ function makeCharts(){
     data: {
       labels: [],
       datasets: [
-        { label: "Range", type: "scatter", showLine:true, data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
-        { label: "Lowest", type: "scatter", data: [], pointRadius: 5 },
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5 },
+        { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
+        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#43a047", pointBorderColor:"#43a047", pointHoverBackgroundColor:"#43a047", pointHoverBorderColor:"#43a047", backgroundColor:"#43a047", borderColor:"#43a047"},
       ]
     },
     options: {
@@ -781,9 +788,9 @@ function makeCharts(){
     data: {
       labels: [],
       datasets: [
-        { label: "Range", type: "scatter", showLine:true, data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
-        { label: "Lowest", type: "scatter", data: [], pointRadius: 5 },
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5 },
+        { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
+        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#43a047", pointBorderColor:"#43a047", pointHoverBackgroundColor:"#43a047", pointHoverBorderColor:"#43a047", backgroundColor:"#43a047", borderColor:"#43a047"},
       ]
     },
     options: {
@@ -804,9 +811,9 @@ function makeCharts(){
     data: {
       labels: [],
       datasets: [
-        { label: "Range", type: "scatter", showLine:true, data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
-        { label: "Lowest", type: "scatter", data: [], pointRadius: 5 },
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5 },
+        { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
+        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#43a047", pointBorderColor:"#43a047", pointHoverBackgroundColor:"#43a047", pointHoverBorderColor:"#43a047", backgroundColor:"#43a047", borderColor:"#43a047"},
       ]
     },
     options: {
@@ -1067,6 +1074,8 @@ function updateDashboard(){
             data: [{x: mins[c], y: c}, {x: maxs[c], y: c}],
             pointRadius: 0,
             borderWidth: 3,
+          borderColor: (getComputedStyle(document.documentElement).getPropertyValue('--rare').trim() || '#3b82f6'),
+          backgroundColor: (getComputedStyle(document.documentElement).getPropertyValue('--rare').trim() || '#3b82f6'),
             parsing: false
           });
           lows.push({x: mins[c], y: c});
@@ -1078,8 +1087,8 @@ function updateDashboard(){
       // Build datasets without null separators (more stable across browsers).
       typeDumbbellChart.data.datasets = [
         ...rangeSets,
-        { label: 'Lowest', type: 'scatter', data: lows, pointRadius: 5, parsing: false },
-        { label: 'Highest', type: 'scatter', data: highs, pointRadius: 5, parsing: false },
+        { label: 'Lowest', type: 'scatter', data: lows, pointRadius: 5, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
+        { label: 'Highest', type: 'scatter', data: highs, pointRadius: 5, parsing: false, pointBackgroundColor: '#43a047', pointBorderColor: '#43a047', backgroundColor: '#43a047', borderColor: '#43a047', pointHoverBackgroundColor: '#43a047', pointHoverBorderColor: '#43a047' },
       ];
       safeUpdate(typeDumbbellChart, { requireVisible: true });
     }
@@ -1125,6 +1134,8 @@ function updateDashboard(){
           data: [{ x: lo, y: loc }, { x: hi, y: loc }],
           pointRadius: 0,
           borderWidth: 3,
+          borderColor: (getComputedStyle(document.documentElement).getPropertyValue('--rare').trim() || '#3b82f6'),
+          backgroundColor: (getComputedStyle(document.documentElement).getPropertyValue('--rare').trim() || '#3b82f6'),
           parsing: false
         });
         minPts.push({ x: lo, y: loc });
@@ -1134,8 +1145,8 @@ function updateDashboard(){
       // Datasets without null separators (prevents occasional full-blank renders).
       chart.data.datasets = [
         ...rangeSets,
-        { label: 'Lowest', type: 'scatter', data: minPts, pointRadius: 5, parsing: false },
-        { label: 'Highest', type: 'scatter', data: maxPts, pointRadius: 5, parsing: false },
+        { label: 'Lowest', type: 'scatter', data: minPts, pointRadius: 5, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
+        { label: 'Highest', type: 'scatter', data: maxPts, pointRadius: 5, parsing: false, pointBackgroundColor: '#43a047', pointBorderColor: '#43a047', backgroundColor: '#43a047', borderColor: '#43a047', pointHoverBackgroundColor: '#43a047', pointHoverBorderColor: '#43a047' },
       ];
       safeUpdate(chart, { requireVisible: true });
     }

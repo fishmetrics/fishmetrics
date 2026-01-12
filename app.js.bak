@@ -586,6 +586,29 @@ function renderTable(){
     i.classList.add("outofrange");
   }
 
+  // While typing: don't validate yet (wait for Enter or blur). Just clear inline errors.
+  i.addEventListener("input", ()=>{
+    if(suppress) return;
+    setInlineError("");
+
+    // Live preview while typing (no validation until Enter/blur):
+    // update the Points/Stars cells for this row and refresh dashboard/analytics (incl. dumbbells).
+    const rawLive = String(i.value ?? "").trim();
+    const wLive = Number.parseFloat(rawLive);
+    let ptsLive = 0;
+    let starsLive = 0;
+    if(Number.isFinite(wLive)){
+      ptsLive = calculatePoints(wLive, fish) || 0;
+      starsLive = ptsLive ? (calculateStars(fish.category, ptsLive) || 0) : 0;
+    }
+    if(pointsCell) pointsCell.textContent = ptsLive ? fmtNumber(ptsLive) : "";
+    if(starsCell) starsCell.textContent = starsLive ? "⭐".repeat(starsLive) : "";
+
+    // Avoid heavy work on every keystroke: debounce to next frame.
+    if(window.__fm_liveTick) cancelAnimationFrame(window.__fm_liveTick);
+    window.__fm_liveTick = requestAnimationFrame(()=>{ try{ updateDashboard(); }catch(_e){} });
+  });
+
 function commitInput(){
     if(suppress) return;
 
@@ -735,22 +758,11 @@ function makeCharts(){
   typeDumbbellChart = safeChart("typeDumbbellChart", {
     type: "line",
     data: { labels: ["Common","Rare","Epic","Legendary"], datasets:[
-      // Use scatter controller with showLine=true for stability on iOS Safari
-      {label:"Range", type:"scatter", showLine:true, data:[], pointRadius:0, borderWidth:3, parsing:false, spanGaps:false},
+      {label:"Range", type:"line", data:[], pointRadius:0, borderWidth:3},
       {label:"Lowest", type:"scatter", data:[], pointRadius:5},
       {label:"Highest", type:"scatter", data:[], pointRadius:5},
     ]},
-    options:{
-      ...baseOpts,
-      indexAxis:'y',
-      plugins:{...baseOpts.plugins, legend:{display:false}},
-      parsing:false,
-      animation:false,
-      scales:{
-        x:{ ...baseOpts.scales.x, type:'linear' },
-        y:{ ...baseOpts.scales.y, type:'category' }
-      }
-    }
+    options:{ ...baseOpts, indexAxis:'y', plugins:{...baseOpts.plugins, legend:{display:false}} }
   });
 
   commonDumbbellChart = safeChart("commonDumbbellChart", {
@@ -758,7 +770,7 @@ function makeCharts(){
     data: {
       labels: [],
       datasets: [
-        { label: "Range", type: "scatter", showLine:true, data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
+        { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3 },
         { label: "Lowest", type: "scatter", data: [], pointRadius: 5 },
         { label: "Highest", type: "scatter", data: [], pointRadius: 5 },
       ]
@@ -767,8 +779,6 @@ function makeCharts(){
       ...baseOpts,
       indexAxis: 'y',
       plugins: { ...baseOpts.plugins, legend: { display: false } },
-      parsing:false,
-      animation:false,
       scales: {
         x: { ...baseOpts.scales.x, type: 'linear' },
         y: { ...baseOpts.scales.y, type: 'category' }
@@ -781,7 +791,7 @@ function makeCharts(){
     data: {
       labels: [],
       datasets: [
-        { label: "Range", type: "scatter", showLine:true, data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
+        { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3 },
         { label: "Lowest", type: "scatter", data: [], pointRadius: 5 },
         { label: "Highest", type: "scatter", data: [], pointRadius: 5 },
       ]
@@ -790,8 +800,6 @@ function makeCharts(){
       ...baseOpts,
       indexAxis: 'y',
       plugins: { ...baseOpts.plugins, legend: { display: false } },
-      parsing:false,
-      animation:false,
       scales: {
         x: { ...baseOpts.scales.x, type: 'linear' },
         y: { ...baseOpts.scales.y, type: 'category' }
@@ -804,7 +812,7 @@ function makeCharts(){
     data: {
       labels: [],
       datasets: [
-        { label: "Range", type: "scatter", showLine:true, data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
+        { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3 },
         { label: "Lowest", type: "scatter", data: [], pointRadius: 5 },
         { label: "Highest", type: "scatter", data: [], pointRadius: 5 },
       ]
@@ -813,8 +821,6 @@ function makeCharts(){
       ...baseOpts,
       indexAxis: 'y',
       plugins: { ...baseOpts.plugins, legend: { display: false } },
-      parsing:false,
-      animation:false,
       scales: {
         x: { ...baseOpts.scales.x, type: 'linear' },
         y: { ...baseOpts.scales.y, type: 'category' }
@@ -919,7 +925,6 @@ function getEffectiveRecords(){
 
 function updateDashboard(){
   const effectiveRecords = getEffectiveRecords();
-  const activeView = document.querySelector('.tab-view.active')?.id;
   const { byLoc, allFish } = computeAggregates(effectiveRecords);
   const locs = getLocationList();
 
@@ -984,21 +989,8 @@ function updateDashboard(){
   }
 
   // ---- Charts (all guarded) ----
-  function isChartVisible(chart){
-    try{
-      const c = chart?.canvas;
-      if(!c) return false;
-      // offsetParent is null when display:none (common in tabbed UIs)
-      if(c.offsetParent === null) return false;
-      return c.clientWidth > 0 && c.clientHeight > 0;
-    }catch(_){
-      return false;
-    }
-  }
-
-  function safeUpdate(chart, { requireVisible = false } = {}){
+  function safeUpdate(chart){
     if(!chart) return;
-    if(requireVisible && !isChartVisible(chart)) return;
     try{ chart.update(); }catch(e){ console.error('Chart update failed', e); }
   }
 
@@ -1036,7 +1028,6 @@ function updateDashboard(){
   }
 
   // Dumbbell by type (all maps combined)
-  if(activeView === 'mapView'){
   try{
     const cats = ['Common','Rare','Epic','Legendary'];
     const mins = {}, maxs = {};
@@ -1055,38 +1046,23 @@ function updateDashboard(){
     });
 
     if(typeDumbbellChart){
-      const rangeSets = [];
-      const lows = [];
-      const highs = [];
+      const seg=[], lo=[], hi=[];
       cats.forEach(c=>{
         if(mins[c]!==Infinity){
-          rangeSets.push({
-            label: c + ' range',
-            type: 'scatter',
-            showLine: true,
-            data: [{x: mins[c], y: c}, {x: maxs[c], y: c}],
-            pointRadius: 0,
-            borderWidth: 3,
-            parsing: false
-          });
-          lows.push({x: mins[c], y: c});
-          highs.push({x: maxs[c], y: c});
+          seg.push({x:mins[c], y:c},{x:maxs[c], y:c},null);
+          lo.push({x:mins[c], y:c});
+          hi.push({x:maxs[c], y:c});
         }
       });
-
-      typeDumbbellChart.data.labels = cats;
-      // Build datasets without null separators (more stable across browsers).
-      typeDumbbellChart.data.datasets = [
-        ...rangeSets,
-        { label: 'Lowest', type: 'scatter', data: lows, pointRadius: 5, parsing: false },
-        { label: 'Highest', type: 'scatter', data: highs, pointRadius: 5, parsing: false },
-      ];
-      safeUpdate(typeDumbbellChart, { requireVisible: true });
+      typeDumbbellChart.data.labels=cats;
+      typeDumbbellChart.data.datasets[0].data=seg;
+      typeDumbbellChart.data.datasets[1].data=lo;
+      typeDumbbellChart.data.datasets[2].data=hi;
+      safeUpdate(typeDumbbellChart);
     }
 
     function updateDumbbellForCategory(category, chart){
       if(!chart) return;
-      if(!isChartVisible(chart)) return;
 
       const mins = [];
       const maxs = [];
@@ -1110,7 +1086,7 @@ function updateDashboard(){
 
       chart.data.labels = locSorted;
 
-      const rangeSets = [];
+      const seg = [];
       const minPts = [];
       const maxPts = [];
       for(let i=0;i<locSorted.length;i++){
@@ -1118,26 +1094,15 @@ function updateDashboard(){
         const lo = mins[i];
         const hi = maxs[i];
         if(lo == null || hi == null) continue;
-        rangeSets.push({
-          label: loc + ' range',
-          type: 'scatter',
-          showLine: true,
-          data: [{ x: lo, y: loc }, { x: hi, y: loc }],
-          pointRadius: 0,
-          borderWidth: 3,
-          parsing: false
-        });
+        seg.push({ x: lo, y: loc }, { x: hi, y: loc }, null);
         minPts.push({ x: lo, y: loc });
         maxPts.push({ x: hi, y: loc });
       }
 
-      // Datasets without null separators (prevents occasional full-blank renders).
-      chart.data.datasets = [
-        ...rangeSets,
-        { label: 'Lowest', type: 'scatter', data: minPts, pointRadius: 5, parsing: false },
-        { label: 'Highest', type: 'scatter', data: maxPts, pointRadius: 5, parsing: false },
-      ];
-      safeUpdate(chart, { requireVisible: true });
+      chart.data.datasets[0].data = seg;
+      chart.data.datasets[1].data = minPts;
+      chart.data.datasets[2].data = maxPts;
+      safeUpdate(chart);
     }
 
     updateDumbbellForCategory('Common', commonDumbbellChart);
@@ -1145,8 +1110,6 @@ function updateDashboard(){
     updateDumbbellForCategory('Epic', epicDumbbellChart);
   }catch(e){
     console.error('Dumbbell update failed', e);
-  }
-
   }
 
   // Legendary (all Legendary fish, arranged by location order)
@@ -1219,11 +1182,6 @@ function setupTabs(){
           .forEach(c=>{ try{ c && c.resize(); }catch(_){} });
       }catch(_){}
     }, 50);
-
-    // Re-render charts when entering a view whose canvases may have been hidden.
-    if(viewId === 'mapView' || viewId === 'fishView' || viewId === 'dashboardView'){
-      try{ updateDashboard(); }catch(_e){}
-    }
 
     if(viewId === 'recordsView'){
       try{ renderTable(); }catch(_){}

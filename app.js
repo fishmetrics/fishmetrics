@@ -421,6 +421,8 @@ let currentFish=[];
 // Dashboard (Chart.js)
 // -----------------------------
 let pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart, legendaryChart, fearsomeChart;
+// Map analytics dumbbell charts (declare to avoid ReferenceError if a chart is absent)
+let typeDumbbellChart, commonDumbbellChart, rareDumbbellChart, epicDumbbellChart;
 
 function fmtNumber(n){
   const x = Number(n) || 0;
@@ -471,6 +473,7 @@ function setStoredWeight(loc, fishName, value){
     recordsByLocation[loc][fishName] = value;
   }
   saveRecords(recordsByLocation);
+  try{ updateDashboard(); }catch(_e){}
 }
 
 function recomputeFromDOM(){
@@ -630,6 +633,8 @@ function renderTable(){
   }
 
   i.addEventListener("blur", commitInput);
+  // Live recompute so KPIs/donut update while typing (does not persist until Enter/blur)
+  i.addEventListener("input", ()=>{ if(!suppress) recomputeFromDOM(); });
   i.addEventListener("keydown", (e)=>{
     if(e.key === "Enter"){
       e.preventDefault();
@@ -650,6 +655,16 @@ r.append(ic,p,s);
 }
 
 function makeCharts(){
+  // Create charts defensively: a missing canvas (or a config error) should not break KPI updates.
+  function safeChart(id, cfg){
+    const el = document.getElementById(id);
+    if(!el) return null;
+    try{ return new Chart(el, cfg); }catch(e){
+      console.error(`Chart init failed for #${id}`, e);
+      return null;
+    }
+  }
+
   const common = getComputedStyle(document.documentElement).getPropertyValue('--common').trim();
   const rare = getComputedStyle(document.documentElement).getPropertyValue('--rare').trim();
   const epic = getComputedStyle(document.documentElement).getPropertyValue('--epic').trim();
@@ -668,7 +683,7 @@ function makeCharts(){
     }
   };
 
-  pointsByRarityChart = new Chart(document.getElementById("pointsByRarityChart"), {
+  pointsByRarityChart = safeChart("pointsByRarityChart", {
     type: "bar",
     data: { labels: [], datasets: [
       { label: "Common", data: [], backgroundColor: common },
@@ -685,7 +700,7 @@ function makeCharts(){
     }
   });
 
-  starsByRarityChart = new Chart(document.getElementById("starsByRarityChart"), {
+  starsByRarityChart = safeChart("starsByRarityChart", {
     type: "bar",
     data: { labels: [], datasets: [
       { label: "Common", data: [], backgroundColor: common },
@@ -696,7 +711,7 @@ function makeCharts(){
     options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { display: false } } }
   });
 
-  starCatchesChart = new Chart(document.getElementById("starCatchesChart"), {
+  starCatchesChart = safeChart("starCatchesChart", {
     type: "bar",
     data: { labels: [], datasets: [
       { label: "1★", data: [], backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--red1").trim() || "rgba(255,80,80,.85)" },
@@ -713,17 +728,16 @@ function makeCharts(){
     }
   });
 
-  pointsByMapChart = new Chart(document.getElementById("pointsByMapChart"), {
+  pointsByMapChart = safeChart("pointsByMapChart", {
     type: "bar",
-    data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: rare, barThickness: 10 }] },
+    data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: rare }] },
     options: {
       ...baseOpts,
-      datasets: { barPercentage: 0.45, categoryPercentage: 0.6 },
       plugins: { ...baseOpts.plugins, legend: { display: false } },
     }
   });
 
-  typeDumbbellChart = new Chart(document.getElementById("typeDumbbellChart"), {
+  typeDumbbellChart = safeChart("typeDumbbellChart", {
     type: "line",
     data: { labels: ["Common","Rare","Epic","Legendary"], datasets:[
       {label:"Range", type:"line", data:[], pointRadius:0, borderWidth:3},
@@ -733,7 +747,7 @@ function makeCharts(){
     options:{ ...baseOpts, indexAxis:'y', plugins:{...baseOpts.plugins, legend:{display:false}} }
   });
 
-  commonDumbbellChart = new Chart(document.getElementById("commonDumbbellChart"), {
+  commonDumbbellChart = safeChart("commonDumbbellChart", {
     type: "line",
     data: {
       labels: [],
@@ -754,7 +768,7 @@ function makeCharts(){
     }
   });
 
-  rareDumbbellChart = new Chart(document.getElementById("rareDumbbellChart"), {
+  rareDumbbellChart = safeChart("rareDumbbellChart", {
     type: "line",
     data: {
       labels: [],
@@ -775,7 +789,7 @@ function makeCharts(){
     }
   });
 
-  epicDumbbellChart = new Chart(document.getElementById("epicDumbbellChart"), {
+  epicDumbbellChart = safeChart("epicDumbbellChart", {
     type: "line",
     data: {
       labels: [],
@@ -796,7 +810,7 @@ function makeCharts(){
     }
   });
 
-  legendaryChart = new Chart(document.getElementById("legendaryChart"), {
+  legendaryChart = safeChart("legendaryChart", {
     type: "bar",
     data: { labels: [], datasets: [{ label: "Legendary Points", data: [], backgroundColor: legendary }] },
     options: {layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } },
@@ -810,14 +824,15 @@ function makeCharts(){
     }
   });
 
-  fearsomeChart = new Chart(document.getElementById("fearsomeChart"), {
+  // Note: avoid duplicate keys inside `scales` (can hide config issues).
+  fearsomeChart = safeChart("fearsomeChart", {
     type: "bar",
     data: { labels: [], datasets: [{ label: "Epic Points", data: [], backgroundColor: epic }] },
     options: {layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } },
        scales: { y: {
           afterFit: (scale) => { scale.width = 260; }, ticks: {
             align: "start",
-            padding: 6, autoSkip:false, callback: function(value){ const l = this.getLabelForValue(value); return String(l).split(" "); } } }, y:{ticks:{autoSkip:false}}}, barThickness: 18, categoryPercentage: 0.8,
+            padding: 6, autoSkip:false, callback: function(value){ const l = this.getLabelForValue(value); return String(l).split(" "); } } } }, barThickness: 18, categoryPercentage: 0.8,
       ...baseOpts,
       indexAxis: 'y',
       plugins: { ...baseOpts.plugins, legend: { display: false } },
@@ -858,157 +873,24 @@ function computeAggregates(){
 }
 
 function updateDashboard(){
-  if(!pointsByRarityChart) return;
   const { byLoc, allFish } = computeAggregates();
-
   const locs = getLocationList();
+
+  // Precompute commonly used arrays
   const pointsCommon = locs.map(l=>byLoc[l].pointsByCat.Common);
   const pointsRare = locs.map(l=>byLoc[l].pointsByCat.Rare);
   const pointsEpic = locs.map(l=>byLoc[l].pointsByCat.Epic);
   const pointsLegendary = locs.map(l=>byLoc[l].pointsByCat.Legendary);
-
-  pointsByRarityChart.data.labels = locs;
-  pointsByRarityChart.data.datasets[0].data = pointsCommon;
-  pointsByRarityChart.data.datasets[1].data = pointsRare;
-  pointsByRarityChart.data.datasets[2].data = pointsEpic;
-  pointsByRarityChart.data.datasets[3].data = pointsLegendary;
-  pointsByRarityChart.update();
 
   const starsCommon = locs.map(l=>byLoc[l].starsByCat.Common);
   const starsRare = locs.map(l=>byLoc[l].starsByCat.Rare);
   const starsEpic = locs.map(l=>byLoc[l].starsByCat.Epic);
   const starsLegendary = locs.map(l=>byLoc[l].starsByCat.Legendary);
 
-  starsByRarityChart.data.labels = locs;
-  starsByRarityChart.data.datasets[0].data = starsCommon;
-  starsByRarityChart.data.datasets[1].data = starsRare;
-  starsByRarityChart.data.datasets[2].data = starsEpic;
-  starsByRarityChart.data.datasets[3].data = starsLegendary;
-  starsByRarityChart.update();
-
-  // Star catches (stacked)
-  starCatchesChart.data.labels = locs;
-  for(let s=1;s<=5;s++){
-    starCatchesChart.data.datasets[s-1].data = locs.map(l=>byLoc[l].starCounts[s-1]);
-  }
-  starCatchesChart.update();
-
   // Points per map (sorted)
   const locSorted = [...locs].sort((a,b)=>byLoc[b].totalPoints - byLoc[a].totalPoints);
-  pointsByMapChart.data.labels = locSorted;
-  pointsByMapChart.data.datasets[0].data = locSorted.map(l=>byLoc[l].totalPoints);
-  pointsByMapChart.update();
 
-  // Dumbbell by type (all maps combined)
-  const cats = ["Common","Rare","Epic","Legendary"];
-  const mins = {}, maxs = {};
-  cats.forEach(c=>{ mins[c]=Infinity; maxs[c]=-Infinity; });
-
-  getLocationList().forEach(loc=>{
-    (LOCATIONS[loc]||[]).forEach(f=>{
-      const raw = recordsByLocation?.[loc]?.[f.name];
-      const w = Number.parseFloat(raw);
-      if(!Number.isFinite(w)) return;
-      const pts = calculatePoints(w,f);
-      if(!pts) return;
-      if(pts < mins[f.category]) mins[f.category]=pts;
-      if(pts > maxs[f.category]) maxs[f.category]=pts;
-    });
-  });
-
-  if(typeDumbbellChart){
-    const seg=[], lo=[], hi=[];
-    cats.forEach(c=>{
-      if(mins[c]!==Infinity){
-        seg.push({x:mins[c], y:c},{x:maxs[c], y:c},null);
-        lo.push({x:mins[c], y:c});
-        hi.push({x:maxs[c], y:c});
-      }
-    });
-    typeDumbbellChart.data.labels=cats;
-    typeDumbbellChart.data.datasets[0].data=seg;
-    typeDumbbellChart.data.datasets[1].data=lo;
-    typeDumbbellChart.data.datasets[2].data=hi;
-    typeDumbbellChart.update();
-  }
-
-
-  function updateDumbbellForCategory(category, chart){
-    if(!chart) return;
-
-    const mins = [];
-    const maxs = [];
-    locSorted.forEach(loc=>{
-      let minP = Infinity;
-      let maxP = -Infinity;
-      for (const fish of (LOCATIONS[loc] || [])){
-        if(fish.category !== category) continue;
-        const raw = recordsByLocation?.[loc]?.[fish.name];
-        const w = Number.parseFloat(raw);
-        if(!Number.isFinite(w)) continue;
-        const pts = calculatePoints(w, fish);
-        if(!pts) continue;
-        if(pts < minP) minP = pts;
-        if(pts > maxP) maxP = pts;
-      }
-      mins.push(minP === Infinity ? null : minP);
-      maxs.push(maxP === -Infinity ? null : maxP);
-    });
-
-    chart.data.labels = locSorted;
-
-    const seg = [];
-    const minPts = [];
-    const maxPts = [];
-    for(let i=0;i<locSorted.length;i++){
-      const loc = locSorted[i];
-      const lo = mins[i];
-      const hi = maxs[i];
-      if(lo == null || hi == null) continue;
-      seg.push({ x: lo, y: loc }, { x: hi, y: loc }, null);
-      minPts.push({ x: lo, y: loc });
-      maxPts.push({ x: hi, y: loc });
-    }
-
-    chart.data.datasets[0].data = seg;
-    chart.data.datasets[1].data = minPts;
-    chart.data.datasets[2].data = maxPts;
-    chart.update();
-  }
-
-  updateDumbbellForCategory("Common", commonDumbbellChart);
-  updateDumbbellForCategory("Rare", rareDumbbellChart);
-  updateDumbbellForCategory("Epic", epicDumbbellChart);
-
-  // Legendary (all Legendary fish, arranged by location order)
-  const pointsByFish = new Map(allFish.map(f=>[`${f.location}|${f.name}`, {points:f.points, stars:f.stars}]));
-  const legendaryList = [];
-  getLocationList().forEach(loc=>{
-    const legFish = (LOCATIONS[loc] || []).filter(f=>f.category === 'Legendary');
-    legFish.forEach(f=>{
-      const rec = pointsByFish.get(`${loc}|${f.name}`);
-      const pts = rec ? (rec.points + (rec.stars||0)) : 0;
-      legendaryList.push({ name: f.name, value: pts });
-    });
-  });
-
-  legendaryChart.data.labels = legendaryList.map(f=>toTitleCase(f.name));
-  legendaryChart.data.datasets[0].data = legendaryList.map(f=>f.value);
-  legendaryChart.update();
-
-  // Fearsome four (fixed list)
-  const fearsomeNames = ["whale shark","ocean sunfish","hoodwinker sunfish","manta ray"];
-  const fearMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
-  const fearList = fearsomeNames.map(n=>{
-    const rec = fearMap.get(n);
-    const val = rec ? (rec.points + (rec.stars||0)) : 0;
-    return { name: n, value: val };
-  });
-  fearsomeChart.data.labels = fearList.map(f=>toTitleCase(f.name));
-fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
-  fearsomeChart.update();
-
-  // KPIs
+  // ---- KPIs FIRST (so a chart error can't block them) ----
   const totalPoints = locs.reduce((s,l)=>s+byLoc[l].totalPoints,0);
   const totalStars = locs.reduce((s,l)=>s+byLoc[l].totalStars,0);
   const totalCaught = locs.reduce((s,l)=>s+byLoc[l].caught,0);
@@ -1016,6 +898,7 @@ fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
   const star5 = locs.reduce((s,l)=>s+byLoc[l].starCounts[4],0);
 
   if(totalPointsEl) totalPointsEl.textContent = fmtNumber(totalPoints);
+
   const avg = totalCaught ? (totalStars / totalCaught) : 0;
   if(avgStarsEl){
     const full = Math.floor(avg);
@@ -1023,51 +906,28 @@ fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
     const starsTxt = '★'.repeat(full) + (half ? '☆' : '') + '☆'.repeat(Math.max(0, 5 - full - (half?1:0)));
     avgStarsEl.textContent = starsTxt;
   }
-  if(avgStarsEl && !avgStarsEl.textContent) avgStarsEl.textContent = '☆☆☆☆☆';
   if(pct4El) pct4El.textContent = totalCaught ? `${(100*star4/totalCaught).toFixed(1)}%` : '0.0%';
   if(pct5El) pct5El.textContent = totalCaught ? `${(100*star5/totalCaught).toFixed(1)}%` : '0.0%';
 
-  
-  // Best Map = best average fish score (points only).
-  // Best average fish score per map = average( avg(Common points) + avg(Rare points) + avg(Epic points) + avg(Legendary points) )
-  const categories = ["Common","Rare","Epic","Legendary"];
-  let bestMap = "—";
+  // Best map: best average points (avg of caught fish points) per map; blank if nothing caught yet
+  let bestMap = '';
   let bestScore = -Infinity;
-
-  for (const loc of locs){
-    let sum = 0;
-    let denom = 0;
-    for (const cat of categories){
-      const ptsArr = [];
-      for (const fish of (LOCATIONS[loc] || [])){
-        if(fish.category !== cat) continue;
-        const raw = recordsByLocation?.[loc]?.[fish.name];
-        const w = Number.parseFloat(raw);
-        if(!Number.isFinite(w)) continue;
-        const pts = calculatePoints(w, fish);
-        if(!pts) continue;
-        ptsArr.push(pts);
-      }
-      const avg = ptsArr.length ? (ptsArr.reduce((a,b)=>a+b,0) / ptsArr.length) : 0;
-      sum += avg;
-      denom += 1;
-    }
-    const score = denom ? (sum / denom) : 0;
+  locs.forEach(l=>{
+    const caught = byLoc[l].caught;
+    if(!caught) return;
+    const score = byLoc[l].totalPoints / caught;
     if(score > bestScore){
       bestScore = score;
-      bestMap = loc;
+      bestMap = l;
     }
-  }
-
-  if(totalCaught === 0) bestMap = "—";
+  });
   if(bestMapEl) bestMapEl.textContent = bestMap;
-
 
   // Bestiary progress = how many unique fish have a stored (valid) record
   const totalFish = Object.values(LOCATIONS).reduce((sum,arr)=>sum+arr.length,0);
   const caughtUnique = new Set(allFish.map(f=>`${f.location}|${f.name}`)).size;
   const pct = totalFish ? (100 * caughtUnique / totalFish) : 0;
-  setDonutProgress(pct);
+  try{ setDonutProgress(pct); }catch(e){ console.error('Donut update failed', e); }
 
   // Sidebar active button
   if(locationButtonsEl){
@@ -1075,7 +935,171 @@ fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
       b.classList.toggle('active', b.dataset.value === locationSelect.value);
     });
   }
+
+  // ---- Charts (all guarded) ----
+  function safeUpdate(chart){
+    if(!chart) return;
+    try{ chart.update(); }catch(e){ console.error('Chart update failed', e); }
+  }
+
+  if(pointsByRarityChart){
+    pointsByRarityChart.data.labels = locs;
+    pointsByRarityChart.data.datasets[0].data = pointsCommon;
+    pointsByRarityChart.data.datasets[1].data = pointsRare;
+    pointsByRarityChart.data.datasets[2].data = pointsEpic;
+    pointsByRarityChart.data.datasets[3].data = pointsLegendary;
+    safeUpdate(pointsByRarityChart);
+  }
+
+  if(starsByRarityChart){
+    starsByRarityChart.data.labels = locs;
+    starsByRarityChart.data.datasets[0].data = starsCommon;
+    starsByRarityChart.data.datasets[1].data = starsRare;
+    starsByRarityChart.data.datasets[2].data = starsEpic;
+    starsByRarityChart.data.datasets[3].data = starsLegendary;
+    safeUpdate(starsByRarityChart);
+  }
+
+  // Star catches (stacked)
+  if(starCatchesChart){
+    starCatchesChart.data.labels = locs;
+    for(let s=1;s<=5;s++){
+      starCatchesChart.data.datasets[s-1].data = locs.map(l=>byLoc[l].starCounts[s-1]);
+    }
+    safeUpdate(starCatchesChart);
+  }
+
+  if(pointsByMapChart){
+    pointsByMapChart.data.labels = locSorted;
+    pointsByMapChart.data.datasets[0].data = locSorted.map(l=>byLoc[l].totalPoints);
+    safeUpdate(pointsByMapChart);
+  }
+
+  // Dumbbell by type (all maps combined)
+  try{
+    const cats = ['Common','Rare','Epic','Legendary'];
+    const mins = {}, maxs = {};
+    cats.forEach(c=>{ mins[c]=Infinity; maxs[c]=-Infinity; });
+
+    getLocationList().forEach(loc=>{
+      (LOCATIONS[loc]||[]).forEach(f=>{
+        const raw = recordsByLocation?.[loc]?.[f.name];
+        const w = Number.parseFloat(raw);
+        if(!Number.isFinite(w)) return;
+        const pts = calculatePoints(w,f);
+        if(!pts) return;
+        if(pts < mins[f.category]) mins[f.category]=pts;
+        if(pts > maxs[f.category]) maxs[f.category]=pts;
+      });
+    });
+
+    if(typeDumbbellChart){
+      const seg=[], lo=[], hi=[];
+      cats.forEach(c=>{
+        if(mins[c]!==Infinity){
+          seg.push({x:mins[c], y:c},{x:maxs[c], y:c},null);
+          lo.push({x:mins[c], y:c});
+          hi.push({x:maxs[c], y:c});
+        }
+      });
+      typeDumbbellChart.data.labels=cats;
+      typeDumbbellChart.data.datasets[0].data=seg;
+      typeDumbbellChart.data.datasets[1].data=lo;
+      typeDumbbellChart.data.datasets[2].data=hi;
+      safeUpdate(typeDumbbellChart);
+    }
+
+    function updateDumbbellForCategory(category, chart){
+      if(!chart) return;
+
+      const mins = [];
+      const maxs = [];
+      locSorted.forEach(loc=>{
+        let minP = Infinity;
+        let maxP = -Infinity;
+        for (const fish of (LOCATIONS[loc] || [])){
+          if(fish.category !== category) continue;
+          const raw = recordsByLocation?.[loc]?.[fish.name];
+          const w = Number.parseFloat(raw);
+          if(!Number.isFinite(w)) continue;
+          const pts = calculatePoints(w, fish);
+          if(!pts) continue;
+          if(pts < minP) minP = pts;
+          if(pts > maxP) maxP = pts;
+        }
+        mins.push(minP === Infinity ? null : minP);
+        maxs.push(maxP === -Infinity ? null : maxP);
+      });
+
+      chart.data.labels = locSorted;
+
+      const seg = [];
+      const minPts = [];
+      const maxPts = [];
+      for(let i=0;i<locSorted.length;i++){
+        const loc = locSorted[i];
+        const lo = mins[i];
+        const hi = maxs[i];
+        if(lo == null || hi == null) continue;
+        seg.push({ x: lo, y: loc }, { x: hi, y: loc }, null);
+        minPts.push({ x: lo, y: loc });
+        maxPts.push({ x: hi, y: loc });
+      }
+
+      chart.data.datasets[0].data = seg;
+      chart.data.datasets[1].data = minPts;
+      chart.data.datasets[2].data = maxPts;
+      safeUpdate(chart);
+    }
+
+    updateDumbbellForCategory('Common', commonDumbbellChart);
+    updateDumbbellForCategory('Rare', rareDumbbellChart);
+    updateDumbbellForCategory('Epic', epicDumbbellChart);
+  }catch(e){
+    console.error('Dumbbell update failed', e);
+  }
+
+  // Legendary (all Legendary fish, arranged by location order)
+  try{
+    const pointsByFish = new Map(allFish.map(f=>[`${f.location}|${f.name}`, {points:f.points, stars:f.stars}]));
+    const legendaryList = [];
+    getLocationList().forEach(loc=>{
+      const legFish = (LOCATIONS[loc] || []).filter(f=>f.category === 'Legendary');
+      legFish.forEach(f=>{
+        const rec = pointsByFish.get(`${loc}|${f.name}`);
+        const pts = rec ? (rec.points + (rec.stars||0)) : 0;
+        legendaryList.push({ name: f.name, value: pts });
+      });
+    });
+
+    if(legendaryChart){
+      legendaryChart.data.labels = legendaryList.map(f=>toTitleCase(f.name));
+      legendaryChart.data.datasets[0].data = legendaryList.map(f=>f.value);
+      safeUpdate(legendaryChart);
+    }
+  }catch(e){
+    console.error('Legendary chart update failed', e);
+  }
+
+  // Fearsome four (fixed list)
+  try{
+    const fearsomeNames = ['whale shark','ocean sunfish','hoodwinker sunfish','manta ray'];
+    const fearMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
+    const fearList = fearsomeNames.map(n=>{
+      const rec = fearMap.get(n);
+      const val = rec ? (rec.points + (rec.stars||0)) : 0;
+      return { name: n, value: val };
+    });
+    if(fearsomeChart){
+      fearsomeChart.data.labels = fearList.map(f=>toTitleCase(f.name));
+      fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
+      safeUpdate(fearsomeChart);
+    }
+  }catch(e){
+    console.error('Fearsome chart update failed', e);
+  }
 }
+
 
 async function initApp(){
   recordsByLocation = await loadRecords();
@@ -1084,7 +1108,7 @@ async function initApp(){
   makeCharts();
   locationSelect.onchange = renderTable;
   renderTable();
-  try{ updateDashboard(); }catch(e){}
+  try{ updateDashboard(); }catch(_){}
 }
 initApp();
 

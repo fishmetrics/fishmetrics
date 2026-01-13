@@ -163,6 +163,21 @@ body{
 
 .rarity-legend{display:grid; grid-template-columns:1fr 1fr; gap:8px}
 .legend-item{display:flex; align-items:center; gap:8px; font-size:10px; color:rgba(255,255,255,.85)}
+
+/* Dashboard rarity slicer behavior */
+.legend-item.slicer{
+  cursor:pointer;
+  user-select:none;
+  padding:6px 8px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+}
+.legend-item.slicer:hover{background:rgba(255,255,255,.08)}
+.legend-item.slicer.active{
+  background:rgba(255,196,0,.14);
+  border-color:rgba(255,196,0,.35);
+}
 .swatch{width:14px; height:14px; border-radius:4px; display:inline-block}
 .swatch.common{background:var(--common)}
 .swatch.rare{background:var(--rare)}
@@ -861,3 +876,7 @@ body{ padding-bottom: 70px; }
   margin-left: auto;
   margin-right: auto;
 }
+
+#mapView .panel-title { margin-bottom: 26px; }
+
+#scoreRangesLocation{ text-align:center; margin: 2px 0 18px; font-size:13px; color: rgba(255,255,255,.85); }

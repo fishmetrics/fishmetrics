@@ -25,11 +25,11 @@
 </header>
 
 <nav class="top-tabs" aria-label="Primary">
+  <button class="tab-btn active" id="tabOverview" type="button" data-view="dashboardView">Dashboard</button>
+  <button class="tab-btn" id="tabRecords" type="button" data-view="recordsView">Log Records</button>
+  <button class="tab-btn" id="tabMap" type="button" data-view="mapView">Score Ranges</button>
+  <button class="tab-btn" id="tabFish" type="button" data-view="fishView">Fish Insights</button>
   <button class="tab-btn" id="tabInstructions" type="button" data-view="instructionsView">Instructions</button>
-  <button class="tab-btn" id="tabRecords" type="button" data-view="recordsView">Record Entry</button>
-  <button class="tab-btn active" id="tabOverview" type="button" data-view="dashboardView">Snapshot</button>
-  <button class="tab-btn" id="tabMap" type="button" data-view="mapView">Points Range</button>
-  <button class="tab-btn" id="tabFish" type="button" data-view="fishView">Fish Analytics</button>
 </nav>
 
 <main class="layout">
@@ -109,10 +109,22 @@
   <div class="panel-title">The Fearsome Four</div>
   <canvas id="fearsomeChart"></canvas>
 </div>
+
+    <div class="panel">
+      <div class="panel-title">Elite Epics</div>
+      <canvas id="eliteEpicsChart"></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">The Invisibles</div>
+      <canvas id="invisiblesChart"></canvas>
+    </div>
+
   </section>
 </div>
 
 <div class="tab-view" id="mapView">
+
   <section class="grid">
 
     <div class="panel">
@@ -140,16 +152,16 @@
   <section class="panel">
     <div class="panel-title">How to Use FishMetrics</div>
     <div class="muted" style="line-height:1.6">
-      <p>1) Go to <strong>Record Entry</strong> to enter fish weights for each location.</p>
-      <p>2) Snapshot shows your overall progress and KPIs.</p>
-      <p>3) Analytics tabs break down performance by fish and by map.</p>
+      <p>1) Go to <strong>Log Records</strong> to enter fish weights for each location.</p>
+      <p>2) Dashboard shows your overall progress and KPIs.</p>
+      <p>3) Use <strong>Score Ranges</strong> and <strong>Fish Insights</strong> to explore performance by map and by fish.</p>
     </div>
   </section>
 </div>
 <div class="tab-view" id="recordsView">
 <section class="table-wrap">
 <div class="table-head">
-<div class="table-title">Records</div>
+<div class="table-title">Log Records</div>
 <label class="location-select">
             Location:
             <select id="locationSelect"></select>

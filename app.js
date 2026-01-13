@@ -258,6 +258,17 @@ const pct4El = document.getElementById("pct4");
 const pct5El = document.getElementById("pct5");
 const bestMapEl = document.getElementById("bestMap");
 
+// ---- Dashboard slicers (left panel) ----
+// These slicers affect ONLY the Dashboard charts (not other tabs, not the records table).
+let dashboardLocation = "__ALL__"; // "__ALL__" or a specific location
+let dashboardCategories = new Set(CATEGORY_ORDER); // multi-select
+
+function updateScoreRangesLocation(){
+  const el = document.getElementById('scoreRangesLocation');
+  if(!el) return;
+  el.textContent = (dashboardLocation && dashboardLocation !== '__ALL__') ? dashboardLocation : 'All Locations';
+}
+
 // (Global error banner removed; we now use inline errors next to inputs.)
 function showError(){ /* no-op */ }
 
@@ -310,9 +321,53 @@ function buildLocationButtons(){
   locationButtonsEl.addEventListener("click", (e)=>{
     const btn = e.target.closest("button.loc-btn");
     if(!btn) return;
-    locationSelect.value = btn.dataset.value;
-    renderTable();
+    dashboardLocation = btn.dataset.value || "__ALL__";
+    updateScoreRangesLocation();
+    // Only Dashboard charts respond to slicers; keep Record Entry dropdown independent.
+    try{ updateDashboard(); }catch(_){ }
   });
+}
+
+function setupRaritySlicers(){
+  const items = Array.from(document.querySelectorAll('.rarity-legend .legend-item'));
+  if(!items.length) return;
+
+  function inferCategory(el){
+    const sw = el.querySelector('.swatch');
+    if(sw && sw.classList.contains('common')) return 'Common';
+    if(sw && sw.classList.contains('rare')) return 'Rare';
+    if(sw && sw.classList.contains('epic')) return 'Epic';
+    if(sw && sw.classList.contains('legendary')) return 'Legendary';
+    const txt = (el.textContent || '').trim().split(/\s+/)[0] || '';
+    return txt ? (txt[0].toUpperCase() + txt.slice(1).toLowerCase()) : '';
+  }
+
+  function refreshUI(){
+    items.forEach(el=>{
+      const cat = el.dataset.category;
+      el.classList.toggle('active', dashboardCategories.has(cat));
+    });
+  }
+
+  items.forEach(el=>{
+    const cat = inferCategory(el);
+    if(!cat) return;
+    el.dataset.category = cat;
+    el.classList.add('slicer');
+    el.addEventListener('click', ()=>{
+      if(dashboardCategories.has(cat)) dashboardCategories.delete(cat);
+      else dashboardCategories.add(cat);
+
+      // Never allow an empty selection; empty means "All".
+      if(dashboardCategories.size === 0){
+        dashboardCategories = new Set(CATEGORY_ORDER);
+      }
+      refreshUI();
+      try{ updateDashboard(); }catch(_){ }
+    });
+  });
+
+  refreshUI();
 }
 
 function toTitleCase(str){
@@ -452,7 +507,7 @@ let currentFish=[];
 // -----------------------------
 // Dashboard (Chart.js)
 // -----------------------------
-let pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart, legendaryChart, fearsomeChart;
+let pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart, legendaryChart, fearsomeChart, eliteEpicsChart, invisiblesChart;
 // Map analytics dumbbell charts (declare to avoid ReferenceError if a chart is absent)
 let typeDumbbellChart, commonDumbbellChart, rareDumbbellChart, epicDumbbellChart;
 
@@ -463,12 +518,23 @@ function fmtNumber(n){
 
 function dumbbellTooltipLabel(context){
   const dsLabel = context?.dataset?.label || "";
-  const x = (context?.parsed && typeof context.parsed.x !== "undefined") ? context.parsed.x : (context?.raw?.x);
+  // Chart.js uses parsed.x for horizontal charts and parsed.y for vertical charts.
+  // The dashboard mixes both, so pick the numeric value robustly.
+  const val = (() => {
+    const p = context?.parsed;
+    if(p && typeof p.y !== 'undefined' && Number.isFinite(Number(p.y))) return p.y;
+    if(p && typeof p.x !== 'undefined' && Number.isFinite(Number(p.x))) return p.x;
+    const r = context?.raw;
+    if(r && typeof r === 'number') return r;
+    if(r && typeof r.y !== 'undefined' && Number.isFinite(Number(r.y))) return r.y;
+    if(r && typeof r.x !== 'undefined' && Number.isFinite(Number(r.x))) return r.x;
+    return 0;
+  })();
   const fishName = context?.raw?.fishName;
   if((dsLabel === "Lowest" || dsLabel === "Highest") && fishName){
-    return `${dsLabel}: ${x}, ${typeof toTitleCase==='function' ? toTitleCase(fishName) : fishName}`;
+    return `${dsLabel}: ${val}, ${typeof toTitleCase==='function' ? toTitleCase(fishName) : fishName}`;
   }
-  return dsLabel ? `${dsLabel}: ${x}` : `${x}`;
+  return dsLabel ? `${dsLabel}: ${val}` : `${val}`;
 }
 
 
@@ -479,7 +545,7 @@ function setDonutProgress(pct){
   const p = clamp01((Number(pct) || 0) / 100);
   const deg = Math.round(360 * p);
   donutEl.style.background = `conic-gradient(#9ad54d 0deg, #9ad54d ${deg}deg, rgba(255,255,255,.14) ${deg}deg)`;
-  bestiaryProgressEl.textContent = `${Math.round(p * 100)}%`;
+  bestiaryProgressEl.textContent = `${(p * 100).toFixed(1)}%`;
 }
 
 function setTableHeaders(isAll){
@@ -842,7 +908,7 @@ if(typeof Chart !== "undefined" && Chart?.register){
       animation:false,
       scales:{
         x:{ ...baseOpts.scales.x, type:'linear' },
-        y:{ ...baseOpts.scales.y, type:'category' }
+        y: { ...baseOpts.scales.y, type: 'category', offset: true }
       }
     }
   });
@@ -853,8 +919,8 @@ if(typeof Chart !== "undefined" && Chart?.register){
       labels: [],
       datasets: [
         { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
-        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
+        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
       ]
     },
     options: {
@@ -865,7 +931,7 @@ if(typeof Chart !== "undefined" && Chart?.register){
       animation:false,
       scales: {
         x: { ...baseOpts.scales.x, type: 'linear' },
-        y: { ...baseOpts.scales.y, type: 'category' }
+        y: { ...baseOpts.scales.y, type: 'category', offset: true }
       }
     }
   });
@@ -876,8 +942,8 @@ if(typeof Chart !== "undefined" && Chart?.register){
       labels: [],
       datasets: [
         { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
-        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
+        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
       ]
     },
     options: {
@@ -888,7 +954,7 @@ if(typeof Chart !== "undefined" && Chart?.register){
       animation:false,
       scales: {
         x: { ...baseOpts.scales.x, type: 'linear' },
-        y: { ...baseOpts.scales.y, type: 'category' }
+        y: { ...baseOpts.scales.y, type: 'category', offset: true }
       }
     }
   });
@@ -899,8 +965,8 @@ if(typeof Chart !== "undefined" && Chart?.register){
       labels: [],
       datasets: [
         { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
-        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
+        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
       ]
     },
     options: {
@@ -911,7 +977,7 @@ if(typeof Chart !== "undefined" && Chart?.register){
       animation:false,
       scales: {
         x: { ...baseOpts.scales.x, type: 'linear' },
-        y: { ...baseOpts.scales.y, type: 'category' }
+        y: { ...baseOpts.scales.y, type: 'category', offset: true }
       }
     }
   });
@@ -939,6 +1005,88 @@ if(typeof Chart !== "undefined" && Chart?.register){
           afterFit: (scale) => { scale.width = 260; }, ticks: {
             align: "start",
             padding: 6, autoSkip:false, callback: function(value){ const l = this.getLabelForValue(value); return String(l).split(" "); } } } }, barThickness: 18, categoryPercentage: 0.8,
+      ...baseOpts,
+      indexAxis: 'y',
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+    }
+  });
+
+  eliteEpicsChart = safeChart("eliteEpicsChart", {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Epic Points", data: [], backgroundColor: epic }] },
+    options: {layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } },
+       scales: { 
+          x: { ...baseOpts.scales.x },
+          y: {
+            ...baseOpts.scales.y,
+            afterFit: (scale) => { scale.width = 260; },
+            ticks: {
+              ...baseOpts.scales.y.ticks,
+              align: "start",
+              padding: 6,
+              autoSkip: false,
+              callback: function(value){
+                const label = this.getLabelForValue(value);
+                if(typeof label !== "string") return label;
+                const max = 16;
+                if(label.length <= max) return label;
+                // smart wrap without breaking midword
+                const words = label.split(" ");
+                const lines = [];
+                let line = "";
+                for(const w of words){
+                  const test = line ? (line + " " + w) : w;
+                  if(test.length <= max) line = test;
+                  else { if(line) lines.push(line); line = w; }
+                }
+                if(line) lines.push(line);
+                return lines;
+              }
+            }
+          }
+       },
+       barThickness: 18, categoryPercentage: 0.8,
+      ...baseOpts,
+      indexAxis: 'y',
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+    }
+  });
+
+  invisiblesChart = safeChart("invisiblesChart", {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: common }] },
+    options: {layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } },
+       scales: { 
+          x: { ...baseOpts.scales.x },
+          y: {
+            ...baseOpts.scales.y,
+            afterFit: (scale) => { scale.width = 260; },
+            ticks: {
+              ...baseOpts.scales.y.ticks,
+              align: "start",
+              padding: 6,
+              autoSkip: false,
+              callback: function(value){
+                const label = this.getLabelForValue(value);
+                if(typeof label !== "string") return label;
+                const max = 16;
+                if(label.length <= max) return label;
+                // smart wrap without breaking midword
+                const words = label.split(" ");
+                const lines = [];
+                let line = "";
+                for(const w of words){
+                  const test = line ? (line + " " + w) : w;
+                  if(test.length <= max) line = test;
+                  else { if(line) lines.push(line); line = w; }
+                }
+                if(line) lines.push(line);
+                return lines;
+              }
+            }
+          }
+       },
+       barThickness: 18, categoryPercentage: 0.8,
       ...baseOpts,
       indexAxis: 'y',
       plugins: { ...baseOpts.plugins, legend: { display: false } },
@@ -980,6 +1128,44 @@ function computeAggregates(records){
   return { byLoc, allFish };
 }
 
+function computeDashboardAggregates(records){
+  const recs = records || recordsByLocation || {};
+  const locsAll = getLocationList();
+  const locs = (dashboardLocation && dashboardLocation !== '__ALL__' && LOCATIONS[dashboardLocation])
+    ? [dashboardLocation]
+    : locsAll;
+
+  const byLoc = {};
+  locs.forEach(loc=>{
+    byLoc[loc] = {
+      pointsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
+      starsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
+      starCounts: [0,0,0,0,0],
+      totalPoints: 0,
+      totalStars: 0,
+      caught: 0,
+    };
+
+    for (const fish of (LOCATIONS[loc] || [])){
+      if(!dashboardCategories.has(fish.category)) continue;
+      const raw = recs?.[loc]?.[fish.name];
+      const w = Number.parseFloat(raw);
+      const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
+      if(!valid) continue;
+      const pts = calculatePoints(w, fish);
+      const stars = calculateStars(fish.category, pts);
+      byLoc[loc].pointsByCat[fish.category] += pts;
+      byLoc[loc].starsByCat[fish.category] += stars;
+      if(stars>=1 && stars<=5) byLoc[loc].starCounts[stars-1] += 1;
+      byLoc[loc].totalPoints += pts;
+      byLoc[loc].totalStars += stars;
+      byLoc[loc].caught += 1;
+    }
+  });
+
+  return { byLoc, locs };
+}
+
 // Use live inputs in Record Entry tab (even before Enter/blur saves) so charts like dumbbells update immediately.
 function getEffectiveRecords(){
   const base = recordsByLocation || {};
@@ -1017,19 +1203,22 @@ function updateDashboard(){
   const { byLoc, allFish } = computeAggregates(effectiveRecords);
   const locs = getLocationList();
 
-  // Precompute commonly used arrays
-  const pointsCommon = locs.map(l=>byLoc[l].pointsByCat.Common);
-  const pointsRare = locs.map(l=>byLoc[l].pointsByCat.Rare);
-  const pointsEpic = locs.map(l=>byLoc[l].pointsByCat.Epic);
-  const pointsLegendary = locs.map(l=>byLoc[l].pointsByCat.Legendary);
+  // Dashboard charts use slicers (location + rarity). Other tabs ignore slicers.
+  const { byLoc: dashByLoc, locs: dashLocs } = computeDashboardAggregates(effectiveRecords);
 
-  const starsCommon = locs.map(l=>byLoc[l].starsByCat.Common);
-  const starsRare = locs.map(l=>byLoc[l].starsByCat.Rare);
-  const starsEpic = locs.map(l=>byLoc[l].starsByCat.Epic);
-  const starsLegendary = locs.map(l=>byLoc[l].starsByCat.Legendary);
+  // Precompute commonly used arrays (Dashboard charts)
+  const pointsCommon = dashLocs.map(l=>dashByLoc[l].pointsByCat.Common);
+  const pointsRare = dashLocs.map(l=>dashByLoc[l].pointsByCat.Rare);
+  const pointsEpic = dashLocs.map(l=>dashByLoc[l].pointsByCat.Epic);
+  const pointsLegendary = dashLocs.map(l=>dashByLoc[l].pointsByCat.Legendary);
 
-  // Points per map (sorted)
-  const locSorted = [...locs].sort((a,b)=>byLoc[b].totalPoints - byLoc[a].totalPoints);
+  const starsCommon = dashLocs.map(l=>dashByLoc[l].starsByCat.Common);
+  const starsRare = dashLocs.map(l=>dashByLoc[l].starsByCat.Rare);
+  const starsEpic = dashLocs.map(l=>dashByLoc[l].starsByCat.Epic);
+  const starsLegendary = dashLocs.map(l=>dashByLoc[l].starsByCat.Legendary);
+
+  // Points per map (sorted) - Dashboard slicers apply
+  const locSorted = [...dashLocs].sort((a,b)=>dashByLoc[b].totalPoints - dashByLoc[a].totalPoints);
 
   // ---- KPIs FIRST (so a chart error can't block them) ----
   const totalPoints = locs.reduce((s,l)=>s+byLoc[l].totalPoints,0);
@@ -1073,7 +1262,7 @@ function updateDashboard(){
   // Sidebar active button
   if(locationButtonsEl){
     [...locationButtonsEl.querySelectorAll('button.loc-btn')].forEach(b=>{
-      b.classList.toggle('active', b.dataset.value === locationSelect.value);
+      b.classList.toggle('active', b.dataset.value === dashboardLocation);
     });
   }
 
@@ -1097,35 +1286,44 @@ function updateDashboard(){
   }
 
   if(pointsByRarityChart){
-    pointsByRarityChart.data.labels = locs;
+    pointsByRarityChart.data.labels = dashLocs;
     pointsByRarityChart.data.datasets[0].data = pointsCommon;
     pointsByRarityChart.data.datasets[1].data = pointsRare;
     pointsByRarityChart.data.datasets[2].data = pointsEpic;
     pointsByRarityChart.data.datasets[3].data = pointsLegendary;
+    // Hide datasets that are not selected in the rarity slicer
+    pointsByRarityChart.data.datasets[0].hidden = !dashboardCategories.has('Common');
+    pointsByRarityChart.data.datasets[1].hidden = !dashboardCategories.has('Rare');
+    pointsByRarityChart.data.datasets[2].hidden = !dashboardCategories.has('Epic');
+    pointsByRarityChart.data.datasets[3].hidden = !dashboardCategories.has('Legendary');
     safeUpdate(pointsByRarityChart);
   }
 
   if(starsByRarityChart){
-    starsByRarityChart.data.labels = locs;
+    starsByRarityChart.data.labels = dashLocs;
     starsByRarityChart.data.datasets[0].data = starsCommon;
     starsByRarityChart.data.datasets[1].data = starsRare;
     starsByRarityChart.data.datasets[2].data = starsEpic;
     starsByRarityChart.data.datasets[3].data = starsLegendary;
+    starsByRarityChart.data.datasets[0].hidden = !dashboardCategories.has('Common');
+    starsByRarityChart.data.datasets[1].hidden = !dashboardCategories.has('Rare');
+    starsByRarityChart.data.datasets[2].hidden = !dashboardCategories.has('Epic');
+    starsByRarityChart.data.datasets[3].hidden = !dashboardCategories.has('Legendary');
     safeUpdate(starsByRarityChart);
   }
 
   // Star catches (stacked)
   if(starCatchesChart){
-    starCatchesChart.data.labels = locs;
+    starCatchesChart.data.labels = dashLocs;
     for(let s=1;s<=5;s++){
-      starCatchesChart.data.datasets[s-1].data = locs.map(l=>byLoc[l].starCounts[s-1]);
+      starCatchesChart.data.datasets[s-1].data = dashLocs.map(l=>dashByLoc[l].starCounts[s-1]);
     }
     safeUpdate(starCatchesChart);
   }
 
   if(pointsByMapChart){
     pointsByMapChart.data.labels = locSorted;
-    pointsByMapChart.data.datasets[0].data = locSorted.map(l=>byLoc[l].totalPoints);
+    pointsByMapChart.data.datasets[0].data = locSorted.map(l=>dashByLoc[l].totalPoints);
     safeUpdate(pointsByMapChart);
   }
 
@@ -1166,8 +1364,13 @@ function updateDashboard(){
           backgroundColor: (getComputedStyle(document.documentElement).getPropertyValue('--rare').trim() || '#3b82f6'),
             parsing: false
           });
-          lows.push({x: mins[c], y: c, fishName: minFishNames[c]});
-          highs.push({x: maxs[c], y: c, fishName: maxFishNames[c]});
+          // If only one record (min==max), show a single GREEN endpoint (Highest) to match prior behavior
+          if(mins[c] === maxs[c] && (minFishNames[c] || '') === (maxFishNames[c] || '')){
+            highs.push({x: maxs[c], y: c, fishName: maxFishNames[c]});
+          }else{
+            lows.push({x: mins[c], y: c, fishName: minFishNames[c]});
+            highs.push({x: maxs[c], y: c, fishName: maxFishNames[c]});
+          }
         }
       });
 
@@ -1175,8 +1378,8 @@ function updateDashboard(){
       // Build datasets without null separators (more stable across browsers).
       typeDumbbellChart.data.datasets = [
         ...rangeSets,
-        { label: 'Lowest', type: 'scatter', data: lows, pointRadius: 5, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
-        { label: 'Highest', type: 'scatter', data: highs, pointRadius: 5, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
+        { label: 'Lowest', type: 'scatter', data: lows, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
+        { label: 'Highest', type: 'scatter', data: highs, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
       ];
       safeUpdate(typeDumbbellChart, { requireVisible: true });
     }
@@ -1232,15 +1435,20 @@ function updateDashboard(){
           backgroundColor: (getComputedStyle(document.documentElement).getPropertyValue('--rare').trim() || '#3b82f6'),
           parsing: false
         });
-        minPts.push({ x: lo, y: loc, fishName: minNames[i] });
-        maxPts.push({ x: hi, y: loc, fishName: maxNames[i] });
+        // If only one record (lo==hi), show a single GREEN endpoint (Highest) to match prior behavior
+        if(lo === hi && (minNames[i] || '') === (maxNames[i] || '')){
+          maxPts.push({ x: hi, y: loc, fishName: maxNames[i] });
+        }else{
+          minPts.push({ x: lo, y: loc, fishName: minNames[i] });
+          maxPts.push({ x: hi, y: loc, fishName: maxNames[i] });
+        }
       }
 
       // Datasets without null separators (prevents occasional full-blank renders).
       chart.data.datasets = [
         ...rangeSets,
-        { label: 'Lowest', type: 'scatter', data: minPts, pointRadius: 5, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
-        { label: 'Highest', type: 'scatter', data: maxPts, pointRadius: 5, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
+        { label: 'Lowest', type: 'scatter', data: minPts, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
+        { label: 'Highest', type: 'scatter', data: maxPts, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
       ];
       safeUpdate(chart, { requireVisible: true });
     }
@@ -1282,7 +1490,7 @@ function updateDashboard(){
     const fearMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
     const fearList = fearsomeNames.map(n=>{
       const rec = fearMap.get(n);
-      const val = rec ? (rec.points + (rec.stars||0)) : 0;
+      const val = rec ? rec.points : 0;
       return { name: n, value: val };
     });
     if(fearsomeChart){
@@ -1293,6 +1501,42 @@ function updateDashboard(){
   }catch(e){
     console.error('Fearsome chart update failed', e);
   }
+  // Elite Epics (fixed list)
+  try{
+    const eliteNames = ['tiger shark','king salmon','bull trout','scottish salmon','bull shark','goldfish'];
+    const eliteMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
+    const eliteList = eliteNames.map(n=>{
+      const rec = eliteMap.get(n);
+      const val = rec ? rec.points : 0;
+      return { name: n, value: val };
+    });
+    if(eliteEpicsChart){
+      eliteEpicsChart.data.labels = eliteList.map(f => __wrapWordsFearsome(toTitleCase(f.name), 10));
+      eliteEpicsChart.data.datasets[0].data = eliteList.map(f=>f.value);
+      safeUpdate(eliteEpicsChart);
+    }
+  }catch(e){
+    console.error('Elite Epics chart update failed', e);
+  }
+
+  // The Invisibles (fixed list)
+  try{
+    const invNames = ['rice eel','malayan leaffish','amazon puffer','amazon barracuda','clownfish'];
+    const invMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
+    const invList = invNames.map(n=>{
+      const rec = invMap.get(n);
+      const val = rec ? rec.points : 0;
+      return { name: n, value: val };
+    });
+    if(invisiblesChart){
+      invisiblesChart.data.labels = invList.map(f => __wrapWordsFearsome(toTitleCase(f.name), 10));
+      invisiblesChart.data.datasets[0].data = invList.map(f=>f.value);
+      safeUpdate(invisiblesChart);
+    }
+  }catch(e){
+    console.error('Invisibles chart update failed', e);
+  }
+
 }
 
 
@@ -1300,6 +1544,7 @@ async function initApp(){
   recordsByLocation = await loadRecords();
   setupTabs();
   buildLocationButtons();
+  setupRaritySlicers();
   makeCharts();
   locationSelect.onchange = renderTable;
   renderTable();

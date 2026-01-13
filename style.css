@@ -748,3 +748,116 @@ body.no-sidebar .sidebar{
     transform-origin: center !important;
   }
 }
+
+
+.app-footer{position:fixed; bottom:0; left:0; width:100%; display:flex; justify-content:center; padding:10px 0; background:rgba(0,0,0,.35); backdrop-filter: blur(6px); z-index:10;}
+.contact-btn{
+  background:#ff4d4d;
+  color:#fff;
+  padding:6px 18px;
+  border-radius:20px;
+  font-weight:700;
+  text-decoration:none;
+}
+.contact-btn:hover{ opacity:.85; }
+
+/* Contact button thinner */
+.contact-btn{ font-size:12px; border-radius:16px; }
+
+/* More space below header for Records + Instructions */
+#recordsView{ margin-top: 14px; }
+#instructionsView{ margin-top: 14px; }
+@media (max-width: 640px){
+  #recordsView{ margin-top: 18px; }
+  #instructionsView{ margin-top: 18px; }
+}
+
+/* Snapshot spacing: push KPI cards and left panel down */
+#dashboardView .kpi-grid{ margin-top: 16px; }
+#dashboardView .left-panel{ margin-top: 16px; }
+@media (max-width: 640px){
+  #dashboardView .kpi-grid{ margin-top: 20px; }
+  #dashboardView .left-panel{ margin-top: 20px; }
+}
+
+/* Uniform spacing below header for all views */
+.tab-view{
+  margin-top: 16px;
+}
+@media (max-width: 640px){
+  .tab-view{
+    margin-top: 20px;
+  }
+}
+
+/* Snapshot alignment */
+#dashboardView .left-panel{ margin-top: 0 !important; }
+#dashboardView .kpi-grid{ margin-top: 0 !important; }
+#dashboardView .grid{ margin-top: 8px; }
+
+/* Match Analytics spacing to Instructions */
+#fishView, #mapView{
+  margin-top: 16px !important;
+}
+
+/* Force Snapshot left panel and KPI grid to align at top */
+#dashboardView .kpi-grid,
+#dashboardView .left-panel{
+  margin-top: 0 !important;
+  align-self: flex-start !important;
+}
+/* Nudge charts grid up slightly */
+#dashboardView .grid{
+  margin-top: 6px !important;
+}
+
+/* Snapshot: align sidebar top with KPI row (same gap below header/tabs) */
+body:not(.no-sidebar) .sidebar{
+  margin-top: 16px;
+}
+@media (max-width: 640px){
+  body:not(.no-sidebar) .sidebar{
+    margin-top: 20px;
+  }
+}
+
+/* Snapshot: nudge the 4 charts down slightly */
+#dashboardView .grid{
+  margin-top: 12px !important;
+}
+@media (max-width: 640px){
+  #dashboardView .grid{
+    margin-top: 16px !important;
+  }
+}
+
+/* Analytics: nudge charts up to match other tabs */
+#fishView .grid, #mapView .grid{
+  margin-top: 0 !important;
+}
+@media (max-width: 640px){
+  #fishView .grid, #mapView .grid{
+    margin-top: 4px !important;
+  }
+}
+
+/* Ensure footer sits after content, not floating */
+.app-footer{position:fixed; bottom:0; left:0; width:100%; display:flex; justify-content:center; padding:10px 0; background:rgba(0,0,0,.35); backdrop-filter: blur(6px); z-index:10;}
+
+body{ padding-bottom: 70px; }
+
+/* Snapshot: nudge all containers to the right */
+#dashboardView .shell{
+  padding-left: 12px;
+}
+@media (max-width: 640px){
+  #dashboardView .shell{
+    padding-left: 6px;
+  }
+}
+
+/* Instructions: center left panel under heading */
+#instructionsView .sidebar{
+  margin-left: auto;
+  margin-right: auto;
+}

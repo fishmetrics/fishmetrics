@@ -321,6 +321,38 @@ function toTitleCase(str){
     .replace(/\b([a-z])/g, (m)=>m.toUpperCase());
 }
 
+  // Wrap labels on word boundaries for Fearsome Four (Chart.js supports array labels for multi-line)
+  function __wrapWordsFearsome(label, maxLen=10){
+    const words = String(label).trim().split(/\s+/).filter(Boolean);
+    if(words.length <= 1) return label;
+
+    // If it's exactly 2 words, always split 1/1 to reduce width.
+    if(words.length === 2){
+      return [words[0], words[1]];
+    }
+
+    // Greedy wrap by maxLen, but if it still ends up 1 line, force a balanced split.
+    const lines = [];
+    let line = "";
+    for(const w of words){
+      if(!line){ line = w; continue; }
+      if((line + " " + w).length <= maxLen){
+        line = line + " " + w;
+      }else{
+        lines.push(line);
+        line = w;
+      }
+    }
+    if(line) lines.push(line);
+
+    if(lines.length <= 1){
+      const mid = Math.ceil(words.length/2);
+      return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+    }
+    return lines;
+  }
+
+
 function getLocationList(){
   // Preserve desired location order even if object key order changes
   return LOCATION_ORDER.filter(l=>Object.prototype.hasOwnProperty.call(LOCATIONS,l));
@@ -428,6 +460,17 @@ function fmtNumber(n){
   const x = Number(n) || 0;
   return x.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
+
+function dumbbellTooltipLabel(context){
+  const dsLabel = context?.dataset?.label || "";
+  const x = (context?.parsed && typeof context.parsed.x !== "undefined") ? context.parsed.x : (context?.raw?.x);
+  const fishName = context?.raw?.fishName;
+  if((dsLabel === "Lowest" || dsLabel === "Highest") && fishName){
+    return `${dsLabel}: ${x}, ${typeof toTitleCase==='function' ? toTitleCase(fishName) : fishName}`;
+  }
+  return dsLabel ? `${dsLabel}: ${x}` : `${x}`;
+}
+
 
 function clamp01(v){ return Math.max(0, Math.min(1, v)); }
 
@@ -674,15 +717,59 @@ function makeCharts(){
   const baseOpts = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
+    plugins: { dumbbellEndpointOverlay: { radius: 8 },
       legend: { labels: { color: 'rgba(255,255,255,.85)' } },
-      tooltip: { enabled: true }
+      tooltip: { enabled: true, callbacks: { label: dumbbellTooltipLabel } }
     },
     scales: {
       x: { ticks: { color: 'rgba(255,255,255,.75)' }, grid: { color: 'rgba(255,255,255,.08)' } },
       y: { ticks: { color: 'rgba(255,255,255,.75)' }, grid: { color: 'rgba(255,255,255,.08)' } }
     }
   };
+
+
+// Draw dumbbell endpoints on top of connector stroke (prevents line end from showing)
+const dumbbellEndpointOverlay = {
+  id: 'dumbbellEndpointOverlay',
+  afterDatasetsDraw(chart, args, pluginOptions){
+    try{
+      // Only apply to our dumbbell charts (those with Lowest/Highest datasets)
+      const ds = chart.data?.datasets || [];
+      const lowIdx = ds.findIndex(d => d && d.label === "Lowest");
+      const highIdx = ds.findIndex(d => d && d.label === "Highest");
+      if(lowIdx === -1 || highIdx === -1) return;
+
+      const ctx = chart.ctx;
+      const r = (pluginOptions && pluginOptions.radius) ? pluginOptions.radius : 8;
+
+      const drawPoints = (idx) => {
+        const meta = chart.getDatasetMeta(idx);
+        if(!meta || meta.hidden) return;
+        const dataset = chart.data.datasets[idx];
+        const color = dataset.pointBackgroundColor || dataset.backgroundColor || "#ffffff";
+        meta.data.forEach((el) => {
+          if(!el || typeof el.x !== "number" || typeof el.y !== "number") return;
+          ctx.save();
+          ctx.beginPath();
+          ctx.fillStyle = color;
+          ctx.arc(el.x, el.y, r, 0, Math.PI*2);
+          ctx.fill();
+          ctx.restore();
+        });
+      };
+
+      // Draw endpoints last, on top of everything
+      drawPoints(lowIdx);
+      drawPoints(highIdx);
+    }catch(e){
+      // never break app
+    }
+  }
+};
+if(typeof Chart !== "undefined" && Chart?.register){
+  Chart.register(dumbbellEndpointOverlay);
+}
+
 
   pointsByRarityChart = safeChart("pointsByRarityChart", {
     type: "bar",
@@ -743,9 +830,9 @@ function makeCharts(){
     type: "line",
     data: { labels: ["Common","Rare","Epic","Legendary"], datasets:[
       // Use scatter controller with showLine=true for stability on iOS Safari
-      {label: "Range", type: "line", data:[], pointRadius:0, borderWidth:3, parsing:false, spanGaps:false},
-      {label:"Lowest", type:"scatter", data:[], pointRadius:5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-      {label:"Highest", type:"scatter", data:[], pointRadius:5, pointBackgroundColor:"#43a047", pointBorderColor:"#43a047", pointHoverBackgroundColor:"#43a047", pointHoverBorderColor:"#43a047", backgroundColor:"#43a047", borderColor:"#43a047"},
+      {label: "Range", type: "line", data:[], pointRadius:0, order:1, borderCapStyle:"butt", borderWidth:2, parsing:false, spanGaps:false},
+      {label:"Lowest", type:"scatter", data:[], pointRadius:8, pointBorderWidth:0, order:10, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+      {label:"Highest", type:"scatter", data:[], pointRadius:8, pointBorderWidth:0, order:10, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
     ]},
     options:{
       ...baseOpts,
@@ -767,7 +854,7 @@ function makeCharts(){
       datasets: [
         { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
         { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#43a047", pointBorderColor:"#43a047", pointHoverBackgroundColor:"#43a047", pointHoverBorderColor:"#43a047", backgroundColor:"#43a047", borderColor:"#43a047"},
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
       ]
     },
     options: {
@@ -790,7 +877,7 @@ function makeCharts(){
       datasets: [
         { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
         { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#43a047", pointBorderColor:"#43a047", pointHoverBackgroundColor:"#43a047", pointHoverBorderColor:"#43a047", backgroundColor:"#43a047", borderColor:"#43a047"},
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
       ]
     },
     options: {
@@ -813,7 +900,7 @@ function makeCharts(){
       datasets: [
         { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
         { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#43a047", pointBorderColor:"#43a047", pointHoverBackgroundColor:"#43a047", pointHoverBorderColor:"#43a047", backgroundColor:"#43a047", borderColor:"#43a047"},
+        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
       ]
     },
     options: {
@@ -1047,7 +1134,8 @@ function updateDashboard(){
   try{
     const cats = ['Common','Rare','Epic','Legendary'];
     const mins = {}, maxs = {};
-    cats.forEach(c=>{ mins[c]=Infinity; maxs[c]=-Infinity; });
+    const minFishNames = {}, maxFishNames = {};
+    cats.forEach(c=>{ mins[c]=Infinity; maxs[c]=-Infinity; minFishNames[c]=''; maxFishNames[c]=''; });
 
     getLocationList().forEach(loc=>{
       (LOCATIONS[loc]||[]).forEach(f=>{
@@ -1056,8 +1144,8 @@ function updateDashboard(){
         if(!Number.isFinite(w)) return;
         const pts = calculatePoints(w,f);
         if(!pts) return;
-        if(pts < mins[f.category]) mins[f.category]=pts;
-        if(pts > maxs[f.category]) maxs[f.category]=pts;
+        if(pts < mins[f.category]){ mins[f.category]=pts; minFishNames[f.category]=f.name; }
+        if(pts > maxs[f.category]){ maxs[f.category]=pts; maxFishNames[f.category]=f.name; }
       });
     });
 
@@ -1078,8 +1166,8 @@ function updateDashboard(){
           backgroundColor: (getComputedStyle(document.documentElement).getPropertyValue('--rare').trim() || '#3b82f6'),
             parsing: false
           });
-          lows.push({x: mins[c], y: c});
-          highs.push({x: maxs[c], y: c});
+          lows.push({x: mins[c], y: c, fishName: minFishNames[c]});
+          highs.push({x: maxs[c], y: c, fishName: maxFishNames[c]});
         }
       });
 
@@ -1088,7 +1176,7 @@ function updateDashboard(){
       typeDumbbellChart.data.datasets = [
         ...rangeSets,
         { label: 'Lowest', type: 'scatter', data: lows, pointRadius: 5, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
-        { label: 'Highest', type: 'scatter', data: highs, pointRadius: 5, parsing: false, pointBackgroundColor: '#43a047', pointBorderColor: '#43a047', backgroundColor: '#43a047', borderColor: '#43a047', pointHoverBackgroundColor: '#43a047', pointHoverBorderColor: '#43a047' },
+        { label: 'Highest', type: 'scatter', data: highs, pointRadius: 5, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
       ];
       safeUpdate(typeDumbbellChart, { requireVisible: true });
     }
@@ -1099,9 +1187,13 @@ function updateDashboard(){
 
       const mins = [];
       const maxs = [];
+      const minNames = [];
+      const maxNames = [];
       locSorted.forEach(loc=>{
         let minP = Infinity;
         let maxP = -Infinity;
+        let minName = '';
+        let maxName = '';
         for (const fish of (LOCATIONS[loc] || [])){
           if(fish.category !== category) continue;
           // Use effective (live) records so dumbbells update even before Enter/blur commits
@@ -1110,11 +1202,13 @@ function updateDashboard(){
           if(!Number.isFinite(w)) continue;
           const pts = calculatePoints(w, fish);
           if(!pts) continue;
-          if(pts < minP) minP = pts;
-          if(pts > maxP) maxP = pts;
+          if(pts < minP){ minP = pts; minName = (fish.name || fish.fishName || fish.fish || ''); }
+          if(pts > maxP){ maxP = pts; maxName = (fish.name || fish.fishName || fish.fish || ''); }
         }
         mins.push(minP === Infinity ? null : minP);
         maxs.push(maxP === -Infinity ? null : maxP);
+        minNames.push(minP === Infinity ? '' : minName);
+        maxNames.push(maxP === -Infinity ? '' : maxName);
       });
 
       chart.data.labels = locSorted;
@@ -1138,15 +1232,15 @@ function updateDashboard(){
           backgroundColor: (getComputedStyle(document.documentElement).getPropertyValue('--rare').trim() || '#3b82f6'),
           parsing: false
         });
-        minPts.push({ x: lo, y: loc });
-        maxPts.push({ x: hi, y: loc });
+        minPts.push({ x: lo, y: loc, fishName: minNames[i] });
+        maxPts.push({ x: hi, y: loc, fishName: maxNames[i] });
       }
 
       // Datasets without null separators (prevents occasional full-blank renders).
       chart.data.datasets = [
         ...rangeSets,
         { label: 'Lowest', type: 'scatter', data: minPts, pointRadius: 5, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
-        { label: 'Highest', type: 'scatter', data: maxPts, pointRadius: 5, parsing: false, pointBackgroundColor: '#43a047', pointBorderColor: '#43a047', backgroundColor: '#43a047', borderColor: '#43a047', pointHoverBackgroundColor: '#43a047', pointHoverBorderColor: '#43a047' },
+        { label: 'Highest', type: 'scatter', data: maxPts, pointRadius: 5, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
       ];
       safeUpdate(chart, { requireVisible: true });
     }
@@ -1192,7 +1286,7 @@ function updateDashboard(){
       return { name: n, value: val };
     });
     if(fearsomeChart){
-      fearsomeChart.data.labels = fearList.map(f=>toTitleCase(f.name));
+      fearsomeChart.data.labels = fearList.map(f => __wrapWordsFearsome(toTitleCase(f.name), 10));
       fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
       safeUpdate(fearsomeChart);
     }

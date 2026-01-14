@@ -135,8 +135,18 @@
     </div>
 
     <div class="panel">
+      <div class="panel-title">Short-Lived Epics</div>
+      <canvas id="shortLivedEpicsChart"></canvas>
+    </div>
+
+    <div class="panel">
       <div class="panel-title">The Invisibles</div>
       <canvas id="invisiblesChart"></canvas>
+    </div>
+
+    <div class="panel personal-bests-panel">
+      <div class="panel-title">👑 Personal Bests</div>
+      <div id="personalBestsGrid" class="bests-grid" aria-label="Personal bests"></div>
     </div>
 
   </section>
@@ -170,7 +180,8 @@
 <div class="tab-view" id="instructionsView">
   <section class="panel">
     <div class="panel-title">How to Use FishMetrics</div>
-    <div class="muted" style="line-height:1.6">
+    <div class="muted instructions-text" style="line-height:1.6">
+      <p><strong>Welcome to FishMetrics.</strong> First things first: this isn't a scientific measure of any fisherperson's skills, so shouldn't be taken too seriously. If you like getting high on numbers like I do, keeping tabs on your CotD fishing career, or casually comparing stats with friends and clanmates, FishMetrics is for you.</p><p><strong>Enjoy!</strong></p>
       <p>1) Go to <strong>Log Records</strong> to enter fish weights for each location.</p>
       <p>2) Dashboard shows your overall progress and KPIs.</p>
       <p>3) Use <strong>Score Ranges</strong> and <strong>Fish Insights</strong> to explore performance by map and by fish.</p>
@@ -200,7 +211,7 @@
 <table>
 <thead>
 <tr>
-<th>Category</th>
+<th>Rarity</th>
 <th>Fish</th>
 <th>Your Record (<span id="recordsUnitLabel">lbs</span>)</th>
 <th>Points</th>

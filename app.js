@@ -407,6 +407,65 @@ function toTitleCase(str){
     return lines;
   }
 
+function renderPersonalBests(allFish){
+  const wrap = document.getElementById('personalBestsGrid');
+  if(!wrap) return;
+
+  const locOrder = getLocationList();
+  const locIndex = new Map(locOrder.map((l,i)=>[l,i]));
+  const rarityOrder = ['Common','Rare','Epic','Legendary'];
+
+  function pickBest(rarity){
+    const candidates = (allFish || []).filter(f=>f.category === rarity);
+    if(!candidates.length) return null;
+    return candidates.reduce((best, cur)=>{
+      if(!best) return cur;
+      if(cur.points > best.points) return cur;
+      if(cur.points < best.points) return best;
+      if((cur.stars||0) > (best.stars||0)) return cur;
+      if((cur.stars||0) < (best.stars||0)) return best;
+      const ci = locIndex.has(cur.location) ? locIndex.get(cur.location) : 999;
+      const bi = locIndex.has(best.location) ? locIndex.get(best.location) : 999;
+      if(ci < bi) return cur;
+      return best;
+    }, null);
+  }
+
+  const tiles = rarityOrder.map(rarity=>{
+    const best = pickBest(rarity);
+    if(!best){
+      return `
+        <div class="best-tile" data-rarity="${rarity}">
+          <div class="best-top">
+            <div class="best-rarity">${rarity}</div>
+            <div class="best-points">—</div>
+          </div>
+          <div class="best-fish">No record yet</div>
+          <div class="best-meta">
+            <span class="pill">⭐ —</span>
+            <span class="pill">📍 —</span>
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <div class="best-tile" data-rarity="${rarity}">
+        <div class="best-top">
+          <div class="best-rarity">${rarity}</div>
+          <div class="best-points">${Math.round(best.points || 0)}</div>
+        </div>
+        <div class="best-fish">${toTitleCase(best.name)}</div>
+        <div class="best-meta">
+          <span class="pill">⭐ ${best.stars ?? 0}</span>
+          <span class="pill">📍 ${best.location || '—'}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  wrap.innerHTML = tiles;
+}
+
 
 function getLocationList(){
   // Preserve desired location order even if object key order changes
@@ -507,7 +566,7 @@ let currentFish=[];
 // -----------------------------
 // Dashboard (Chart.js)
 // -----------------------------
-let pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart, legendaryChart, fearsomeChart, eliteEpicsChart, invisiblesChart;
+let pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart, legendaryChart, fearsomeChart, eliteEpicsChart, shortLivedEpicsChart, invisiblesChart;
 // Map analytics dumbbell charts (declare to avoid ReferenceError if a chart is absent)
 let typeDumbbellChart, commonDumbbellChart, rareDumbbellChart, epicDumbbellChart;
 
@@ -1078,6 +1137,37 @@ if(typeof Chart !== "undefined" && Chart?.register){
     }
   });
 
+  shortLivedEpicsChart = safeChart("shortLivedEpicsChart", {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Epic Points", data: [], backgroundColor: epic }] },
+    options: {
+      layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } },
+      scales: {
+        x: { ...baseOpts.scales.x },
+        y: {
+          ...baseOpts.scales.y,
+          afterFit: (scale) => { scale.width = 260; },
+          ticks: {
+            ...baseOpts.scales.y.ticks,
+            align: "start",
+            padding: 6,
+            autoSkip: false,
+            callback: function(value){
+              const label = this.getLabelForValue(value);
+              if(typeof label !== "string") return label;
+              return __wrapWordsFearsome(label, 10);
+            }
+          }
+        }
+      },
+      barThickness: 18,
+      categoryPercentage: 0.8,
+      ...baseOpts,
+      indexAxis: 'y',
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+    }
+  });
+
   invisiblesChart = safeChart("invisiblesChart", {
     type: "bar",
     data: { labels: [], datasets: [{ label: "Points", data: [], backgroundColor: common }] },
@@ -1545,6 +1635,24 @@ function updateDashboard(){
     console.error('Elite Epics chart update failed', e);
   }
 
+  // Short-Lived Epics (fixed list)
+  try{
+    const shortNames = ['queensland grouper','bull shark','european eel'];
+    const shortMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
+    const shortList = shortNames.map(n=>{
+      const rec = shortMap.get(n);
+      const val = rec ? rec.points : 0;
+      return { name: n, value: val };
+    });
+    if(shortLivedEpicsChart){
+      shortLivedEpicsChart.data.labels = shortList.map(f => __wrapWordsFearsome(toTitleCase(f.name), 10));
+      shortLivedEpicsChart.data.datasets[0].data = shortList.map(f=>f.value);
+      safeUpdate(shortLivedEpicsChart);
+    }
+  }catch(e){
+    console.error('Short-Lived Epics chart update failed', e);
+  }
+
   // The Invisibles (fixed list)
   try{
     const invNames = ['rice eel','malayan leaffish','amazon puffer','amazon barracuda','clownfish'];
@@ -1562,6 +1670,9 @@ function updateDashboard(){
   }catch(e){
     console.error('Invisibles chart update failed', e);
   }
+
+  // Personal Bests (leaderboard tiles)
+  try{ renderPersonalBests(allFish); }catch(e){ console.error('Personal bests render failed', e); }
 
 }
 
@@ -1603,7 +1714,7 @@ function setupTabs(){
     // Chart.js doesn't always recalc size when a canvas goes from display:none -> block.
     setTimeout(()=>{
       try{
-        [pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart, legendaryChart, fearsomeChart, commonDumbbellChart, rareDumbbellChart, epicDumbbellChart, typeDumbbellChart]
+        [pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart, legendaryChart, fearsomeChart, eliteEpicsChart, shortLivedEpicsChart, invisiblesChart, commonDumbbellChart, rareDumbbellChart, epicDumbbellChart, typeDumbbellChart]
           .forEach(c=>{ try{ c && c.resize(); }catch(_){} });
       }catch(_){}
     }, 50);
@@ -1715,8 +1826,10 @@ function buildShareKPIs(){
 
       const cat = fish.category;
       const cur = topByRarity[cat];
-      if(!cur || pts > cur.points){
-        topByRarity[cat] = { name: fish.name, points: pts };
+      const curPts = cur ? cur.points : -1;
+      const curStars = cur ? (cur.stars ?? 0) : -1;
+      if(!cur || pts > curPts || (pts === curPts && stars > curStars)){
+        topByRarity[cat] = { name: fish.name, points: pts, stars, location: loc };
       }
     }
   }
@@ -1786,55 +1899,62 @@ function generateShareImage(){
   }
 
   const pad=70, gap=26;
+  const sectionGap = 40;
   const colW = (size - pad*2 - gap)/2;
-  const rowH = 170;
+  const rowH = 140;
+  const topY = 210;
+  const y2 = topY + rowH + gap;
 
-  // Best map + Avg score
-  card(pad, 210, colW, rowH);
-  ctx.fillStyle='rgba(255,255,255,.70)';
-  ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-  ctx.fillText('Best map', pad+26, 260);
-  ctx.fillStyle='rgba(255,255,255,.92)';
-  ctx.font='800 34px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-  ctx.fillText(k.bestMap || '—', pad+26, 312);
-  ctx.fillStyle='rgba(255,255,255,.70)';
-  ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-  ctx.fillText('Average fish score', pad+26, 352);
-  ctx.fillStyle='rgba(255,255,255,.92)';
-  ctx.font='900 36px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-  ctx.fillText((k.bestAvg ? k.bestAvg.toFixed(0) : '0'), pad+26, 402);
+  const drawLabel = (txt, x, y) => {
+    ctx.fillStyle='rgba(255,255,255,.70)';
+    ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText(txt, x, y);
+  };
+  const drawValue = (txt, x, y, weight=900, px=48) => {
+    ctx.fillStyle='rgba(255,255,255,.92)';
+    ctx.font=`${weight} ${px}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+    ctx.fillText(txt, x, y);
+  };
 
-  // % 4★ and % 5★
-  card(pad+colW+gap, 210, colW, rowH);
-  ctx.fillStyle='rgba(255,255,255,.70)';
-  ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-  ctx.fillText('% 4★ catches', pad+colW+gap+26, 260);
-  ctx.fillStyle='rgba(255,255,255,.92)';
-  ctx.font='900 44px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-  ctx.fillText(k.pct4.toFixed(1) + '%', pad+colW+gap+26, 320);
-  ctx.fillStyle='rgba(255,255,255,.70)';
-  ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-  ctx.fillText('% 5★ catches', pad+colW+gap+26, 352);
-  ctx.fillStyle='rgba(255,255,255,.92)';
-  ctx.font='900 44px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-  ctx.fillText(k.pct5.toFixed(1) + '%', pad+colW+gap+26, 412);
+  // KPI cards (2x2) — each KPI gets its own container
+  // 1) Best map
+  card(pad, topY, colW, rowH);
+  drawLabel('Best map', pad+26, topY+50);
+  drawValue(k.bestMap || '—', pad+26, topY+108, 800, 40);
 
-  // Highest scoring fish per rarity
-  const topY = 420;
-  card(pad, topY, size - pad*2, 520);
-  ctx.fillStyle='rgba(255,255,255,.85)';
+  // 2) Average fish score
+  card(pad+colW+gap, topY, colW, rowH);
+  drawLabel('Average fish score', pad+colW+gap+26, topY+50);
+  drawValue((k.bestAvg ? k.bestAvg.toFixed(0) : '0'), pad+colW+gap+26, topY+110, 900, 52);
+
+  // 3) % 4★ catches
+  card(pad, y2, colW, rowH);
+  drawLabel('% 4★ catches', pad+26, y2+50);
+  drawValue(k.pct4.toFixed(1) + '%', pad+26, y2+112, 900, 56);
+
+  // 4) % 5★ catches
+  card(pad+colW+gap, y2, colW, rowH);
+  drawLabel('% 5★ catches', pad+colW+gap+26, y2+50);
+  drawValue(k.pct5.toFixed(1) + '%', pad+colW+gap+26, y2+112, 900, 56);
+
+  // Rarity section anchor (below KPI grid)
+  const rarityTopY = y2 + rowH + sectionGap;
+
+  card(pad, rarityTopY, size - pad*2, size - rarityTopY - 120);
+
+  ctx.fillStyle='rgba(255,255,255,.92)';
   ctx.font='800 28px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-  ctx.fillText('Highest scoring fish by rarity', pad+26, topY+58);
+  ctx.fillText('Highest scoring fish by rarity', pad+26, rarityTopY+58);
 
   const rarities = ['Common','Rare','Epic','Legendary'];
   const startX = pad+26;
-  const startY = topY+110;
-  const lineH = 92;
+  const startY = rarityTopY+110;
+  const lineH = 76;
 
   rarities.forEach((key,i)=>{
     const y = startY + i*lineH;
     ctx.fillStyle='rgba(255,255,255,.65)';
-    ctx.font='800 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.font='600 18px system-ui, -apple-system, Segoe UI, Roboto, Arial';
     ctx.fillText(key, startX, y);
 
     const item = k.topByRarity[key];
@@ -1842,8 +1962,18 @@ function generateShareImage(){
     const pts = item ? item.points : 0;
 
     ctx.fillStyle='rgba(255,255,255,.92)';
-    ctx.font='900 30px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.font='800 26px system-ui, -apple-system, Segoe UI, Roboto, Arial';
     ctx.fillText(name, startX, y+42);
+
+    // extra info (stars + location)
+    ctx.fillStyle='rgba(255,255,255,.62)';
+    ctx.font='600 18px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    const stars = item ? (item.stars ?? 0) : 0;
+    const loc = item ? (item.location ?? '') : '';
+    if(item){
+      const meta = `★ ${stars}  •  ${loc}`;
+      ctx.fillText(meta, startX, y+70);
+    }
 
     ctx.fillStyle='rgba(255,255,255,.70)';
     ctx.font='800 24px system-ui, -apple-system, Segoe UI, Roboto, Arial';

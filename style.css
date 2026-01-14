@@ -234,6 +234,40 @@ body{
 .panel.span-2{grid-column:1 / span 1}
 .panel-title{font-size:12px; color:rgba(255,255,255,.78); margin:2px 0 8px}
 
+/* Personal Bests (Fish Insights) */
+.bests-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap:16px;
+  width:100%;
+  margin:0 auto;
+  justify-content:center;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+  padding-bottom: 8px;
+}
+.best-tile{
+  justify-content:center;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.04);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-height: 96px;
+}
+.best-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+.best-rarity{font-size:12px; letter-spacing:.6px; text-transform:uppercase; color:rgba(255,255,255,.82)}
+.best-points{font-size:20px; font-weight:800; color:var(--accent)}
+.best-fish{font-size:13px; color:rgba(255,255,255,.92)}
+.best-meta{display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:rgba(255,255,255,.78)}
+.best-meta .pill{padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03)}
+
+@media (max-width: 540px){
+  .bests-grid{ grid-template-columns: 1fr; }
+}
+
 canvas{width:100% !important; height:300px !important;}
 .panel canvas{height:300px !important}
 .table-wrap{
@@ -1160,3 +1194,39 @@ html{ overflow-y: scroll; }
   text-align: center;
   white-space: nowrap;
 }
+
+
+/* True vertical centering for Personal Bests panel */
+@media (min-width: 900px) {
+  .personal-bests-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+
+/* Vertically center Personal Bests grouping within its panel (desktop only) */
+@media (min-width: 900px) {
+  .personal-bests-panel{
+    display:flex;
+    flex-direction:column;
+  }
+  .personal-bests-panel .bests-grid{
+    margin-top:auto;
+    margin-bottom:auto;
+  }
+}
+
+
+/* Instructions text styling to match other tabs */
+.instructions-text {
+  line-height: 1.6;
+}
+.instructions-text p {
+  font-size: 15px;
+  color: rgba(255,255,255,.85);
+}
+
+
+.muted{ color: var(--muted); font-size: 16px; }

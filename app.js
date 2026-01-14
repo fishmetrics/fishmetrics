@@ -511,6 +511,32 @@ let pointsByRarityChart, starsByRarityChart, starCatchesChart, pointsByMapChart,
 // Map analytics dumbbell charts (declare to avoid ReferenceError if a chart is absent)
 let typeDumbbellChart, commonDumbbellChart, rareDumbbellChart, epicDumbbellChart;
 
+const LBS_PER_KG = 2.2046226218;
+let weightUnit = (localStorage.getItem('weightUnit') || 'lbs'); // default lbs
+
+function toLbs(v){ return (Number(v) || 0) * LBS_PER_KG; }
+function fromLbs(v){ return (Number(v) || 0) / LBS_PER_KG; }
+function fmtWeightDisplay(lbsVal){
+  if(weightUnit === 'kgs'){
+    const kg = fromLbs(lbsVal);
+    return kg.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  }
+  return (Number(lbsVal) || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+function parseUserWeightToLbs(raw){
+  const v = Number.parseFloat(raw);
+  if(raw === "" || Number.isNaN(v) || v <= 0) return NaN;
+  return (weightUnit === 'kgs') ? toLbs(v) : v;
+}
+function displayWeightFromStored(raw){
+  const v = Number.parseFloat(raw);
+  if(raw === "" || Number.isNaN(v) || v <= 0) return raw;
+  if(weightUnit === 'kgs'){
+    return fromLbs(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+  return String(v);
+}
+
 function fmtNumber(n){
   const x = Number(n) || 0;
   return x.toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -555,7 +581,7 @@ function setTableHeaders(isAll){
       <th>Location</th>
       <th>Category</th>
       <th>Fish</th>
-      <th>Your Record (lbs)</th>
+      <th>Your Record (<span id="recordsUnitLabel">${weightUnit}</span>)</th>
       <th>Points</th>
       <th>Stars</th>
     `;
@@ -563,7 +589,7 @@ function setTableHeaders(isAll){
     theadRow.innerHTML = `
       <th>Category</th>
       <th>Fish</th>
-      <th>Your Record (lbs)</th>
+      <th>Your Record (<span id="recordsUnitLabel">${weightUnit}</span>)</th>
       <th>Points</th>
       <th>Stars</th>
     `;
@@ -603,8 +629,8 @@ function recomputeFromDOM(){
       inp.classList.add("invalid");
       return;
     }
-    const w = parseFloat(inp.value);
-    if(!w){
+    const w = parseUserWeightToLbs(String(inp.value ?? '').trim());
+    if(Number.isNaN(w) || w <= 0){
       return;
     }
     if(w < fish.min || w > fish.max){
@@ -658,7 +684,7 @@ function renderTable(){
   r.classList.add(f.category.toLowerCase());
   r.dataset.idx = String(idx);
 
-  const rangeTip = `Min: ${f.min} lbs  •  Max: ${f.max} lbs`;
+  const rangeTip = `Min: ${fmtWeightDisplay(f.min)} ${(weightUnit === 'kgs') ? 'kgs' : 'lbs'}  •  Max: ${fmtWeightDisplay(f.max)} ${(weightUnit === 'kgs') ? 'kgs' : 'lbs'}`;
   const fishLabel = `<span class="fish-name" title="${rangeTip}">${toTitleCase(f.name)}</span>`;
   if(isAll){
     r.innerHTML=`<td>${f.location}</td><td>${f.category}</td><td>${fishLabel}</td>`;
@@ -1111,7 +1137,7 @@ function computeAggregates(records){
 
     for (const fish of LOCATIONS[loc]){
       const raw = recs?.[loc]?.[fish.name];
-      const w = Number.parseFloat(raw);
+      const w = parseUserWeightToLbs(raw);
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
       if(!valid) continue;
       const pts = calculatePoints(w, fish);
@@ -1149,7 +1175,7 @@ function computeDashboardAggregates(records){
     for (const fish of (LOCATIONS[loc] || [])){
       if(!dashboardCategories.has(fish.category)) continue;
       const raw = recs?.[loc]?.[fish.name];
-      const w = Number.parseFloat(raw);
+      const w = parseUserWeightToLbs(raw);
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
       if(!valid) continue;
       const pts = calculatePoints(w, fish);
@@ -1188,7 +1214,7 @@ function getEffectiveRecords(){
     const raw = String(inp.value ?? '').trim();
     if(raw === '') return;
     if(!/^\d*(?:\.\d{0,2})?$/.test(raw)) return;
-    const w = Number.parseFloat(raw);
+    const w = parseUserWeightToLbs(raw);
     if(!Number.isFinite(w)) return;
     if(w < fish.min || w > fish.max) return;
     merged[loc][fish.name] = raw;
@@ -1338,7 +1364,7 @@ function updateDashboard(){
     getLocationList().forEach(loc=>{
       (LOCATIONS[loc]||[]).forEach(f=>{
         const raw = effectiveRecords?.[loc]?.[f.name];
-        const w = Number.parseFloat(raw);
+        const w = parseUserWeightToLbs(raw);
         if(!Number.isFinite(w)) return;
         const pts = calculatePoints(w,f);
         if(!pts) return;
@@ -1401,7 +1427,7 @@ function updateDashboard(){
           if(fish.category !== category) continue;
           // Use effective (live) records so dumbbells update even before Enter/blur commits
           const raw = effectiveRecords?.[loc]?.[fish.name];
-          const w = Number.parseFloat(raw);
+          const w = parseUserWeightToLbs(raw);
           if(!Number.isFinite(w)) continue;
           const pts = calculatePoints(w, fish);
           if(!pts) continue;
@@ -1543,6 +1569,8 @@ function updateDashboard(){
 async function initApp(){
   recordsByLocation = await loadRecords();
   setupTabs();
+  setupWeightUnitToggle();
+  updateRecordsUnitLabel();
   buildLocationButtons();
   setupRaritySlicers();
   makeCharts();
@@ -1577,6 +1605,7 @@ function setupTabs(){
 
     if(viewId === 'recordsView'){
       try{ renderTable(); }catch(_){}
+      try{ updateRecordsUnitLabel(); }catch(_){}
     }
   }
 
@@ -1584,4 +1613,49 @@ function setupTabs(){
 
   // Default: Overview
   setActive('dashboardView');
+}
+
+
+function setupWeightUnitToggle(){
+  const lbsBtn = document.getElementById('unitLbs');
+  const kgsBtn = document.getElementById('unitKgs');
+  if(!lbsBtn || !kgsBtn) return;
+
+  function applyActive(){
+    lbsBtn.classList.toggle('active', weightUnit === 'lbs');
+    kgsBtn.classList.toggle('active', weightUnit === 'kgs');
+  }
+  applyActive();
+
+    updateRecordsUnitLabel();
+  lbsBtn.addEventListener('click', ()=>{
+    if(weightUnit === 'lbs') return;
+    weightUnit = 'lbs';
+    localStorage.setItem('weightUnit', weightUnit);
+    applyActive();
+    updateRecordsUnitLabel();
+    if(typeof renderTable === 'function') renderTable();
+    if(typeof renderTable === 'function') renderTable();
+    if(typeof renderRecords === 'function') renderRecords();
+    if(typeof buildRecordsTable === 'function') buildRecordsTable();
+  });
+
+  kgsBtn.addEventListener('click', ()=>{
+    if(weightUnit === 'kgs') return;
+    weightUnit = 'kgs';
+    localStorage.setItem('weightUnit', weightUnit);
+    applyActive();
+    updateRecordsUnitLabel();
+    if(typeof renderTable === 'function') renderTable();
+    if(typeof renderTable === 'function') renderTable();
+    if(typeof renderRecords === 'function') renderRecords();
+    if(typeof buildRecordsTable === 'function') buildRecordsTable();
+  });
+}
+
+
+function updateRecordsUnitLabel(){
+  const el = document.getElementById('recordsUnitLabel');
+  if(!el) return;
+  el.textContent = (weightUnit === 'kgs') ? 'kgs' : 'lbs';
 }

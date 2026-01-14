@@ -880,3 +880,60 @@ body{ padding-bottom: 70px; }
 #mapView .panel-title { margin-bottom: 26px; }
 
 #scoreRangesLocation{ text-align:center; margin: 2px 0 18px; font-size:13px; color: rgba(255,255,255,.85); }
+/* Weight unit toggle */
+.unit-toggle-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin: 6px 0 14px 0;
+}
+.unit-toggle-label{
+  color: rgba(255,255,255,.75);
+  font-size: 14px;
+  letter-spacing: .4px;
+}
+.unit-toggle{
+  display:flex;
+  gap:8px;
+  padding:6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.unit-btn{
+  border:none;
+  cursor:pointer;
+  padding:8px 14px;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255,255,255,.75);
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: lowercase;
+}
+.unit-btn.active{
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.92);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+}
+.unit-btn:focus{ outline: 2px solid rgba(255,255,255,.18); outline-offset: 2px; }
+
+
+/* Stable width for Stars column (prevents table shifting as stars appear) */
+td.stars, th.stars {
+  width: 8ch;
+  min-width: 8ch;
+  text-align: center;
+  white-space: nowrap;
+}
+td.stars {
+  font-variant-ligatures: none;
+}
+
+.stars{
+  display: inline-block;
+  min-width: 8ch;
+  text-align: center;
+  white-space: nowrap;
+}

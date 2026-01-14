@@ -159,6 +159,14 @@
   </section>
 </div>
 <div class="tab-view" id="recordsView">
+  <div class="unit-toggle-row">
+    <div class="unit-toggle-label">Weight Unit</div>
+    <div class="unit-toggle" role="group" aria-label="Weight unit selector">
+      <button type="button" id="unitLbs" class="unit-btn active">lbs</button>
+      <button type="button" id="unitKgs" class="unit-btn">kgs</button>
+    </div>
+  </div>
+
 <section class="table-wrap">
 <div class="table-head">
 <div class="table-title">Log Records</div>
@@ -175,7 +183,7 @@
 <tr>
 <th>Category</th>
 <th>Fish</th>
-<th>Your Record (lbs)</th>
+<th>Your Record (<span id="recordsUnitLabel">lbs</span>)</th>
 <th>Points</th>
 <th>Stars</th>
 </tr>

@@ -1732,7 +1732,7 @@ function updateDashboard(){
       const legFish = (LOCATIONS[loc] || []).filter(f=>f.category === 'Legendary');
       legFish.forEach(f=>{
         const rec = pointsByFish.get(`${loc}|${f.name}`);
-        const pts = rec ? (rec.points + (rec.stars||0)) : 0;
+        const pts = rec ? rec.points : 0;
         legendaryList.push({ name: f.name, value: pts });
       });
     });
@@ -2044,10 +2044,12 @@ function generateShareImage(){
     ctx.stroke();
   }
 
-  const pad=70, gap=26;
-  const sectionGap = 40;
+  const pad=70, gap=22;
+  const sectionGap = 26;
   const colW = (size - pad*2 - gap)/2;
-  const rowH = 140;
+  const rowH = 118;
+  const labelYOff = Math.round(rowH * 0.38);
+  const valueYOff = Math.round(rowH * 0.80);
   const topY = 210;
   const y2 = topY + rowH + gap;
 
@@ -2065,28 +2067,28 @@ function generateShareImage(){
   // KPI cards (2x2) — each KPI gets its own container
   // 1) Best map
   card(pad, topY, colW, rowH);
-  drawLabel('Best map', pad+26, topY+50);
-  drawValue(k.bestMap || '—', pad+26, topY+108, 800, 40);
+  drawLabel('Best map', pad+26, topY+labelYOff);
+  drawValue(k.bestMap || '—', pad+26, topY+valueYOff, 800, 40);
 
   // 2) Average fish score
   card(pad+colW+gap, topY, colW, rowH);
-  drawLabel('Average fish score', pad+colW+gap+26, topY+50);
-  drawValue((k.bestAvg ? k.bestAvg.toFixed(0) : '0'), pad+colW+gap+26, topY+110, 900, 52);
+  drawLabel('Average fish score', pad+colW+gap+26, topY+labelYOff);
+  drawValue((k.bestAvg ? k.bestAvg.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
 
   // 3) % 4★ catches
   card(pad, y2, colW, rowH);
-  drawLabel('% 4★ catches', pad+26, y2+50);
-  drawValue(k.pct4.toFixed(1) + '%', pad+26, y2+112, 900, 56);
+  drawLabel('% 4★ catches', pad+26, y2+labelYOff);
+  drawValue(k.pct4.toFixed(1) + '%', pad+26, y2+valueYOff, 900, 56);
 
   // 4) % 5★ catches
   card(pad+colW+gap, y2, colW, rowH);
-  drawLabel('% 5★ catches', pad+colW+gap+26, y2+50);
-  drawValue(k.pct5.toFixed(1) + '%', pad+colW+gap+26, y2+112, 900, 56);
+  drawLabel('% 5★ catches', pad+colW+gap+26, y2+labelYOff);
+  drawValue(k.pct5.toFixed(1) + '%', pad+colW+gap+26, y2+valueYOff, 900, 56);
 
   // Rarity section anchor (below KPI grid)
   const rarityTopY = y2 + rowH + sectionGap;
 
-  card(pad, rarityTopY, size - pad*2, size - rarityTopY - 120);
+  card(pad, rarityTopY, size - pad*2, size - rarityTopY - 80);
 
   ctx.fillStyle='rgba(255,255,255,.92)';
   ctx.font='800 28px system-ui, -apple-system, Segoe UI, Roboto, Arial';
@@ -2094,26 +2096,34 @@ function generateShareImage(){
 
   const rarities = ['Common','Rare','Epic','Legendary'];
   const startX = pad+26;
-  const startY = rarityTopY+110;
-  const lineH = 76;
+  const startY = rarityTopY+92;
+  const lineH = 94;
 
   rarities.forEach((key,i)=>{
     const y = startY + i*lineH;
-    ctx.fillStyle='rgba(255,255,255,.65)';
-    ctx.font='600 18px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-    ctx.fillText(key, startX, y);
+    ctx.fillStyle='rgba(255,255,255,.75)';
+    ctx.font='800 16px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    const rk = String(key||'').toUpperCase();
+    ctx.fillText(rk, startX, y);
+    const tw = ctx.measureText(rk).width;
+    ctx.strokeStyle = 'rgba(255,255,255,.45)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(startX, y+7);
+    ctx.lineTo(startX+tw, y+7);
+    ctx.stroke();
 
     const item = k.topByRarity[key];
     const name = item ? toTitleCase(item.name) : '—';
     const pts = item ? item.points : 0;
 
     ctx.fillStyle='rgba(255,255,255,.92)';
-    ctx.font='800 26px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-    ctx.fillText(name, startX, y+42);
+    ctx.font='800 23px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText(name, startX, y+38);
 
     // extra info (stars + location)
     ctx.fillStyle='rgba(255,255,255,.62)';
-    ctx.font='600 18px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.font='600 15px system-ui, -apple-system, Segoe UI, Roboto, Arial';
     const stars = item ? (item.stars ?? 0) : 0;
     const loc = item ? (item.location ?? '') : '';
     if(item){
@@ -2122,8 +2132,8 @@ function generateShareImage(){
     }
 
     ctx.fillStyle='rgba(255,255,255,.70)';
-    ctx.font='800 24px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-    ctx.fillText(String(pts) + ' pts', size - pad - 220, y+42);
+    ctx.font='800 21px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText(String(pts) + ' pts', size - pad - 200, y+40);
   });
 
   ctx.fillStyle='rgba(255,255,255,.50)';

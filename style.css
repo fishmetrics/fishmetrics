@@ -1264,3 +1264,41 @@ html{ overflow-y: scroll; }
   font-weight: 600;
   white-space: nowrap;
 }
+
+
+/* === Share Card layout rebalance === */
+
+/* Shrink KPI cards slightly */
+.share-card .kpi-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.share-card .kpi {
+  padding: 14px 16px;
+}
+
+.share-card .kpi .label {
+  font-size: 0.85rem;
+}
+
+.share-card .kpi .value {
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+
+/* Give more vertical room to highest scoring fish section */
+.share-card .highest-by-rarity {
+  margin-top: 18px;
+  padding-top: 6px;
+}
+
+/* Ensure rarity list can grow */
+.share-card .highest-by-rarity .rarity-entry {
+  margin-bottom: 18px;
+}
+
+/* Slightly smaller points text to avoid collisions */
+.share-card .highest-by-rarity .fish-points {
+  font-size: 0.9rem;
+}

@@ -805,8 +805,18 @@ function commitInput(){
     }
 
     // Range check on commit
-    if(num < f.min || num > f.max){
-      setInlineError(`Must be between ${f.min} and ${f.max} lbs`);
+    // Fish min/max weights are stored in lbs in the dataset.
+    // When the UI is set to kgs, the user's entry must be converted to lbs before validation.
+    const enteredLbs = parseUserWeightToLbs(raw);
+    if(!Number.isNaN(enteredLbs) && (enteredLbs < f.min || enteredLbs > f.max)){
+      const unitLabel = (weightUnit === 'kgs') ? 'kgs' : 'lbs';
+      const minDisp = (weightUnit === 'kgs')
+        ? fromLbs(f.min).toLocaleString(undefined, { maximumFractionDigits: 2 })
+        : Number(f.min).toLocaleString(undefined, { maximumFractionDigits: 2 });
+      const maxDisp = (weightUnit === 'kgs')
+        ? fromLbs(f.max).toLocaleString(undefined, { maximumFractionDigits: 2 })
+        : Number(f.max).toLocaleString(undefined, { maximumFractionDigits: 2 });
+      setInlineError(`Must be between ${minDisp} and ${maxDisp} ${unitLabel}`);
       suppress = true;
       i.value = "";
       suppress = false;
@@ -935,7 +945,19 @@ if(typeof Chart !== "undefined" && Chart?.register){
       
       ...baseOpts,
       
-      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      plugins: {
+        ...baseOpts.plugins,
+        legend: { display: false },
+        tooltip: {
+          ...baseOpts.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => {
+              const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
+              return `Points: ${value}`;
+            }
+          }
+        }
+      },
     }
   });
 
@@ -987,8 +1009,58 @@ if(typeof Chart !== "undefined" && Chart?.register){
     ]},
     options:{
       ...baseOpts,
+      interaction: { mode: 'y', axis: 'y', intersect: false },
+      hover: { mode: 'y', axis: 'y', intersect: false },
       indexAxis:'y',
-      plugins:{...baseOpts.plugins, legend:{display:false}},
+      plugins: {
+  ...baseOpts.plugins,
+  legend: { display: false },
+  tooltip: {
+    ...baseOpts.plugins.tooltip,
+    // Range-only tooltip to avoid flicker between endpoints
+    filter: (item) => {
+      const dsLabel = item?.dataset?.label || "";
+      if(dsLabel === "Range") return false;
+      if(dsLabel === "Highest") return true;
+      const chart = item.chart;
+      const y = item.raw?.y;
+      const hasHighest = (chart?.data?.datasets || []).some(ds =>
+        ds?.label === "Highest" && (ds.data || []).some(p => p && p.y === y)
+      );
+      return !hasHighest;
+    },
+    callbacks: {
+      title: (items) => {
+        const it = items && items[0];
+        if(!it) return "";
+        const y = it.raw?.y;
+        const labels = it.chart?.data?.labels || [];
+        return (typeof y !== "undefined" && labels[y]) ? labels[y] : "";
+      },
+      label: (ctx) => {
+        const chart = ctx.chart;
+        const y = ctx.raw?.y;
+        if(typeof y === "undefined") return "";
+        const dsets = chart?.data?.datasets || [];
+        const lowDs = dsets.find(d => d && d.label === "Lowest");
+        const highDs = dsets.find(d => d && d.label === "Highest");
+        const low = lowDs ? (lowDs.data || []).find(p => p && p.y === y)?.x : undefined;
+        const high = highDs ? (highDs.data || []).find(p => p && p.y === y)?.x : undefined;
+
+        const hasLow = typeof low === "number";
+        const hasHigh = typeof high === "number";
+
+        if(hasLow && hasHigh){
+          const a = Math.min(low, high);
+          const b = Math.max(low, high);
+          return `Range: ${a}–${b}`;
+        }
+        const single = hasHigh ? high : (hasLow ? low : undefined);
+        return (typeof single === "number") ? `Points: ${single}` : "";
+      }
+    }
+  }
+},
       parsing:false,
       animation:false,
       scales:{
@@ -1077,7 +1149,19 @@ if(typeof Chart !== "undefined" && Chart?.register){
             padding: 6,autoSkip:false}}}, barThickness: 18, categoryPercentage: 0.8,
       ...baseOpts,
       indexAxis: 'y',
-      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      plugins: {
+        ...baseOpts.plugins,
+        legend: { display: false },
+        tooltip: {
+          ...baseOpts.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => {
+              const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
+              return `Points: ${value}`;
+            }
+          }
+        }
+      },
     }
   });
 
@@ -1092,7 +1176,19 @@ if(typeof Chart !== "undefined" && Chart?.register){
             padding: 6, autoSkip:false, callback: function(value){ const l = this.getLabelForValue(value); return String(l).split(" "); } } } }, barThickness: 18, categoryPercentage: 0.8,
       ...baseOpts,
       indexAxis: 'y',
-      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      plugins: {
+        ...baseOpts.plugins,
+        legend: { display: false },
+        tooltip: {
+          ...baseOpts.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => {
+              const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
+              return `Points: ${value}`;
+            }
+          }
+        }
+      },
     }
   });
 
@@ -1133,7 +1229,19 @@ if(typeof Chart !== "undefined" && Chart?.register){
        barThickness: 18, categoryPercentage: 0.8,
       ...baseOpts,
       indexAxis: 'y',
-      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      plugins: {
+        ...baseOpts.plugins,
+        legend: { display: false },
+        tooltip: {
+          ...baseOpts.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => {
+              const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
+              return `Points: ${value}`;
+            }
+          }
+        }
+      },
     }
   });
 
@@ -1164,7 +1272,19 @@ if(typeof Chart !== "undefined" && Chart?.register){
       categoryPercentage: 0.8,
       ...baseOpts,
       indexAxis: 'y',
-      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      plugins: {
+        ...baseOpts.plugins,
+        legend: { display: false },
+        tooltip: {
+          ...baseOpts.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => {
+              const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
+              return `Points: ${value}`;
+            }
+          }
+        }
+      },
     }
   });
 
@@ -1205,7 +1325,19 @@ if(typeof Chart !== "undefined" && Chart?.register){
        barThickness: 18, categoryPercentage: 0.8,
       ...baseOpts,
       indexAxis: 'y',
-      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      plugins: {
+        ...baseOpts.plugins,
+        legend: { display: false },
+        tooltip: {
+          ...baseOpts.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => {
+              const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
+              return `Points: ${value}`;
+            }
+          }
+        }
+      },
     }
   });
 }

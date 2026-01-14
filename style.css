@@ -931,9 +931,232 @@ td.stars {
   font-variant-ligatures: none;
 }
 
-.stars{
-  display: inline-block;
-  min-width: 8ch;
+
+/* Share button in header */
+.topbar-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+.header-share{
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+.share-btn{
+  cursor:pointer;
+  padding:10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+  font-weight: 800;
+  letter-spacing: .4px;
+}
+.share-btn:hover{ background: rgba(255,255,255,.12); }
+
+/* Header share icon button */
+.header-share{
+  padding:8px;
+  width:36px;
+  height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 999px;
+}
+.header-share svg{
+  display:block;
+}
+
+/* Inline title + share icon */
+.dashboard-title-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.dashboard-title{
+  font-size:22px;
+  font-weight:800;
+  color: rgba(255,255,255,.92);
+}
+
+/* Share icon inline with brand title */
+.brand-title-row{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+}
+.header-share-inline{
+  padding:8px;
+  width:34px;
+  height:34px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+}
+.header-share-inline:hover{ background: rgba(255,255,255,.12); }
+
+/* Ensure header content stays centered */
+.topbar-inner{
+  justify-content:center;
+}
+
+/* Share icon positioned after logo */
+.header-share-inline{
+  margin-left: 10px;
+}
+
+/* Stars content should not change cell display */
+td.stars { white-space: nowrap; }
+
+/* Records table: keep Stars column stable (1–5 stars) */
+table.records-table{
+  table-layout: fixed;
+}
+table.records-table th.stars,
+table.records-table td.stars{
+  width: 9ch;
+  min-width: 9ch;
+  max-width: 9ch;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Header pulldown menu (top-right corner) */
+header{ position: relative; }
+.header-menu-wrap{
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  z-index: 50;
+}
+.menu-btn{
+  cursor:pointer;
+  width:36px;
+  height:36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.menu-btn:hover{ background: rgba(255,255,255,.12); }
+.menu-dropdown{
+  margin-top: 8px;
+  min-width: 160px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(10,16,28,.96);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  display:none;
+}
+.menu-dropdown.open{ display:block; }
+.menu-item{
+  width:100%;
+  cursor:pointer;
+  border:none;
+  background: transparent;
+  color: rgba(255,255,255,.92);
+  padding: 10px 10px;
+  border-radius: 10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight: 750;
+}
+.menu-item:hover{ background: rgba(255,255,255,.08); }
+.mi-icon{ display:inline-flex; }
+
+@media (max-width: 768px){
+  .header-menu-wrap{ right: 10px; top: 8px; }
+}
+
+/* Prevent layout shift when dropdown opens */
+html{ overflow-y: scroll; }
+
+/* Menu: icon-only item compact */
+.menu-dropdown{
+  min-width: 56px;
+  padding: 6px;
+}
+.menu-item{
+  justify-content:center;
+  padding: 10px;
+}
+.menu-item .mi-icon{
+  margin: 0;
+}
+
+/* Mobile: move menu further right/top so it doesn't overlap logo */
+@media (max-width: 768px){
+  .header-menu-wrap{
+    right: 6px;
+    top: 6px;
+  }
+  .menu-btn{
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* Prevent menu jump by fixing wrapper size */
+.header-menu-wrap{
+  width: 36px;
+  height: 36px;
+}
+.menu-dropdown{
+  position: absolute;
+  right: 0;
+  top: 42px;
+}
+
+/* Stronger mobile positioning */
+@media (max-width: 768px){
+  .header-menu-wrap{
+    right: 2px;
+    top: 2px;
+  }
+  .menu-dropdown{
+    top: 40px;
+  }
+}
+
+/* Records table: lock Stars column width (1–5 stars) */
+#recordsView table{
+  table-layout: fixed;
+}
+#recordsView th:nth-child(5),
+#recordsView td:nth-child(5){
+  width: 9ch;
+  min-width: 9ch;
+  max-width: 9ch;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Records table: widen table and give Stars column generous fixed space */
+#recordsView .records-card{
+  max-width: 1400px; /* slightly wider container */
+}
+
+#recordsView table{
+  table-layout: fixed;
+  width: 100%;
+}
+
+#recordsView th:nth-child(5),
+#recordsView td:nth-child(5){
+  width: 140px;      /* hard pixel width for stars */
+  min-width: 140px;
+  max-width: 140px;
   text-align: center;
   white-space: nowrap;
 }

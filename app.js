@@ -1569,7 +1569,17 @@ function updateDashboard(){
 async function initApp(){
   recordsByLocation = await loadRecords();
   setupTabs();
+  setupHeaderMenu();
   setupWeightUnitToggle();
+
+  // Normalize stored record values to the currently selected unit on load
+  try{
+    const storedUnit = localStorage.getItem('recordsUnit') || 'lbs';
+    if(storedUnit !== (weightUnit || 'lbs')){
+      convertAllStoredRecords(storedUnit, (weightUnit || 'lbs'));
+    }
+  }catch(_){}
+
   updateRecordsUnitLabel();
   buildLocationButtons();
   setupRaritySlicers();
@@ -1630,10 +1640,14 @@ function setupWeightUnitToggle(){
     updateRecordsUnitLabel();
   lbsBtn.addEventListener('click', ()=>{
     if(weightUnit === 'lbs') return;
+    const prevUnit = weightUnit;
     weightUnit = 'lbs';
     localStorage.setItem('weightUnit', weightUnit);
+    convertAllStoredRecords(prevUnit, weightUnit);
     applyActive();
     updateRecordsUnitLabel();
+    try{ updateDashboard(); }catch(_){ }
+    try{ updateScoreRangesLocation(); }catch(_){ }
     if(typeof renderTable === 'function') renderTable();
     if(typeof renderTable === 'function') renderTable();
     if(typeof renderRecords === 'function') renderRecords();
@@ -1642,10 +1656,14 @@ function setupWeightUnitToggle(){
 
   kgsBtn.addEventListener('click', ()=>{
     if(weightUnit === 'kgs') return;
+    const prevUnit = weightUnit;
     weightUnit = 'kgs';
     localStorage.setItem('weightUnit', weightUnit);
+    convertAllStoredRecords(prevUnit, weightUnit);
     applyActive();
     updateRecordsUnitLabel();
+    try{ updateDashboard(); }catch(_){ }
+    try{ updateScoreRangesLocation(); }catch(_){ }
     if(typeof renderTable === 'function') renderTable();
     if(typeof renderTable === 'function') renderTable();
     if(typeof renderRecords === 'function') renderRecords();
@@ -1658,4 +1676,269 @@ function updateRecordsUnitLabel(){
   const el = document.getElementById('recordsUnitLabel');
   if(!el) return;
   el.textContent = (weightUnit === 'kgs') ? 'kgs' : 'lbs';
+}
+
+
+function _shareSafeNumber(n){
+  if(n == null || Number.isNaN(Number(n))) return 0;
+  return Number(n);
+}
+
+function buildShareKPIs(){
+  const recs = recordsByLocation || {};
+  let totalCaught = 0;
+  let star4 = 0;
+  let star5 = 0;
+
+  const byMap = {};
+  const topByRarity = { Common:null, Rare:null, Epic:null, Legendary:null };
+
+  for(const loc of getLocationList()){
+    byMap[loc] = {sum:0, cnt:0};
+    const fishList = LOCATIONS[loc] || [];
+    for(const fish of fishList){
+      const raw = recs?.[loc]?.[fish.name];
+      // weights stored in lbs; user input may be kg depending on current unit
+      const w = parseUserWeightToLbs(raw);
+      const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
+      if(!valid) continue;
+
+      const pts = calculatePoints(w, fish); // points-only
+      const stars = calculateStars(fish.category, pts);
+
+      totalCaught += 1;
+      byMap[loc].sum += pts;
+      byMap[loc].cnt += 1;
+
+      if(stars === 4) star4 += 1;
+      if(stars === 5) star5 += 1;
+
+      const cat = fish.category;
+      const cur = topByRarity[cat];
+      if(!cur || pts > cur.points){
+        topByRarity[cat] = { name: fish.name, points: pts };
+      }
+    }
+  }
+
+  let bestMap = "";
+  let bestAvg = 0;
+  for(const loc of Object.keys(byMap)){
+    const cnt = byMap[loc].cnt;
+    const avg = cnt ? (byMap[loc].sum / cnt) : 0;
+    if(avg > bestAvg){
+      bestAvg = avg;
+      bestMap = loc;
+    }
+  }
+
+  const pct4 = totalCaught ? (star4 / totalCaught * 100) : 0;
+  const pct5 = totalCaught ? (star5 / totalCaught * 100) : 0;
+
+  return {
+    bestMap,
+    bestAvg: _shareSafeNumber(bestAvg),
+    pct4: _shareSafeNumber(pct4),
+    pct5: _shareSafeNumber(pct5),
+    topByRarity
+  };
+}
+
+function generateShareImage(){
+  const k = buildShareKPIs();
+  const size = 1080;
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  const ctx = c.getContext('2d');
+
+  ctx.fillStyle = '#0b1220';
+  ctx.fillRect(0,0,size,size);
+
+  const g = ctx.createLinearGradient(0,0,size,size);
+  g.addColorStop(0,'rgba(255,255,255,.06)');
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,size,size);
+
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  ctx.font = '800 56px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('FishMetrics', 70, 120);
+
+  ctx.fillStyle = 'rgba(255,255,255,.65)';
+  ctx.font = '600 26px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  const dateStr = new Date().toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  ctx.fillText('Share Card • ' + dateStr, 70, 160);
+
+  function card(x,y,w,h){
+    ctx.fillStyle = 'rgba(255,255,255,.06)';
+    ctx.strokeStyle = 'rgba(255,255,255,.10)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const r = 22;
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  const pad=70, gap=26;
+  const colW = (size - pad*2 - gap)/2;
+  const rowH = 170;
+
+  // Best map + Avg score
+  card(pad, 210, colW, rowH);
+  ctx.fillStyle='rgba(255,255,255,.70)';
+  ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('Best map', pad+26, 260);
+  ctx.fillStyle='rgba(255,255,255,.92)';
+  ctx.font='800 34px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText(k.bestMap || '—', pad+26, 312);
+  ctx.fillStyle='rgba(255,255,255,.70)';
+  ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('Average fish score', pad+26, 352);
+  ctx.fillStyle='rgba(255,255,255,.92)';
+  ctx.font='900 36px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText((k.bestAvg ? k.bestAvg.toFixed(0) : '0'), pad+26, 402);
+
+  // % 4★ and % 5★
+  card(pad+colW+gap, 210, colW, rowH);
+  ctx.fillStyle='rgba(255,255,255,.70)';
+  ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('% 4★ catches', pad+colW+gap+26, 260);
+  ctx.fillStyle='rgba(255,255,255,.92)';
+  ctx.font='900 44px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText(k.pct4.toFixed(1) + '%', pad+colW+gap+26, 320);
+  ctx.fillStyle='rgba(255,255,255,.70)';
+  ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('% 5★ catches', pad+colW+gap+26, 352);
+  ctx.fillStyle='rgba(255,255,255,.92)';
+  ctx.font='900 44px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText(k.pct5.toFixed(1) + '%', pad+colW+gap+26, 412);
+
+  // Highest scoring fish per rarity
+  const topY = 420;
+  card(pad, topY, size - pad*2, 520);
+  ctx.fillStyle='rgba(255,255,255,.85)';
+  ctx.font='800 28px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('Highest scoring fish by rarity', pad+26, topY+58);
+
+  const rarities = ['Common','Rare','Epic','Legendary'];
+  const startX = pad+26;
+  const startY = topY+110;
+  const lineH = 92;
+
+  rarities.forEach((key,i)=>{
+    const y = startY + i*lineH;
+    ctx.fillStyle='rgba(255,255,255,.65)';
+    ctx.font='800 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText(key, startX, y);
+
+    const item = k.topByRarity[key];
+    const name = item ? toTitleCase(item.name) : '—';
+    const pts = item ? item.points : 0;
+
+    ctx.fillStyle='rgba(255,255,255,.92)';
+    ctx.font='900 30px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText(name, startX, y+42);
+
+    ctx.fillStyle='rgba(255,255,255,.70)';
+    ctx.font='800 24px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText(String(pts) + ' pts', size - pad - 220, y+42);
+  });
+
+  ctx.fillStyle='rgba(255,255,255,.50)';
+  ctx.font='700 18px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('fishmetrics • share card', pad, size-40);
+
+  return c;
+}
+
+function downloadShareImage(){
+  try{
+    const c = generateShareImage();
+    const a = document.createElement('a');
+    a.href = c.toDataURL('image/png');
+    a.download = 'FishMetrics_Share.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }catch(e){
+    console.error('Share failed', e);
+    alert('Could not generate share image.');
+  }
+}
+
+
+function saveRecordsToStorage(){
+  try{
+    // IndexedDB is source of truth
+    if(typeof saveRecords === 'function') saveRecords(recordsByLocation || {});
+  }catch(_){}
+  try{
+    // LocalStorage backup (legacy key)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsByLocation || {}));
+    localStorage.setItem('recordsUnit', weightUnit || 'lbs');
+  }catch(_){}
+}
+
+
+function convertAllStoredRecords(fromUnit, toUnit){
+  if(!recordsByLocation) return;
+  if(fromUnit === toUnit) return;
+  const factor = 2.2046226218; // lbs per kg
+  for(const loc of Object.keys(recordsByLocation)){
+    const locObj = recordsByLocation[loc];
+    if(!locObj) continue;
+    for(const fishName of Object.keys(locObj)){
+      const raw = locObj[fishName];
+      if(raw == null) continue;
+      const s = String(raw).trim();
+      if(s === '') continue;
+      const n = parseFloat(s);
+      if(Number.isNaN(n)) continue;
+
+      let converted = n;
+      if(fromUnit === 'lbs' && toUnit === 'kgs') converted = n / factor;
+      if(fromUnit === 'kgs' && toUnit === 'lbs') converted = n * factor;
+
+      locObj[fishName] = converted.toFixed(2);
+    }
+  }
+  saveRecordsToStorage();
+}
+
+
+function setupHeaderMenu(){
+  const btn = document.getElementById('menuBtn');
+  const dd = document.getElementById('menuDropdown');
+  const share = document.getElementById('shareMenuItem');
+  if(!btn || !dd) return;
+
+  function closeMenu(){
+    dd.classList.remove('open');
+    dd.setAttribute('aria-hidden','true');
+  }
+  function toggleMenu(){
+    const open = dd.classList.toggle('open');
+    dd.setAttribute('aria-hidden', open ? 'false' : 'true');
+  }
+
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  document.addEventListener('click', ()=> closeMenu());
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeMenu(); });
+
+  if(share){
+    share.addEventListener('click', ()=>{
+      closeMenu();
+      downloadShareImage();
+    });
+  }
 }

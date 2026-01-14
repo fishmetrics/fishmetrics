@@ -1230,3 +1230,37 @@ html{ overflow-y: scroll; }
 
 
 .muted{ color: var(--muted); font-size: 16px; }
+
+
+/* === Share card: stabilize highest scoring fish list === */
+.share-card .rarity-entry {
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.share-card .rarity-entry .left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.share-card .rarity-entry .fish-name {
+  font-size: 1.05rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.share-card .rarity-entry .fish-meta {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+
+.share-card .rarity-entry .fish-points {
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+}

@@ -1350,6 +1350,7 @@ function computeAggregates(records){
   getLocationList().forEach(loc=>{
     byLoc[loc] = {
       pointsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
+      countsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
       starsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
       starCounts: [0,0,0,0,0],
       totalPoints: 0,
@@ -1365,6 +1366,7 @@ function computeAggregates(records){
       const pts = calculatePoints(w, fish);
       const stars = calculateStars(fish.category, pts);
       byLoc[loc].pointsByCat[fish.category] += pts;
+      byLoc[loc].countsByCat[fish.category] += 1;
       byLoc[loc].starsByCat[fish.category] += stars;
       if(stars>=1 && stars<=5) byLoc[loc].starCounts[stars-1] += 1;
       byLoc[loc].totalPoints += pts;
@@ -1387,6 +1389,7 @@ function computeDashboardAggregates(records){
   locs.forEach(loc=>{
     byLoc[loc] = {
       pointsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
+      countsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
       starsByCat: { Common:0, Rare:0, Epic:0, Legendary:0 },
       starCounts: [0,0,0,0,0],
       totalPoints: 0,
@@ -1403,6 +1406,7 @@ function computeDashboardAggregates(records){
       const pts = calculatePoints(w, fish);
       const stars = calculateStars(fish.category, pts);
       byLoc[loc].pointsByCat[fish.category] += pts;
+      byLoc[loc].countsByCat[fish.category] += 1;
       byLoc[loc].starsByCat[fish.category] += stars;
       if(stars>=1 && stars<=5) byLoc[loc].starCounts[stars-1] += 1;
       byLoc[loc].totalPoints += pts;
@@ -1490,16 +1494,26 @@ function updateDashboard(){
   // Best map: best average points (avg of caught fish points) per map; blank if nothing caught yet
   let bestMap = '';
   let bestScore = -Infinity;
+  let anyCaught = false;
+  const rarities = ['Common','Rare','Epic','Legendary'];
   locs.forEach(l=>{
-    const caught = byLoc[l].caught;
-    if(!caught) return;
-    const score = byLoc[l].totalPoints / caught;
+    const data = byLoc[l];
+    if(!data) return;
+    const totalCaught = Object.values(data.countsByCat || {}).reduce((a,b)=>a+b,0);
+    if(totalCaught>0) anyCaught = true;
+    let sum = 0;
+    rarities.forEach(r=>{
+      const c = data.countsByCat[r] || 0;
+      const avg = c ? (data.pointsByCat[r] / c) : 0;
+      sum += avg;
+    });
+    const score = sum / 4;
     if(score > bestScore){
       bestScore = score;
       bestMap = l;
     }
   });
-  if(bestMapEl) bestMapEl.textContent = bestMap;
+  if(bestMapEl) bestMapEl.textContent = anyCaught ? bestMap : '-' ;
 
   // Bestiary progress = how many unique fish have a stored (valid) record
   const totalFish = Object.values(LOCATIONS).reduce((sum,arr)=>sum+arr.length,0);

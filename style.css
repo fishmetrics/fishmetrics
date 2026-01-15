@@ -195,7 +195,7 @@ body{
   justify-content:center;
   box-shadow: inset 0 0 0 18px rgba(4,12,34,.88);
 }
-.donut-value{font-size:14px; font-weight:800; color:#ffffff; background:transparent; padding:0; border-radius:0}
+.donut-value{font-size:14px; font-weight:800; color:#9ca3af; background:transparent; padding:0; border-radius:0}
 
 .content{display:flex; flex-direction:column; gap:14px}
 
@@ -1301,4 +1301,25 @@ html{ overflow-y: scroll; }
 /* Slightly smaller points text to avoid collisions */
 .share-card .highest-by-rarity .fish-points {
   font-size: 0.9rem;
+}
+
+/* Acknowledgements text styling */
+.ack-text {
+  font-weight: 400;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.ack-logo {
+  height: 16px;
+  width: auto;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* Acknowledgements spacing & tone */
+.ack-wrapper {
+  margin-top: 20px;
+}
+.ack-text {
+  color: #9aa0a6; /* slightly dimmed gray */
 }

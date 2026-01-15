@@ -578,9 +578,9 @@ function fromLbs(v){ return (Number(v) || 0) / LBS_PER_KG; }
 function fmtWeightDisplay(lbsVal){
   if(weightUnit === 'kgs'){
     const kg = fromLbs(lbsVal);
-    return kg.toLocaleString(undefined, { maximumFractionDigits: 1 });
+    return kg.toLocaleString(undefined, { maximumFractionDigits: 2 });
   }
-  return (Number(lbsVal) || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  return (Number(lbsVal) || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 function parseUserWeightToLbs(raw){
   const v = Number.parseFloat(raw);
@@ -598,7 +598,7 @@ function displayWeightFromStored(raw){
 
 function fmtNumber(n){
   const x = Number(n) || 0;
-  return x.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  return x.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 function dumbbellTooltipLabel(context){
@@ -1483,8 +1483,9 @@ function updateDashboard(){
 
   const avg = totalCaught ? (totalStars / totalCaught) : 0;
   if(avgStarsEl){
-    const full = Math.floor(avg);
-    const half = (avg - full) >= 0.5;
+    const rounded = Math.ceil(avg);
+    const full = Math.min(rounded,5);
+    const half = false;
     const starsTxt = '★'.repeat(full) + (half ? '☆' : '') + '☆'.repeat(Math.max(0, 5 - full - (half?1:0)));
     avgStarsEl.textContent = starsTxt;
   }

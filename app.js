@@ -1993,7 +1993,7 @@ function updateDashboard(){
 
   // Short-Lived Epics (fixed list)
   try{
-    const shortNames = ['queensland grouper','bull shark','european eel'];
+    const shortNames = ['queensland grouper','bull shark','european eel','black marlin'];
     const shortMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
     const shortList = shortNames.map(n=>{
       const rec = shortMap.get(n);

@@ -1315,8 +1315,21 @@ html{ overflow-y: scroll; }
 }
 
 /* Acknowledgements spacing & tone */
+.instr-divider{
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.14);
+  margin: 18px 0 10px;
+}
+.ack-heading{
+  color: #9aa0a6;
+  font-weight: 700;
+}
+
 .ack-wrapper {
   margin-top: 20px;
+}
+.instr-text{
+  color: var(--text);
 }
 .ack-text {
   color: #9aa0a6; /* slightly dimmed gray */

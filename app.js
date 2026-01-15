@@ -377,6 +377,47 @@ function toTitleCase(str){
 }
 
 
+// --- Broken x-axis mapping for "Points Range by Type" chart (compress 1000–5000) ---
+// Epic points top out around ~1000, and Legendary points begin around ~5000,
+// so we place the break between these ranges.
+const TYPE_RANGE_BREAK_LO = 1500;
+const TYPE_RANGE_BREAK_HI = 4500;
+// visual width (in axis units) reserved for the "break" zone
+const TYPE_RANGE_BREAK_GAP = 400;
+
+function mapTypeRangeX(x){
+  const v = Number(x);
+  if(!isFinite(v)) return v;
+  if(v <= TYPE_RANGE_BREAK_LO) return v;
+
+  // compress the mid-band into a small gap
+  if(v < TYPE_RANGE_BREAK_HI){
+    const t = (v - TYPE_RANGE_BREAK_LO) / (TYPE_RANGE_BREAK_HI - TYPE_RANGE_BREAK_LO);
+    return TYPE_RANGE_BREAK_LO + t * TYPE_RANGE_BREAK_GAP;
+  }
+
+  // shift the high band left by the removed width (minus the gap)
+  const shift = (TYPE_RANGE_BREAK_HI - TYPE_RANGE_BREAK_LO) - TYPE_RANGE_BREAK_GAP;
+  return v - shift;
+}
+
+function unmapTypeRangeX(mapped){
+  const v = Number(mapped);
+  if(!isFinite(v)) return v;
+  if(v <= TYPE_RANGE_BREAK_LO) return v;
+
+  const hiBandStart = TYPE_RANGE_BREAK_LO + TYPE_RANGE_BREAK_GAP;
+  if(v < hiBandStart){
+    // inverse of the compressed mid-band
+    const t = (v - TYPE_RANGE_BREAK_LO) / TYPE_RANGE_BREAK_GAP;
+    return TYPE_RANGE_BREAK_LO + t * (TYPE_RANGE_BREAK_HI - TYPE_RANGE_BREAK_LO);
+  }
+
+  const shift = (TYPE_RANGE_BREAK_HI - TYPE_RANGE_BREAK_LO) - TYPE_RANGE_BREAK_GAP;
+  return v + shift;
+}
+
+
 function tooltipTitleJoinSpaces(items){
   const it = items && items[0];
   if(!it) return '';
@@ -975,8 +1016,62 @@ const dimFishInsightsBars = {
 };
 
 
+
+
+// Draw a visual "//" break on the x-axis for the Type Range dumbbell chart.
+const brokenXAxisBreak = {
+  id: 'brokenXAxisBreak',
+  afterDraw(chart, args, opts){
+  try{
+    if(!opts || !opts.enabled) return;
+    const xScale = chart.scales?.x;
+    if(!xScale) return;
+
+    const ctx = chart.ctx;
+
+    const x1 = xScale.getPixelForValue(TYPE_RANGE_BREAK_LO);
+    const x2 = xScale.getPixelForValue(TYPE_RANGE_BREAK_LO + TYPE_RANGE_BREAK_GAP);
+
+    // Clip a clean "gap" over gridlines so the break is obvious
+    const top = chart.chartArea.top;
+    const bottom = chart.chartArea.bottom;
+
+    ctx.save();
+    // Slightly dark panel-colored overlay (transparent) to mute gridlines in the gap
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(x1, top, Math.max(0, x2 - x1), bottom - top);
+
+    // Draw thin boundary lines on either side of the gap
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x1, top);
+    ctx.lineTo(x1, bottom);
+    ctx.moveTo(x2, top);
+    ctx.lineTo(x2, bottom);
+    ctx.stroke();
+
+    // Draw large "//" on the axis line
+    const y = xScale.bottom + 2;
+    const mid = (x1 + x2) / 2;
+    const size = 10;
+
+    ctx.strokeStyle = 'rgba(255,255,255,.75)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(mid - size, y - size);
+    ctx.lineTo(mid - 2, y - 2);
+    ctx.moveTo(mid + 2, y - size);
+    ctx.lineTo(mid + size, y - 2);
+    ctx.stroke();
+
+    ctx.restore();
+  }catch(_){}
+}
+};
 Chart.register(dimFishInsightsBars,
-dumbbellEndpointOverlay);
+dumbbellEndpointOverlay,
+brokenXAxisBreak);
 }
 
 
@@ -1060,8 +1155,36 @@ dumbbellEndpointOverlay);
       interaction: { mode: 'y', axis: 'y', intersect: false },
       hover: { mode: 'y', axis: 'y', intersect: false },
       indexAxis:'y',
+      scales: {
+        x: {
+          ...baseOpts.scales.x,
+          ticks: {
+            ...baseOpts.scales.x.ticks,
+            callback: (val) => {
+              const v = unmapTypeRangeX(val);
+              // hide tick labels inside the break zone for cleanliness
+              if(val > TYPE_RANGE_BREAK_LO && val < (TYPE_RANGE_BREAK_LO + TYPE_RANGE_BREAK_GAP)) return '';
+              if(!isFinite(v)) return '';
+              return Math.round(v).toString();
+            }
+          },
+          grid: {
+            ...baseOpts.scales.x.grid,
+            color: (ctx) => {
+              const v = ctx?.tick?.value;
+              if(typeof v === 'number' && v > TYPE_RANGE_BREAK_LO && v < (TYPE_RANGE_BREAK_LO + TYPE_RANGE_BREAK_GAP)){
+                return 'rgba(255,255,255,0)'; // no gridlines through the break
+              }
+              return baseOpts.scales.x.grid.color;
+            }
+          }
+        },
+        y: { ...baseOpts.scales.y }
+      },
+
       plugins: {
   ...baseOpts.plugins,
+  brokenXAxisBreak: { enabled: true },
   legend: { display: false },
   tooltip: {
     ...baseOpts.plugins.tooltip,
@@ -1096,8 +1219,10 @@ dumbbellEndpointOverlay);
         const lowPt = lowDs ? (lowDs.data || []).find(p => p && p.y === y) : undefined;
         const highPt = highDs ? (highDs.data || []).find(p => p && p.y === y) : undefined;
 
-        const low = lowPt?.x;
-        const high = highPt?.x;
+        const fmt = (n) => (typeof n === 'number' && isFinite(n)) ? Math.round(n) : n;
+
+        const low = fmt((typeof lowPt?.xRaw === 'number') ? lowPt.xRaw : lowPt?.x);
+        const high = fmt((typeof highPt?.xRaw === 'number') ? highPt.xRaw : highPt?.x);
         const lowName = toTitleCase((lowPt?.fishName || '').toString().trim());
         const highName = toTitleCase((highPt?.fishName || '').toString().trim());
 
@@ -1117,7 +1242,7 @@ dumbbellEndpointOverlay);
         }
 
         const singlePt = hasHigh ? highPt : (hasLow ? lowPt : undefined);
-        const single = singlePt?.x;
+        const single = fmt((typeof singlePt?.xRaw === 'number') ? singlePt.xRaw : singlePt?.x);
         const singleName = toTitleCase((singlePt?.fishName || '').toString().trim());
         return (typeof single === "number") ? `Points: ${single}${singleName ? ` — ${singleName}` : ""}` : "";
       }
@@ -1687,7 +1812,7 @@ function updateDashboard(){
             label: c + ' range',
             type: 'scatter',
             showLine: true,
-            data: [{x: mins[c], y: c}, {x: maxs[c], y: c}],
+            data: [{x: mapTypeRangeX(mins[c]), xRaw: mins[c], y: c}, {x: mapTypeRangeX(maxs[c]), xRaw: maxs[c], y: c}],
             pointRadius: 0,
             borderWidth: 3,
           borderColor: (getComputedStyle(document.documentElement).getPropertyValue('--rare').trim() || '#3b82f6'),
@@ -1696,10 +1821,10 @@ function updateDashboard(){
           });
           // If only one record (min==max), show a single GREEN endpoint (Highest) to match prior behavior
           if(mins[c] === maxs[c] && (minFishNames[c] || '') === (maxFishNames[c] || '')){
-            highs.push({x: maxs[c], y: c, fishName: maxFishNames[c]});
+            highs.push({x: mapTypeRangeX(maxs[c]), xRaw: maxs[c], y: c, fishName: maxFishNames[c]});
           }else{
-            lows.push({x: mins[c], y: c, fishName: minFishNames[c]});
-            highs.push({x: maxs[c], y: c, fishName: maxFishNames[c]});
+            lows.push({x: mapTypeRangeX(mins[c]), xRaw: mins[c], y: c, fishName: minFishNames[c]});
+            highs.push({x: mapTypeRangeX(maxs[c]), xRaw: maxs[c], y: c, fishName: maxFishNames[c]});
           }
         }
       });
@@ -1711,6 +1836,22 @@ function updateDashboard(){
         { label: 'Lowest', type: 'scatter', data: lows, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
         { label: 'Highest', type: 'scatter', data: highs, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
       ];
+
+      // Ensure broken-scale tick labels always reflect raw point values (not mapped units)
+      try{
+        if(typeDumbbellChart.options && typeDumbbellChart.options.scales && typeDumbbellChart.options.scales.x){
+          const xTicks = (typeDumbbellChart.options.scales.x.ticks || {});
+          typeDumbbellChart.options.scales.x.ticks = {
+            ...xTicks,
+            callback: (val) => {
+              const v = unmapTypeRangeX(val);
+              if(typeof val === 'number' && val > TYPE_RANGE_BREAK_LO && val < (TYPE_RANGE_BREAK_LO + TYPE_RANGE_BREAK_GAP)) return '';
+              if(!isFinite(v)) return '';
+              return String(Math.round(v));
+            }
+          };
+        }
+      }catch(e){}
       safeUpdate(typeDumbbellChart, { requireVisible: true });
     }
 

@@ -195,8 +195,6 @@ body{
   justify-content:center;
   box-shadow: inset 0 0 0 18px rgba(4,12,34,.88);
 }
-.donut-value{font-size:14px; font-weight:800; color:#9ca3af; background:transparent; padding:0; border-radius:0}
-
 .content{display:flex; flex-direction:column; gap:14px}
 
 .kpis{
@@ -1322,4 +1320,23 @@ html{ overflow-y: scroll; }
 }
 .ack-text {
   color: #9aa0a6; /* slightly dimmed gray */
+}
+
+/* Donut center label (fixed) */
+.donut { position: relative; }
+.donut canvas { position: relative; z-index: 1; }
+.donut-value{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  font-size: 14px;
+  font-weight: 800;
+  color: #6b7280;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  line-height: 1;
+  pointer-events: none;
 }

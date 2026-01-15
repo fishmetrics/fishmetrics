@@ -938,6 +938,7 @@ const dumbbellEndpointOverlay = {
 };
 if(typeof Chart !== "undefined" && Chart?.register){
   
+
 const dimFishInsightsBars = {
   id: 'dimFishInsightsBars',
   beforeDatasetsDraw(chart){
@@ -948,17 +949,31 @@ const dimFishInsightsBars = {
 
     chart.data.datasets.forEach(ds => {
       if(!ds.backgroundColor) return;
+
+      const applyAlpha = (c, a) => {
+        if(typeof c !== 'string') return c;
+        if(c.startsWith('rgba')) return c.replace(/rgba\(([^,]+),([^,]+),([^,]+),[^\)]+\)/, `rgba($1,$2,$3,${a})`);
+        if(c.startsWith('rgb')) return c.replace(/rgb\(([^,]+),([^,]+),([^\)]+)\)/, `rgba($1,$2,$3,${a})`);
+        if(c.startsWith('#')){
+          const hex = c.replace('#','');
+          const v = parseInt(hex.length===3 ? hex.split('').map(x=>x+x).join('') : hex, 16);
+          const r=(v>>16)&255, g=(v>>8)&255, b=v&255;
+          return `rgba(${r},${g},${b},${a})`;
+        }
+        return c;
+      };
+
       const c = ds.backgroundColor;
-      if(typeof c === 'string'){
-        ds.backgroundColor = c.startsWith('rgba')
-          ? c.replace(/rgba\(([^,]+),([^,]+),([^,]+),[^\)]+\)/, 'rgba($1,$2,$3,0.75)')
-          : c.startsWith('rgb')
-            ? c.replace(/rgb\(([^,]+),([^,]+),([^\)]+)\)/, 'rgba($1,$2,$3,0.75)')
-            : c;
-      }
+      // Detect yellow-ish bars and dim them more
+      const isYellow = typeof c === 'string' && (
+        c.includes('#f') && c.includes('f') || c.toLowerCase().includes('yellow')
+      );
+
+      ds.backgroundColor = applyAlpha(c, isYellow ? 0.55 : 0.75);
     });
   }
 };
+
 
 Chart.register(dimFishInsightsBars,
 dumbbellEndpointOverlay);
@@ -1077,19 +1092,34 @@ dumbbellEndpointOverlay);
         const dsets = chart?.data?.datasets || [];
         const lowDs = dsets.find(d => d && d.label === "Lowest");
         const highDs = dsets.find(d => d && d.label === "Highest");
-        const low = lowDs ? (lowDs.data || []).find(p => p && p.y === y)?.x : undefined;
-        const high = highDs ? (highDs.data || []).find(p => p && p.y === y)?.x : undefined;
+
+        const lowPt = lowDs ? (lowDs.data || []).find(p => p && p.y === y) : undefined;
+        const highPt = highDs ? (highDs.data || []).find(p => p && p.y === y) : undefined;
+
+        const low = lowPt?.x;
+        const high = highPt?.x;
+        const lowName = toTitleCase((lowPt?.fishName || '').toString().trim());
+        const highName = toTitleCase((highPt?.fishName || '').toString().trim());
 
         const hasLow = typeof low === "number";
         const hasHigh = typeof high === "number";
 
         if(hasLow && hasHigh){
-          const a = Math.min(low, high);
-          const b = Math.max(low, high);
-          return `Range: ${a}–${b}`;
+          // If it's effectively a single point, show a single informative line.
+          if(low === high && (lowName || '') === (highName || '')){
+            return `Points: ${low}${lowName ? ` — ${lowName}` : ""}`;
+          }
+          // Otherwise show both endpoints with fish names.
+          const lines = [];
+          lines.push(`Lowest: ${low}${lowName ? ` — ${lowName}` : ""}`);
+          lines.push(`Highest: ${high}${highName ? ` — ${highName}` : ""}`);
+          return lines;
         }
-        const single = hasHigh ? high : (hasLow ? low : undefined);
-        return (typeof single === "number") ? `Points: ${single}` : "";
+
+        const singlePt = hasHigh ? highPt : (hasLow ? lowPt : undefined);
+        const single = singlePt?.x;
+        const singleName = toTitleCase((singlePt?.fishName || '').toString().trim());
+        return (typeof single === "number") ? `Points: ${single}${singleName ? ` — ${singleName}` : ""}` : "";
       }
     }
   }

@@ -72,7 +72,7 @@ const LOCATIONS = {
   { name:"bull shark", category:"Epic", min:22.05, max:696.66 },
   { name:"hammerhead shark", category:"Epic", min:44.09, max:335.1 },
   { name:"whale shark", category:"Epic", min:440.92, max:7495.72 },
-  { name:"whitetooth shark", category:"Epic", min:44.09, max:368.19 },
+  { name:"whitetip shark", category:"Epic", min:44.09, max:368.19 },
   { name:"don pedro", category:"Legendary", min:1873.93, max:3086.47 }
  ],
  "Alaska": [
@@ -93,14 +93,14 @@ const LOCATIONS = {
   { name:"bigmouth sculpin", category:"Common", min:1.1, max:6.61 },
   { name:"arctic grayling", category:"Common", min:4.41, max:8.82 },
   { name:"humpback salmon", category:"Common", min:4.41, max:15.43 },
-  { name:"halibut", category:"Common", min:44.09, max:800.28 },
+  { name:"halibut", category:"Rare", min:44.09, max:800.28 },
   { name:"blue lingcod", category:"Rare", min:11.02, max:130.07 },
   { name:"spiny skate", category:"Rare", min:2.2, max:132.28 },
   { name:"wolf eel", category:"Rare", min:6.61, max:39.68 },
   { name:"king salmon", category:"Epic", min:11.02, max:134.48 },
   { name:"salmon shark", category:"Epic", min:88.18, max:385.81 },
   { name:"pacific sleeper shark", category:"Epic", min:22.05, max:800.28 },
-  { name:"sunfish", category:"Epic", min:220.46, max:5291.09 },
+  { name:"ocean sunfish", category:"Epic", min:220.46, max:5291.09 },
   { name:"kraken", category:"Legendary", min:400.92, max:1102.31 }
  ],
  "Australia": [
@@ -116,8 +116,8 @@ const LOCATIONS = {
   { name:"unicorn leatherjacket", category:"Common", min:1.1, max:5.95 },
   { name:"tailor", category:"Common", min:6.61, max:31.75 },
   { name:"leafy seadragon", category:"Common", min:0.11, max:0.22 },
-  { name:"rock flatgal", category:"Common", min:2.2, max:5.29 },
-  { name:"saddled coral grouper", category:"Common", min:17.64, max:52.91 },
+  { name:"rock flagtail", category:"Common", min:2.2, max:5.29 },
+  { name:"black saddled coral grouper", category:"Common", min:17.64, max:52.91 },
   { name:"common stargazer", category:"Common", min:4.41, max:19.84 },
   { name:"skipjack tuna", category:"Common", min:22.05, max:88.18 },
   { name:"fingermark", category:"Common", min:4.41, max:22.05 },

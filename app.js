@@ -376,6 +376,15 @@ function toTitleCase(str){
     .replace(/\b([a-z])/g, (m)=>m.toUpperCase());
 }
 
+
+function tooltipTitleJoinSpaces(items){
+  const it = items && items[0];
+  if(!it) return '';
+  const rawLbl = it.chart?.data?.labels?.[it.dataIndex];
+  if(Array.isArray(rawLbl)) return rawLbl.join(' ');
+  const lbl = rawLbl != null ? String(rawLbl) : (it.label != null ? String(it.label) : '');
+  return lbl.replace(/,/g,' ');
+}
   // Wrap labels on word boundaries for Fearsome Four (Chart.js supports array labels for multi-line)
   function __wrapWordsFearsome(label, maxLen=10){
     const words = String(label).trim().split(/\s+/).filter(Boolean);
@@ -928,7 +937,31 @@ const dumbbellEndpointOverlay = {
   }
 };
 if(typeof Chart !== "undefined" && Chart?.register){
-  Chart.register(dumbbellEndpointOverlay);
+  
+const dimFishInsightsBars = {
+  id: 'dimFishInsightsBars',
+  beforeDatasetsDraw(chart){
+    if(!chart || !chart.canvas) return;
+    const id = chart.canvas.id || '';
+    if(!['fearsomeChart','eliteEpicsChart','shortLivedEpicsChart','invisiblesChart','legendaryChart']
+        .some(k => id.includes(k))) return;
+
+    chart.data.datasets.forEach(ds => {
+      if(!ds.backgroundColor) return;
+      const c = ds.backgroundColor;
+      if(typeof c === 'string'){
+        ds.backgroundColor = c.startsWith('rgba')
+          ? c.replace(/rgba\(([^,]+),([^,]+),([^,]+),[^\)]+\)/, 'rgba($1,$2,$3,0.75)')
+          : c.startsWith('rgb')
+            ? c.replace(/rgb\(([^,]+),([^,]+),([^\)]+)\)/, 'rgba($1,$2,$3,0.75)')
+            : c;
+      }
+    });
+  }
+};
+
+Chart.register(dimFishInsightsBars,
+dumbbellEndpointOverlay);
 }
 
 
@@ -1182,6 +1215,7 @@ if(typeof Chart !== "undefined" && Chart?.register){
         tooltip: {
           ...baseOpts.plugins.tooltip,
           callbacks: {
+            title: (items)=>tooltipTitleJoinSpaces(items),
             label: (ctx) => {
               const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
               return `Points: ${value}`;
@@ -1235,6 +1269,7 @@ if(typeof Chart !== "undefined" && Chart?.register){
         tooltip: {
           ...baseOpts.plugins.tooltip,
           callbacks: {
+            title: (items)=>tooltipTitleJoinSpaces(items),
             label: (ctx) => {
               const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
               return `Points: ${value}`;
@@ -1278,6 +1313,7 @@ if(typeof Chart !== "undefined" && Chart?.register){
         tooltip: {
           ...baseOpts.plugins.tooltip,
           callbacks: {
+            title: (items)=>tooltipTitleJoinSpaces(items),
             label: (ctx) => {
               const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
               return `Points: ${value}`;
@@ -1331,6 +1367,7 @@ if(typeof Chart !== "undefined" && Chart?.register){
         tooltip: {
           ...baseOpts.plugins.tooltip,
           callbacks: {
+            title: (items)=>tooltipTitleJoinSpaces(items),
             label: (ctx) => {
               const value = (ctx.chart.options.indexAxis === 'y') ? ctx.parsed.x : ctx.parsed.y;
               return `Points: ${value}`;
@@ -1803,7 +1840,7 @@ function updateDashboard(){
 
   // The Invisibles (fixed list)
   try{
-    const invNames = ['rice eel','malayan leaffish','amazon puffer','Freshwater Barracuda','clownfish'];
+    const invNames = ['rice eel','malayan leaffish','amazon puffer','freshwater barracuda','clownfish'];
     const invMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
     const invList = invNames.map(n=>{
       const rec = invMap.get(n);

@@ -1655,7 +1655,8 @@ function updateDashboard(){
       const maxs = [];
       const minNames = [];
       const maxNames = [];
-      locSorted.forEach(loc=>{
+      const locOrder = getLocationList();
+      locOrder.forEach(loc=>{
         let minP = Infinity;
         let maxP = -Infinity;
         let minName = '';
@@ -1677,13 +1678,13 @@ function updateDashboard(){
         maxNames.push(maxP === -Infinity ? '' : maxName);
       });
 
-      chart.data.labels = locSorted;
+      chart.data.labels = locOrder;
 
       const rangeSets = [];
       const minPts = [];
       const maxPts = [];
-      for(let i=0;i<locSorted.length;i++){
-        const loc = locSorted[i];
+      for(let i=0;i<locOrder.length;i++){
+        const loc = locOrder[i];
         const lo = mins[i];
         const hi = maxs[i];
         if(lo == null || hi == null) continue;
@@ -1802,7 +1803,7 @@ function updateDashboard(){
 
   // The Invisibles (fixed list)
   try{
-    const invNames = ['rice eel','malayan leaffish','amazon puffer','amazon barracuda','clownfish'];
+    const invNames = ['rice eel','malayan leaffish','amazon puffer','Freshwater Barracuda','clownfish'];
     const invMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
     const invList = invNames.map(n=>{
       const rec = invMap.get(n);

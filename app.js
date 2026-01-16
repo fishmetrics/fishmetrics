@@ -241,6 +241,105 @@ function calculateStars(cat,p){
 }
 
 const tbody=document.querySelector("tbody");
+
+/* === Golden_v12 FINAL: Inject colgroup for records table at runtime === */
+(function(){
+  function getLocationSelect(){
+    const selects = Array.from(document.querySelectorAll('select'));
+    const locationHints = [/all locations/i, /paradise/i, /great lakes/i, /costa rica/i, /alaska/i, /australia/i, /scotland/i, /thailand/i, /amazon/i];
+    for(const sel of selects){
+      const opts = Array.from(sel.options || []).map(o => (o.textContent||'').trim());
+      const joined = opts.join(' | ');
+      if(locationHints.some(rx => rx.test(joined))) return sel;
+    }
+    return null;
+  }
+
+  function getSelectedLocationLabel(locSelect){
+    if(!locSelect || !locSelect.options) return '';
+    const idx = locSelect.selectedIndex;
+    if(idx < 0) return '';
+    let t = (locSelect.options[idx].textContent || '').trim();
+    t = t.replace(/\s*\(\d+\)\s*$/, '');
+    if(/all locations/i.test(t)) return '';
+    return t;
+  }
+
+  function ensure(){
+    try{
+      const table = document.querySelector('.records-table') || document.querySelector('#recordsTable') || document.querySelector('table');
+      if(!table) return;
+
+      const thead = table.querySelector('thead');
+      const tbody = table.querySelector('tbody');
+      if(!thead || !tbody) return;
+
+      const locSelect = getLocationSelect();
+      const selectedLoc = getSelectedLocationLabel(locSelect);
+
+      const ths = Array.from(thead.querySelectorAll('th'));
+      const hasLocationHeader = ths.some(th => (th.textContent||'').trim().toLowerCase() === 'location');
+
+      if(selectedLoc && !hasLocationHeader){
+        const headerRow = thead.querySelector('tr');
+        if(headerRow){
+          const th = document.createElement('th');
+          th.textContent = 'Location';
+          headerRow.insertBefore(th, headerRow.firstChild);
+        }
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.forEach(tr => {
+          const firstCell = tr.querySelector('td');
+          const firstText = firstCell ? (firstCell.textContent||'').trim() : '';
+          if(firstText && firstText === selectedLoc) return;
+          const td = document.createElement('td');
+          td.textContent = selectedLoc;
+          tr.insertBefore(td, tr.firstChild);
+        });
+      }
+
+      const headerCount = thead.querySelectorAll('th').length || 0;
+      if(!headerCount) return;
+
+      const existing = table.querySelector('colgroup');
+      if(existing) existing.remove();
+
+      const cg = document.createElement('colgroup');
+      let widths;
+      if(headerCount === 6){
+        widths = ['22%','14%','22%','17%','15%','10%'];
+      } else if(headerCount === 5){
+        widths = ['16%','26%','17%','25%','16%'];
+      } else {
+        widths = Array.from({length: headerCount}, () => (100/headerCount).toFixed(2) + '%');
+      }
+      widths.forEach(w=>{
+        const c = document.createElement('col');
+        c.style.width = w;
+        cg.appendChild(c);
+      });
+      table.prepend(cg);
+      table.style.tableLayout = 'fixed';
+    }catch(e){}
+  }
+
+  ensure();
+
+  const locSelect = getLocationSelect();
+  if(locSelect){
+    locSelect.addEventListener('change', () => setTimeout(ensure, 0));
+  }
+
+  const root = document.querySelector('#logRecords') || document.querySelector('.log-records') || document.body;
+  const obs = new MutationObserver(() => {
+    clearTimeout(window.__fmEnsureTimer);
+    window.__fmEnsureTimer = setTimeout(ensure, 0);
+  });
+  obs.observe(root, {childList: true, subtree: true});
+})();
+/* === End Golden_v12 FINAL === */
+
+
 const locationSelect=document.getElementById("locationSelect");
 const theadRow = document.querySelector("thead tr");
 
@@ -796,9 +895,9 @@ function renderTable(){
   const rangeTip = `Min: ${fmtWeightDisplay(f.min)} ${(weightUnit === 'kgs') ? 'kgs' : 'lbs'}  •  Max: ${fmtWeightDisplay(f.max)} ${(weightUnit === 'kgs') ? 'kgs' : 'lbs'}`;
   const fishLabel = `<span class="fish-name" title="${rangeTip}">${toTitleCase(f.name)}</span>`;
   if(isAll){
-    r.innerHTML=`<td>${f.location}</td><td>${f.category}</td><td>${fishLabel}</td>`;
+    r.innerHTML=`<td class="location-cell">${f.location}</td><td class="category-cell">${f.category}</td><td>${fishLabel}</td>`;
   }else{
-    r.innerHTML=`<td>${f.category}</td><td>${fishLabel}</td>`;
+    r.innerHTML=`<td class="category-cell">${f.category}</td><td>${fishLabel}</td>`;
   }
 
   const i=document.createElement("input");
@@ -810,6 +909,11 @@ function renderTable(){
 
   // Prefill persisted record for this location+fish
   i.value = getStoredWeight(f.location, f.name);
+
+  // Highlight fish name while the user is entering a value
+  i.addEventListener('focus', ()=>{
+    r.classList.add('editing');
+  });
 
   
   let suppress = false;
@@ -881,6 +985,13 @@ function commitInput(){
   }
 
   i.addEventListener("blur", commitInput);
+  i.addEventListener('blur', ()=>{
+    // End highlight when leaving the field
+    r.classList.remove('editing');
+  });
+  i.addEventListener('blur', ()=>{
+    r.classList.remove('editing');
+  });
   // Live recompute so KPIs/donut update while typing (does not persist until Enter/blur)
   i.addEventListener("input", ()=>{ if(!suppress) recomputeFromDOM(); });
   i.addEventListener("keydown", (e)=>{

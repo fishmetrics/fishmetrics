@@ -330,15 +330,6 @@ tbody tr:hover{background:rgba(255,255,255,.05)}
 
 .fish-name{cursor:help; border-bottom:1px dotted rgba(255,255,255,.35)}
 
-/* Highlight fish name while entering a record */
-tbody tr.editing .fish-name{
-  border-bottom-color: transparent;
-  background: rgba(255,255,255,.10);
-  padding: 2px 8px;
-  border-radius: 999px;
-  box-shadow: 0 0 0 2px rgba(255,196,0,.16);
-}
-
 .input-cell{min-width:160px}
 input{
   width:120px;
@@ -359,10 +350,10 @@ input.outofrange{border-color:rgba(255,90,90,.75)}
 }
 .inline-error.show{display:block}
 
-tbody tr.common .category-cell{color:var(--common)}
-tbody tr.rare .category-cell{color:var(--rare)}
-tbody tr.epic .category-cell{color:var(--epic)}
-tbody tr.legendary .category-cell{color:var(--legendary)}
+tbody tr.common td:first-child{color:var(--common)}
+tbody tr.rare td:first-child{color:var(--rare)}
+tbody tr.epic td:first-child{color:var(--epic)}
+tbody tr.legendary td:first-child{color:var(--legendary)}
 
 @media (max-width: 100%){
   .layout{grid-template-columns:1fr}
@@ -1362,73 +1353,3 @@ html{ overflow-y: scroll; }
   line-height: 1;
   pointer-events: none;
 }
-
-
-/* === Golden_v12e: Visual-only fish highlight, FORCE single-line, brighter yellow === */
-.fish-name,
-.is-editing .fish-name {
-  display: inline-flex !important;   /* overrides flex/text wrapping sources */
-  flex-wrap: nowrap !important;
-  align-items: center;
-  max-width: 100%;
-  white-space: nowrap !important;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.fish-name.is-editing,
-.is-editing .fish-name {
-  background: rgba(255, 240, 90, 0.45); /* much brighter yellow fill */
-  box-shadow:
-    0 0 0 3px rgba(255, 240, 90, 1),
-    0 0 18px rgba(255, 240, 90, 0.95);
-  border-radius: 8px;
-}
-/* === End Golden_v12e === */
-
-
-/* === Golden_v12f: EXTRA-bright yellow highlight (visual-only) === */
-.fish-name.is-editing,
-.is-editing .fish-name {
-  background: rgba(255, 255, 120, 0.65); /* very bright yellow */
-  box-shadow:
-    0 0 0 3px rgba(255, 230, 0, 1),
-    0 0 22px rgba(255, 230, 0, 1);
-}
-/* === End Golden_v12f === */
-
-
-/* === Golden_v12g: Allow wrap when idle, single-line only when selected === */
-
-/* Default (NOT selected): allow wrapping */
-.fish-name {
-  display: inline;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-}
-
-/* Selected / editing: force single line */
-.fish-name.is-editing,
-.is-editing .fish-name {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  white-space: nowrap !important;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* === End Golden_v12g === */
-
-
-/* === Golden_v12h: Slightly widen Log Records table container === */
-/* Desktop only – mobile remains viewport-bound */
-@media (min-width: 1200px) {
-  .log-records-container,
-  .records-container,
-  .log-records,
-  .records-table-wrapper {
-    max-width: 1280px;
-  }
-}
-/* === End Golden_v12h === */

@@ -101,7 +101,7 @@ const LOCATIONS = {
   { name:"salmon shark", category:"Epic", min:88.18, max:385.81 },
   { name:"pacific sleeper shark", category:"Epic", min:22.05, max:800.28 },
   { name:"ocean sunfish", category:"Epic", min:220.46, max:5291.09 },
-  { name:"kraken", category:"Legendary", min:400.92, max:1102.31 }
+  { name:"kraken", category:"Legendary", min:440.92, max:1102.31 }
  ],
  "Australia": [
   { name:"black bream", category:"Common", min:2.2, max:8.82 },
@@ -225,6 +225,24 @@ const LOCATIONS = {
   { name:"boiuna", category:"Legendary", min:2204.62, max:6613.86 }
  ]
 };
+
+
+function setupShareButton(){
+  const btn = document.getElementById('menuBtn'); // repurposed as Share button
+  if(!btn) return;
+  // avoid double-binding
+  if(btn.dataset && btn.dataset.shareBound === '1') return;
+  if(btn.dataset) btn.dataset.shareBound = '1';
+
+  btn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    try{ downloadShareImage(); }catch(err){
+      console.error('Share failed', err);
+      alert('Could not generate share image.');
+    }
+  });
+}
 
 function calculatePoints(w,f){
  if(!w||w<f.min||w>f.max) return 0;
@@ -901,6 +919,30 @@ function renderTable(){
   }
 
   const i=document.createElement("input");
+  // Numeric input: allow up to 2 decimal places
+  i.type = "number";
+  i.step = "0.01";
+  i.min = "0";
+  i.setAttribute("inputmode", "decimal");
+
+  // Prevent scientific notation / non-decimal characters that some browsers allow in number inputs
+  i.addEventListener("keydown", (e)=>{
+    if(["e","E","+","-"] .includes(e.key)){
+      e.preventDefault();
+    }
+  });
+
+  function clampTwoDecimals(v){
+    const s = String(v ?? "");
+    if(s === "") return "";
+    if(!s.includes(".")) return s;
+    const parts = s.split(".");
+    const intPart = parts[0] ?? "";
+    const decPart = (parts[1] ?? "").slice(0, 2);
+    // Keep trailing dot while typing (e.g., "12.")
+    if(parts.length === 2 && parts[1] === "") return `${intPart}.`;
+    return decPart === "" ? intPart : `${intPart}.${decPart}`;
+  }
   const p=document.createElement("td");
   const s=document.createElement("td");
 
@@ -937,7 +979,13 @@ function renderTable(){
 function commitInput(){
     if(suppress) return;
 
-    const raw = String(i.value ?? "").trim();
+    // Enforce at most 2 decimal places on commit
+    const raw = clampTwoDecimals(String(i.value ?? "").trim());
+    if(i.value !== raw){
+      suppress = true;
+      i.value = raw;
+      suppress = false;
+    }
     const num = parseFloat(raw);
 
     // Empty or 0 clears stored record + clears points/stars
@@ -993,7 +1041,16 @@ function commitInput(){
     r.classList.remove('editing');
   });
   // Live recompute so KPIs/donut update while typing (does not persist until Enter/blur)
-  i.addEventListener("input", ()=>{ if(!suppress) recomputeFromDOM(); });
+  i.addEventListener("input", ()=>{
+    if(suppress) return;
+    const clamped = clampTwoDecimals(i.value);
+    if(i.value !== clamped){
+      suppress = true;
+      i.value = clamped;
+      suppress = false;
+    }
+    recomputeFromDOM();
+  });
   i.addEventListener("keydown", (e)=>{
     if(e.key === "Enter"){
       e.preventDefault();
@@ -2122,7 +2179,7 @@ function updateDashboard(){
 
   // The Invisibles (fixed list)
   try{
-    const invNames = ['rice eel','malayan leaffish','amazon puffer','freshwater barracuda','clownfish'];
+    const invNames = ['capelin','leafy seadragon','rice eel','malayan leaffish','yellow mystus'];
     const invMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
     const invList = invNames.map(n=>{
       const rec = invMap.get(n);
@@ -2147,6 +2204,7 @@ function updateDashboard(){
 async function initApp(){
   recordsByLocation = await loadRecords();
   setupTabs();
+  setupShareButton();
   setupHeaderMenu();
   setupWeightUnitToggle();
 

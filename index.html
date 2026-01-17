@@ -9,14 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet" />
   <style>
     :root{
-      --bg1:#071021;
-      --bg2:#0b1a33;
-      --card:rgba(255,255,255,.06);
+      --bg1:#051225;
+      --bg2:#081b38;
+      --card:#0b2550;
+      --text:#e9f1ff;
+      --muted:#b2c6ee;
+      --accent:#ffd84d;      /* yellow for title */
+      --accent2:#4fa3ff;     /* blue for CTA */
       --border:rgba(255,255,255,.12);
-      --text:#eaf1ff;
-      --muted:rgba(234,241,255,.72);
-      --accent:#ffd54a;
-      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --shadow: 0 18px 48px rgba(0,0,0,.45);
     }
 
     *{ box-sizing:border-box; }
@@ -110,18 +111,18 @@
       border:0;
       cursor:pointer;
       border-radius:14px;
-      padding:12px 16px;
-      font-weight:800;
-      font-size:15px;
-      background: linear-gradient(180deg, rgba(255,213,74,1), rgba(255,195,26,1));
-      color:#1a1a1a;
-      box-shadow: 0 10px 26px rgba(255,213,74,.16);
+      padding:12px 18px;
+      font-weight:700;
+      font-size:16px;
+      background: linear-gradient(180deg, #5fb2ff, #3d8cff);
+      color:#081425;
+      box-shadow: 0 12px 28px rgba(79,163,255,.35);
       transition: transform .08s ease, filter .12s ease;
       text-decoration:none;
       display:inline-flex;
       align-items:center;
-      gap:10px;
-      user-select:none;
+      justify-content:center;
+      min-width:120px;
     }
     .btn:hover{ filter: brightness(1.03); }
     .btn:active{ transform: translateY(1px); }
@@ -188,7 +189,7 @@
     
 
     /* Landing overrides (v8) */
-    .title h1{
+    .title h1{color:var(--accent);
       color: var(--accent);
     }
     
@@ -198,7 +199,7 @@
       max-width: 820px;
     }
 
-    .title h1{
+    .title h1{color:var(--accent);
       font-size: 40px;
       letter-spacing: 0.6px;
     }
@@ -213,6 +214,14 @@
       margin-top: 28px;
     }
     
+
+/* FORCE brand color */
+.card .title h1,
+.card h1,
+h1{
+  color: #ffd84d !important;
+}
+
 </style>
 </head>
 <body>

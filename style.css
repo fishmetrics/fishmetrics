@@ -1497,3 +1497,16 @@ input[type=number] {
 
 
 .version-micro{position:absolute; right:8px; bottom:6px; font-size:8px; color:#ffffff; opacity:.85; pointer-events:none;}
+
+
+.ack-discord img{vertical-align:middle;}
+
+.ack-discord {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.ack-discord img {
+  vertical-align: middle;
+}

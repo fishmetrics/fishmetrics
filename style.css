@@ -1455,3 +1455,17 @@ input[type=number] {
   font-weight: 600;
 }
 
+
+
+/* Carp Diem discord link in acknowledgements */
+.ack-discord{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.ack-discord:hover{
+  text-decoration: underline;
+}

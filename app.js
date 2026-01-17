@@ -2202,9 +2202,9 @@ function updateDashboard(){
   }catch(e){
     console.error('Fearsome chart update failed', e);
   }
-  // Elite Epics (fixed list)
+  // The Elite Epics (fixed list)
   try{
-    const eliteNames = ['tiger shark','king salmon','bull trout','scottish salmon','bull shark','goldfish'];
+    const eliteNames = ['goldfish','bull shark','king salmon','tiger shark','bull trout','scottish salmon'];
     const eliteMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
     const eliteList = eliteNames.map(n=>{
       const rec = eliteMap.get(n);
@@ -2217,12 +2217,12 @@ function updateDashboard(){
       safeUpdate(eliteEpicsChart);
     }
   }catch(e){
-    console.error('Elite Epics chart update failed', e);
+    console.error('The Elite Epics chart update failed', e);
   }
 
-  // Short-Lived Epics (fixed list)
+  // The Short-Lived Specials (fixed list)
   try{
-    const shortNames = ['queensland grouper','bull shark','european eel','black marlin'];
+    const shortNames = ['black marlin','bull shark','queensland grouper','european eel','european grayling'];
     const shortMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
     const shortList = shortNames.map(n=>{
       const rec = shortMap.get(n);
@@ -2235,7 +2235,7 @@ function updateDashboard(){
       safeUpdate(shortLivedEpicsChart);
     }
   }catch(e){
-    console.error('Short-Lived Epics chart update failed', e);
+    console.error('The Short-Lived Specials chart update failed', e);
   }
 
   // The Invisibles (fixed list)

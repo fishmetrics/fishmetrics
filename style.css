@@ -1444,3 +1444,14 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+
+
+/* Highlight referenced tab names in instructions */
+
+
+/* Highlight referenced tab names in instructions (muted) */
+.tab-ref{
+  color: rgba(255, 216, 77, 0.75);
+  font-weight: 600;
+}
+

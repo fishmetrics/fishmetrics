@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>FISHMETRICS</title>
+<link href="style.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<header class="topbar">
+<div class="topbar-inner">
+<div class="brand-group">
+    <div class="brand">
+      <div class="brand-title-row"><div class="brand-title">FISHMETRICS</div></div>
+      <div class="brand-sub">CREATURES OF THE DEEP</div>
+    </div>
+    <img alt="FishMetrics logo" class="brand-logo" src="logo.png"/></div>
+
+  <div class="header-menu-wrap">
+    <button type="button" id="menuBtn" class="menu-btn" aria-label="Share card" title="Share card">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/>
+        <polyline points="16 6 12 2 8 6"/>
+        <line x1="12" y1="2" x2="12" y2="15"/>
+      </svg>
+</button>
+</div>
+</div>
+</header>
+
+<nav class="top-tabs" aria-label="Primary">
+  <button class="tab-btn active" id="tabOverview" type="button" data-view="dashboardView">Dashboard</button>
+  <button class="tab-btn" id="tabRecords" type="button" data-view="recordsView">Log Records</button>
+  <button class="tab-btn" id="tabMap" type="button" data-view="mapView">Score Ranges</button>
+  <button class="tab-btn" id="tabFish" type="button" data-view="fishView">Fish Insights</button>
+  <button class="tab-btn" id="tabInstructions" type="button" data-view="instructionsView">Instructions</button>
+</nav>
+
+<main class="layout">
+<aside class="sidebar">
+<div class="sidebar-section">
+<div class="sidebar-title">Locations</div>
+<div aria-label="Locations" class="btn-list" id="locationButtons"></div>
+</div>
+<div class="sidebar-section">
+<div class="sidebar-title">Rarity</div>
+<div class="rarity-legend">
+<div class="legend-item"><span class="swatch common"></span>Common</div>
+<div class="legend-item"><span class="swatch rare"></span>Rare</div>
+<div class="legend-item"><span class="swatch epic"></span>Epic</div>
+<div class="legend-item"><span class="swatch legendary"></span>Legendary</div>
+</div>
+</div>
+<div class="sidebar-section progress">
+<div class="sidebar-title">Bestiary Progress</div>
+<div aria-label="Bestiary progress" class="donut" role="img">
+<div class="donut-value" id="bestiaryProgress">0%</div>
+</div>
+</div>
+</aside>
+<section class="content">
+<div class="tab-view active" id="dashboardView">
+<section aria-label="Summary" class="kpis">
+<div class="kpi">
+<div class="kpi-label">Average Star Rating</div>
+<div class="kpi-stars" id="avgStars">—</div>
+</div>
+<div class="kpi">
+<div class="kpi-label">Total Points</div>
+<div class="kpi-value" id="totalPoints">0</div>
+</div>
+<div class="kpi">
+<div class="kpi-label">4 Star Catches</div>
+<div class="kpi-value" id="pct4">0.0%</div>
+</div>
+<div class="kpi">
+<div class="kpi-label">5 Star Catches</div>
+<div class="kpi-value" id="pct5">0.0%</div>
+</div>
+<div class="kpi">
+<div class="kpi-label">Best Map</div>
+<div class="kpi-value" id="bestMap">—</div>
+</div>
+</section>
+<section class="grid"><div class="panel">
+<div class="panel-title">Total Points / Rarity</div>
+<canvas id="pointsByRarityChart"></canvas>
+</div>
+<div class="panel">
+<div class="panel-title">Total Stars / Rarity</div>
+<canvas id="starsByRarityChart"></canvas>
+</div>
+<div class="panel span-2">
+<div class="panel-title">Points / Map</div>
+<canvas id="pointsByMapChart"></canvas>
+</div>
+<div class="panel">
+<div class="panel-title">Star Catches</div>
+<canvas id="starCatchesChart"></canvas>
+</div>
+</section>
+</div>
+
+
+<div class="tab-view" id="fishView">
+  <section class="grid">
+    <div class="panel">
+<div class="panel-title">The Legendary</div>
+<canvas id="legendaryChart"></canvas>
+</div>
+
+    <div class="panel">
+  <div class="panel-title">The Fearsome Four</div>
+  <canvas id="fearsomeChart"></canvas>
+</div>
+
+    <div class="panel">
+      <div class="panel-title">The Elite Epics</div>
+      <canvas id="eliteEpicsChart"></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">The Short-Lived Specials</div>
+      <canvas id="shortLivedEpicsChart"></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">The Invisibles</div>
+      <canvas id="invisiblesChart"></canvas>
+    </div>
+
+    <div class="panel personal-bests-panel">
+      <div class="panel-title">👑 Personal Bests</div>
+      <div id="personalBestsGrid" class="bests-grid" aria-label="Personal bests"></div>
+    </div>
+
+  </section>
+</div>
+
+<div class="tab-view" id="mapView">
+
+  <section class="grid">
+
+    <div class="panel">
+      <div class="panel-title">Common Points Range</div>
+      <canvas id="commonDumbbellChart"></canvas>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Rare Points Range</div>
+      <canvas id="rareDumbbellChart"></canvas>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Epic Points Range</div>
+      <canvas id="epicDumbbellChart"></canvas>
+    </div>
+  
+    <div class="panel">
+      <div class="panel-title">Points Range by Type</div>
+      <canvas id="typeDumbbellChart"></canvas>
+    </div>
+</section>
+</div>
+
+
+<div class="tab-view" id="instructionsView">
+  <section class="panel">
+    <div class="panel-title">Instructions</div>
+    <div class="instructions-text" style="line-height:1.6">
+
+      <p class="ack-wrapper">
+        <span class="instr-text">
+          <strong>Welcome to FishMetrics.</strong>
+          First things first: this isn't a scientific measure of any fisherperson's skills, so shouldn't be taken too seriously.
+          If you like playing with numbers like I do, keeping tabs on your CotD fishing career, or casually comparing stats
+          with friends and clanmates, FishMetrics is for you.
+           Enjoy!
+        </span>
+      </p>
+
+      <p class="ack-wrapper"><strong>How to Use FishMetrics</strong><br>
+        <span class="instr-text">
+          1) Go to <strong>Log Records</strong> to enter fish weights for each location.<br>
+          2) Dashboard shows your overall progress and KPIs.<br>
+          3) Use <strong>Score Ranges</strong> and <strong>Fish Insights</strong> to explore performance by map and by fish.
+        </span>
+      </p>
+
+      <hr class="instr-divider">
+
+      <p class="ack-wrapper"><span class="ack-heading">Acknowledgements</span><br>
+        <span class="ack-text">
+          A huge thank you to everyone — my super awesome clanmates at
+          <img src="carp_diem_logo.png" alt="Carp Diem" class="ack-logo">
+          Carp Diem who inspired this project and helped with many hours of brainstorming and testing,
+          friends from all across the CotD community for ideas and feedback,
+          and particularly those non-gamer friends who had no clue what CotD was but never said no to a debugging SOS —
+          for your time! This project wouldn’t be possible without you 💜
+        </span>
+      </p>
+
+    </div>
+  </section>
+</div>
+
+<div class="tab-view" id="recordsView">
+  <div class="unit-toggle-row">
+    <div class="unit-toggle-label">Weight Unit</div>
+    <div class="unit-toggle" role="group" aria-label="Weight unit selector">
+      <button type="button" id="unitLbs" class="unit-btn active">lbs</button>
+      <button type="button" id="unitKgs" class="unit-btn">kgs</button>
+    </div>
+  </div>
+
+<section class="table-wrap">
+<div class="table-head">
+<div class="table-title">Log Records</div>
+<label class="location-select">
+            Location:
+            <select id="locationSelect"></select>
+<span class="total-fish">Total Fish: <strong id="totalFishCount"></strong></span>
+<span class="total-fish total-fish-all">All Locations: <strong id="totalFishCountAll"></strong></span>
+</label>
+</div>
+<div class="table-scroll" aria-label="Records table scroll region">
+<table>
+<thead>
+<tr>
+<th>Rarity</th>
+<th>Fish</th>
+<th>Your Record (<span id="recordsUnitLabel">lbs</span>)</th>
+<th>Points</th>
+<th>Stars</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+</div>
+</section>
+</main>
+<script src="app.js"></script>
+
+<footer class="app-footer">
+  <a class="contact-btn" href="mailto:fishyloni@gmail.com">CONTACT</a>
+</footer>
+
+</body>
+</html>

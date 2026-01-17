@@ -1116,6 +1116,31 @@ header{ position: relative; }
 .menu-item:hover{ background: rgba(255,255,255,.08); }
 .mi-icon{ display:inline-flex; }
 
+/* Sharecards dropdown: text list + section header */
+.menu-dropdown.share-dropdown{
+  min-width: 220px;
+  padding: 8px;
+}
+.menu-dropdown.share-dropdown .menu-item{
+  justify-content: flex-start;
+  padding: 10px 10px;
+  font-weight: 750;
+}
+.menu-dropdown.share-dropdown .menu-section{
+  padding: 6px 10px 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+}
+.menu-dropdown.share-dropdown .menu-divider{
+  height: 1px;
+  background: rgba(255,255,255,.10);
+  margin: 6px 6px;
+  border-radius: 1px;
+}
+
 @media (max-width: 768px){
   .header-menu-wrap{ right: 10px; top: 8px; }
 }
@@ -1469,3 +1494,6 @@ input[type=number] {
 .ack-discord:hover{
   text-decoration: underline;
 }
+
+
+.version-micro{position:absolute; right:8px; bottom:6px; font-size:8px; color:#ffffff; opacity:.85; pointer-events:none;}

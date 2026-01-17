@@ -229,19 +229,71 @@ const LOCATIONS = {
 
 function setupShareButton(){
   const btn = document.getElementById('menuBtn'); // repurposed as Share button
+  const dropdown = document.getElementById('shareDropdown');
   if(!btn) return;
   // avoid double-binding
   if(btn.dataset && btn.dataset.shareBound === '1') return;
   if(btn.dataset) btn.dataset.shareBound = '1';
 
+  function closeMenu(){
+    if(!dropdown) return;
+    dropdown.classList.remove('open');
+    btn.setAttribute('aria-expanded','false');
+  }
+
+  function toggleMenu(){
+    if(!dropdown) {
+      // fallback (no menu found)
+      try{ downloadShareImage(); }catch(err){
+        console.error('Share failed', err);
+        alert('Could not generate share image.');
+      }
+      return;
+    }
+    const open = dropdown.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  btn.setAttribute('aria-haspopup','menu');
+  btn.setAttribute('aria-expanded','false');
+
   btn.addEventListener('click', (e)=>{
     e.preventDefault();
     e.stopPropagation();
-    try{ downloadShareImage(); }catch(err){
-      console.error('Share failed', err);
-      alert('Could not generate share image.');
-    }
+    toggleMenu();
   });
+
+  document.addEventListener('click', (e)=>{
+    // close if clicking outside
+    if(!dropdown || !dropdown.classList.contains('open')) return;
+    const t = e.target;
+    if(t === btn || dropdown.contains(t)) return;
+    closeMenu();
+  });
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') closeMenu();
+  });
+
+  if(dropdown && !dropdown.dataset.bound){
+    dropdown.dataset.bound = '1';
+    dropdown.querySelectorAll('button.menu-item[data-share]').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        closeMenu();
+        const mode = el.getAttribute('data-share');
+        const loc = el.getAttribute('data-loc') || '';
+        try{
+          if(mode === 'location' && loc) downloadShareImage({ location: loc });
+          else downloadShareImage();
+        }catch(err){
+          console.error('Share failed', err);
+          alert('Could not generate share image.');
+        }
+      });
+    });
+  }
 }
 
 function calculatePoints(w,f){
@@ -2381,16 +2433,20 @@ function _shareSafeNumber(n){
   return Number(n);
 }
 
-function buildShareKPIs(){
+function buildShareKPIs(opts){
+  const location = (opts && opts.location) ? String(opts.location) : '';
   const recs = recordsByLocation || {};
   let totalCaught = 0;
   let star4 = 0;
   let star5 = 0;
 
+  let totalPoints = 0;
+
   const byMap = {};
   const topByRarity = { Common:null, Rare:null, Epic:null, Legendary:null };
 
-  for(const loc of getLocationList()){
+  const locs = location ? [location] : getLocationList();
+  for(const loc of locs){
     byMap[loc] = {sum:0, cnt:0};
     const fishList = LOCATIONS[loc] || [];
     for(const fish of fishList){
@@ -2408,6 +2464,7 @@ function buildShareKPIs(){
       const stars = calculateStars(fish.category, pts);
 
       totalCaught += 1;
+      totalPoints += pts;
       byMap[loc].sum += pts;
       byMap[loc].cnt += 1;
 
@@ -2426,12 +2483,18 @@ function buildShareKPIs(){
 
   let bestMap = "";
   let bestAvg = 0;
-  for(const loc of Object.keys(byMap)){
-    const cnt = byMap[loc].cnt;
-    const avg = cnt ? (byMap[loc].sum / cnt) : 0;
-    if(avg > bestAvg){
-      bestAvg = avg;
-      bestMap = loc;
+  if(location){
+    const cnt = byMap[location]?.cnt || 0;
+    bestMap = location;
+    bestAvg = cnt ? (byMap[location].sum / cnt) : 0;
+  }else{
+    for(const loc of Object.keys(byMap)){
+      const cnt = byMap[loc].cnt;
+      const avg = cnt ? (byMap[loc].sum / cnt) : 0;
+      if(avg > bestAvg){
+        bestAvg = avg;
+        bestMap = loc;
+      }
     }
   }
 
@@ -2439,6 +2502,9 @@ function buildShareKPIs(){
   const pct5 = totalCaught ? (star5 / totalCaught * 100) : 0;
 
   return {
+    location,
+    totalPoints: _shareSafeNumber(totalPoints),
+    totalCaught: _shareSafeNumber(totalCaught),
     bestMap,
     bestAvg: _shareSafeNumber(bestAvg),
     pct4: _shareSafeNumber(pct4),
@@ -2447,8 +2513,8 @@ function buildShareKPIs(){
   };
 }
 
-function generateShareImage(){
-  const k = buildShareKPIs();
+function generateShareImage(opts){
+  const k = buildShareKPIs(opts || {});
   const size = 1080;
   const c = document.createElement('canvas');
   c.width = size; c.height = size;
@@ -2470,7 +2536,8 @@ function generateShareImage(){
   ctx.fillStyle = 'rgba(255,255,255,.65)';
   ctx.font = '600 26px system-ui, -apple-system, Segoe UI, Roboto, Arial';
   const dateStr = new Date().toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
-  ctx.fillText('Share Card • ' + dateStr, 70, 160);
+  const sub = k.location ? ('Share Card • ' + k.location + ' • ' + dateStr) : ('Share Card • ' + dateStr);
+  ctx.fillText(sub, 70, 160);
 
   function card(x,y,w,h){
     ctx.fillStyle = 'rgba(255,255,255,.06)';
@@ -2509,15 +2576,25 @@ function generateShareImage(){
   };
 
   // KPI cards (2x2) — each KPI gets its own container
-  // 1) Best map
+  // 1) Best map (overall) / Location (per-location)
   card(pad, topY, colW, rowH);
-  drawLabel('Best map', pad+26, topY+labelYOff);
-  drawValue(k.bestMap || '—', pad+26, topY+valueYOff, 800, 40);
+  if(k.location){
+    drawLabel('Location', pad+26, topY+labelYOff);
+    drawValue(k.location || '—', pad+26, topY+valueYOff, 800, 40);
+  }else{
+    drawLabel('Best map', pad+26, topY+labelYOff);
+    drawValue(k.bestMap || '—', pad+26, topY+valueYOff, 800, 40);
+  }
 
-  // 2) Average fish score
+  // 2) Total points (per-location) / Average fish score (overall)
   card(pad+colW+gap, topY, colW, rowH);
-  drawLabel('Average fish score', pad+colW+gap+26, topY+labelYOff);
-  drawValue((k.bestAvg ? k.bestAvg.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
+  if(k.location){
+    drawLabel('Total points', pad+colW+gap+26, topY+labelYOff);
+    drawValue((k.totalPoints ? k.totalPoints.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
+  }else{
+    drawLabel('Average fish score', pad+colW+gap+26, topY+labelYOff);
+    drawValue((k.bestAvg ? k.bestAvg.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
+  }
 
   // 3) % 4★ catches
   card(pad, y2, colW, rowH);
@@ -2587,12 +2664,14 @@ function generateShareImage(){
   return c;
 }
 
-function downloadShareImage(){
+function downloadShareImage(opts){
   try{
-    const c = generateShareImage();
+    const c = generateShareImage(opts || {});
+    const loc = (opts && opts.location) ? String(opts.location) : '';
+    const safeLoc = loc ? loc.replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'') : '';
     const a = document.createElement('a');
     a.href = c.toDataURL('image/png');
-    a.download = 'FishMetrics_Share.png';
+    a.download = safeLoc ? ('FishMetrics_' + safeLoc + '_Share.png') : 'FishMetrics_Share.png';
     document.body.appendChild(a);
     a.click();
     a.remove();

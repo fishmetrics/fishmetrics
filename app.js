@@ -749,6 +749,40 @@ function fmtWeightDisplay(lbsVal){
   }
   return (Number(lbsVal) || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
+
+function tinyFishKgAcceptsDisplayed(rawKg, fish){
+  if(!fish || typeof fish.max !== 'number') return false;
+  if(weightUnit !== 'kgs') return false;
+
+  const kgVal = parseFloat(rawKg);
+  if(Number.isNaN(kgVal)) return false;
+
+  // Treat as "tiny" for boundary purposes if the max is under ~1.00 kg (2dp UI),
+  // or under ~5 lb. This avoids false max-boundary errors from kg<->lb rounding.
+  const maxKg = fromLbs(fish.max);
+  if(!(maxKg < 1.0 || fish.max < 5)) return false;
+
+  const userCents = Math.round(kgVal * 100);
+  const minCents  = Math.round(fromLbs(fish.min) * 100);
+  const maxCents  = Math.round(maxKg * 100);
+
+  // Allow +1 cent tolerance to match what users can reasonably enter at 2dp.
+  return userCents >= minCents && userCents <= (maxCents + 1);
+}
+
+function parseAndClampRecordLbs(rawStr, fish){
+  const s = String(rawStr ?? '').trim();
+  if(!s) return NaN;
+  let w = parseUserWeightToLbs(s);
+  if(Number.isNaN(w) || !fish) return w;
+  if(weightUnit === 'kgs' && tinyFishKgAcceptsDisplayed(s, fish)){
+    if(w < fish.min) w = fish.min;
+    if(w > fish.max) w = fish.max;
+  }
+  return w;
+}
+
+
 function parseUserWeightToLbs(raw){
   const v = Number.parseFloat(raw);
   if(raw === "" || Number.isNaN(v) || v <= 0) return NaN;
@@ -855,13 +889,20 @@ function recomputeFromDOM(){
       inp.classList.add("invalid");
       return;
     }
-    const w = parseUserWeightToLbs(String(inp.value ?? '').trim());
-    if(Number.isNaN(w) || w <= 0){
+    const rawStr = String(inp.value ?? '').trim();
+    const w0 = parseUserWeightToLbs(rawStr);
+    if(Number.isNaN(w0) || w0 <= 0){
       return;
     }
-    if(w < fish.min || w > fish.max){
+    let w = w0;
+    if((w < fish.min || w > fish.max) && !(weightUnit === 'kgs' && tinyFishKgAcceptsDisplayed(rawStr, fish))){
       inp.classList.add("outofrange");
       return;
+    }
+
+    if(weightUnit === 'kgs' && tinyFishKgAcceptsDisplayed(rawStr, fish)){
+      if(w < fish.min) w = fish.min;
+      if(w > fish.max) w = fish.max;
     }
 
     const pts = calculatePoints(w, fish);
@@ -1008,8 +1049,16 @@ function commitInput(){
 
     // Range check on commit
     // Fish min/max weights are stored in lbs in the dataset.
+
     // When the UI is set to kgs, the user's entry must be converted to lbs before validation.
-    const enteredLbs = parseUserWeightToLbs(raw);
+    let enteredLbs = parseUserWeightToLbs(raw);
+
+    // Tiny-fish kg boundary: allow values that match the displayed (2dp) kg min/max.
+    if(weightUnit === 'kgs' && tinyFishKgAcceptsDisplayed(raw, f)){
+      if(enteredLbs < f.min) enteredLbs = f.min;
+      if(enteredLbs > f.max) enteredLbs = f.max;
+    }
+
     if(!Number.isNaN(enteredLbs) && (enteredLbs < f.min || enteredLbs > f.max)){
       const unitLabel = (weightUnit === 'kgs') ? 'kgs' : 'lbs';
       const minDisp = (weightUnit === 'kgs')
@@ -1720,7 +1769,7 @@ function computeAggregates(records){
 
     for (const fish of LOCATIONS[loc]){
       const raw = recs?.[loc]?.[fish.name];
-      const w = parseUserWeightToLbs(raw);
+      const w = parseAndClampRecordLbs(raw, fish);
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
       if(!valid) continue;
       const pts = calculatePoints(w, fish);
@@ -1760,7 +1809,11 @@ function computeDashboardAggregates(records){
     for (const fish of (LOCATIONS[loc] || [])){
       if(!dashboardCategories.has(fish.category)) continue;
       const raw = recs?.[loc]?.[fish.name];
-      const w = parseUserWeightToLbs(raw);
+      let w = parseUserWeightToLbs(raw);
+      if(weightUnit === 'kgs' && tinyFishKgAcceptsDisplayed(raw, fish)){
+        if(w < fish.min) w = fish.min;
+        if(w > fish.max) w = fish.max;
+      }
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
       if(!valid) continue;
       const pts = calculatePoints(w, fish);
@@ -2041,8 +2094,16 @@ function updateDashboard(){
           if(fish.category !== category) continue;
           // Use effective (live) records so dumbbells update even before Enter/blur commits
           const raw = effectiveRecords?.[loc]?.[fish.name];
-          const w = parseUserWeightToLbs(raw);
+          let w = parseUserWeightToLbs(raw);
           if(!Number.isFinite(w)) continue;
+
+          // Tiny-fish kg boundary: if the displayed kg value is acceptable, clamp lbs into [min,max]
+          // so the range charts don't drop the record due to rounding pushing w slightly over max.
+          if(weightUnit === 'kgs' && tinyFishKgAcceptsDisplayed(raw, fish)){
+            if(w < fish.min) w = fish.min;
+            if(w > fish.max) w = fish.max;
+          }
+
           const pts = calculatePoints(w, fish);
           if(!pts) continue;
           if(pts < minP){ minP = pts; minName = (fish.name || fish.fishName || fish.fish || ''); }
@@ -2335,7 +2396,11 @@ function buildShareKPIs(){
     for(const fish of fishList){
       const raw = recs?.[loc]?.[fish.name];
       // weights stored in lbs; user input may be kg depending on current unit
-      const w = parseUserWeightToLbs(raw);
+      let w = parseUserWeightToLbs(raw);
+      if(weightUnit === 'kgs' && tinyFishKgAcceptsDisplayed(raw, fish)){
+        if(w < fish.min) w = fish.min;
+        if(w > fish.max) w = fish.max;
+      }
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
       if(!valid) continue;
 

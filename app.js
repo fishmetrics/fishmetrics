@@ -195,7 +195,7 @@ const LOCATIONS = {
  ],
  "Amazon": [
   { name:"amazon pellona", category:"Common", min:2.2, max:15.65 },
-  { name:"bass tunacare", category:"Common", min:2.2, max:19.84 },
+  { name:"tucunare", category:"Common", min:2.2, max:19.84 },
   { name:"curimbata", category:"Common", min:2.2, max:15.43 },
   { name:"corvina", category:"Common", min:2.2, max:9.62 },
   { name:"jatuarana", category:"Common", min:1.1, max:9.7 },

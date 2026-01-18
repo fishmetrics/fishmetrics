@@ -285,11 +285,15 @@ function setupShareButton(){
         const mode = el.getAttribute('data-share');
         const loc = el.getAttribute('data-loc') || '';
         try{
+          if(mode === 'backup'){
+            downloadBackupJSON();
+            return;
+          }
           if(mode === 'location' && loc) downloadShareImage({ location: loc });
           else downloadShareImage();
         }catch(err){
           console.error('Share failed', err);
-          alert('Could not generate share image.');
+          alert('Could not complete that action.');
         }
       });
     });
@@ -2320,6 +2324,7 @@ async function initApp(){
   setupShareButton();
   setupHeaderMenu();
   setupWeightUnitToggle();
+  setupBackupRestoreUI();
 
   // Normalize stored record values to the currently selected unit on load
   try{
@@ -2748,6 +2753,189 @@ function setupHeaderMenu(){
     share.addEventListener('click', ()=>{
       closeMenu();
       downloadShareImage();
+    });
+  }
+}
+
+
+// -----------------------------
+// Backup / Restore (JSON)
+// -----------------------------
+
+function buildBackupPayload(){
+  const now = new Date();
+  return {
+    meta: {
+      app: 'FishMetrics',
+      version: '1.2',
+      exportedAt: now.toISOString()
+    },
+    settings: {
+      weightUnit: (weightUnit === 'kgs') ? 'kgs' : 'lbs'
+    },
+    recordsByLocation: recordsByLocation || {}
+  };
+}
+
+function downloadBackupJSON(){
+  try{
+    const payload = buildBackupPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = (payload?.meta?.exportedAt || '').slice(0,10) || (new Date()).toISOString().slice(0,10);
+    a.href = url;
+    a.download = `fishmetrics_backup_${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(_){ } }, 0);
+    try{ setBackupMsg('✅ Fish Tank backed up.'); }catch(_){ }
+  }catch(err){
+    console.error('Backup export failed', err);
+    alert('Could not export backup.');
+  }
+}
+
+function _countBackupRecords(obj){
+  let n = 0;
+  try{
+    for(const loc of Object.keys(obj || {})){
+      const rec = obj[loc] || {};
+      for(const k of Object.keys(rec)){
+        const v = rec[k];
+        if(v == null) continue;
+        const s = String(v).trim();
+        if(s) n += 1;
+      }
+    }
+  }catch(_){ }
+  return n;
+}
+
+function _normalizeBackupObject(parsed){
+  if(!parsed || typeof parsed !== 'object') return null;
+  const records = parsed.recordsByLocation || parsed.records || parsed.data || null;
+  if(!records || typeof records !== 'object') return null;
+  const unit = parsed?.settings?.weightUnit || parsed?.settings?.unit || parsed?.weightUnit || null;
+  const exportedAt = parsed?.meta?.exportedAt || parsed?.exportedAt || null;
+  const version = parsed?.meta?.version || parsed?.version || null;
+  return { recordsByLocation: records, weightUnit: unit, exportedAt, version };
+}
+
+function applyRestoredState(restored){
+  recordsByLocation = restored.recordsByLocation || {};
+  const u = (restored.weightUnit === 'kgs') ? 'kgs' : 'lbs';
+  weightUnit = u;
+  try{ localStorage.setItem('weightUnit', weightUnit); }catch(_){ }
+  try{ localStorage.setItem('recordsUnit', weightUnit); }catch(_){ }
+  try{ saveRecordsToStorage(); }catch(_){ }
+
+  // Update unit toggle UI
+  try{
+    const lbsBtn = document.getElementById('unitLbs');
+    const kgsBtn = document.getElementById('unitKgs');
+    if(lbsBtn && kgsBtn){
+      lbsBtn.classList.toggle('active', weightUnit === 'lbs');
+      kgsBtn.classList.toggle('active', weightUnit === 'kgs');
+    }
+  }catch(_){ }
+
+  try{ updateRecordsUnitLabel(); }catch(_){ }
+  try{ renderTable(); }catch(_){ }
+  try{ updateDashboard(); }catch(_){ }
+}
+
+function setBackupMsg(msg){
+  const el = document.getElementById('backupMsg');
+  if(!el) return;
+  el.textContent = msg || '';
+}
+
+function restoreFromFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onerror = () => {
+    setBackupMsg('❌ Could not read that file.');
+  };
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(String(reader.result || ''));
+      const norm = _normalizeBackupObject(parsed);
+      if(!norm){
+        setBackupMsg('❌ This doesn\'t look like a FishMetrics backup.');
+        return;
+      }
+
+      const locCount = Object.keys(norm.recordsByLocation || {}).length;
+      const recCount = _countBackupRecords(norm.recordsByLocation || {});
+      const unit = (norm.weightUnit === 'kgs') ? 'kgs' : 'lbs';
+      const when = norm.exportedAt ? new Date(norm.exportedAt).toLocaleString() : 'Unknown date';
+
+      const ok = confirm(
+        `Backup detected:\n\n• ${recCount} fish records\n• ${locCount} locations\n• Units: ${unit}\n• Exported: ${when}\n\nRestoring will replace your current pond. Continue?`
+      );
+      if(!ok){
+        setBackupMsg('Restore cancelled.');
+        return;
+      }
+
+      applyRestoredState(norm);
+      setBackupMsg('🎉 Fish Tank successfully restored.');
+    }catch(err){
+      console.error('Restore failed', err);
+      setBackupMsg('❌ That file could not be restored (invalid JSON).');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function setupBackupRestoreUI(){
+  const exportBtn = document.getElementById('backupExportBtn');
+  const drop = document.getElementById('restoreDrop');
+  const fileInput = document.getElementById('restoreFile');
+
+  if(exportBtn){
+    exportBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      downloadBackupJSON();
+    });
+  }
+
+  function openPicker(){
+    if(fileInput) fileInput.click();
+  }
+
+  if(drop){
+    drop.addEventListener('click', openPicker);
+    drop.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        openPicker();
+      }
+    });
+
+    drop.addEventListener('dragover', (e)=>{
+      e.preventDefault();
+      drop.classList.add('dragover');
+    });
+    drop.addEventListener('dragleave', ()=> drop.classList.remove('dragover'));
+    drop.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      drop.classList.remove('dragover');
+      const file = e.dataTransfer?.files?.[0];
+      if(!file) return;
+      restoreFromFile(file);
+    });
+  }
+
+  if(fileInput){
+    fileInput.addEventListener('change', ()=>{
+      const file = fileInput.files?.[0];
+      // allow restoring same file twice
+      fileInput.value = '';
+      if(!file) return;
+      restoreFromFile(file);
     });
   }
 }

@@ -45,6 +45,9 @@
       <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Scotland">Scotland</button>
       <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Thailand">Thailand</button>
       <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Amazon">Amazon</button>
+
+      <div class="menu-divider" role="separator" aria-hidden="true"></div>
+      <button class="menu-item" type="button" role="menuitem" data-share="backup">Export your Fish Tank (JSON)</button>
     </div>
 </div>
 </div>
@@ -209,6 +212,25 @@
           </span>
       </p>
 
+      <p class="ack-wrapper"><strong>Data &amp; Backups</strong><br>
+        <span class="instr-text">
+          Want to move FishMetrics to another device (or just keep a safety copy)?
+        </span>
+      </p>
+
+      <div class="backup-actions" aria-label="Data backup and restore">
+        <button type="button" class="backup-btn" id="backupExportBtn">Export your Fish Tank (JSON)</button>
+
+        <div class="restore-wrap">
+          <div class="restore-label">Restore your Fish Tank</div>
+          <div class="restore-drop" id="restoreDrop" role="button" tabindex="0" aria-label="Drop a FishMetrics backup JSON file here, or click to browse">
+            Drop a FishMetrics backup here, or click to browse
+          </div>
+          <input type="file" id="restoreFile" accept="application/json,.json" style="display:none" />
+          <div class="backup-msg" id="backupMsg" aria-live="polite"></div>
+        </div>
+      </div>
+
       <hr class="instr-divider">
 
       <p class="ack-wrapper"><span class="ack-heading">Acknowledgements</span><br>
@@ -270,7 +292,7 @@
 <footer class="app-footer">
   <a class="contact-btn" href="mailto:fishyloni@gmail.com">CONTACT</a>
 
-  <div class="version-micro">v1.1</div>
+  <div class="version-micro">v1.2</div>
 </footer>
 
 </body>

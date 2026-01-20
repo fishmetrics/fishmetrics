@@ -85,6 +85,15 @@
 </aside>
 <section class="content">
 <div class="tab-view active" id="dashboardView">
+
+<div class="dash-controls" aria-label="Dashboard Controls">
+  <label class="toggle">
+    <input type="checkbox" id="includeLegendaryToggle">
+    <span class="slider"></span>
+    <span class="toggle-label">Include Legendary</span>
+  </label>
+</div>
+
 <section aria-label="Summary" class="kpis">
 <div class="kpi">
 <div class="kpi-label">Average Star Rating</div>
@@ -292,8 +301,34 @@
 <footer class="app-footer">
   <a class="contact-btn" href="mailto:fishyloni@gmail.com">CONTACT</a>
 
-  <div class="version-micro">v1.2</div>
+  <div class="version-micro">v1.3</div>
 </footer>
+
+
+<hr class="privacy-divider">
+<button class="privacy-btn" onclick="openPrivacyNotice()">Privacy Notice</button>
+
+<div id="privacyModal" class="privacy-modal">
+  <div class="privacy-content">
+    <h3>Privacy Notice</h3>
+
+    <p>
+      FishMetrics does not use tracking cookies or advertising trackers.
+    </p>
+
+    <p>
+      You can delete all locally stored data at any time using the button below.
+    </p>
+
+    <button onclick="clearFishMetricsData()">Clear All Local Data</button>
+
+    <p class="privacy-footnote">
+      GDPR compliance: FishMetrics v1.3 – local-only data storage.
+    </p>
+
+    <button class="close-btn" onclick="closePrivacyNotice()">Close</button>
+  </div>
+</div>
 
 </body>
 </html>

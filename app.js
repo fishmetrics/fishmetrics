@@ -431,9 +431,24 @@ const pct4El = document.getElementById("pct4");
 const pct5El = document.getElementById("pct5");
 const bestMapEl = document.getElementById("bestMap");
 
+
+
+function initIncludeLegendaryToggle(){
+  const el = document.getElementById("includeLegendaryToggle");
+  if(!el) return;
+  el.checked = !!includeLegendaryDashboard;
+  el.addEventListener("change", ()=>{
+    includeLegendaryDashboard = el.checked;
+    localStorage.setItem("includeLegendaryDashboard", JSON.stringify(includeLegendaryDashboard));
+    updateDashboard();
+  });
+}
+
 // ---- Dashboard slicers (left panel) ----
 // These slicers affect ONLY the Dashboard charts (not other tabs, not the records table).
 let dashboardLocation = "__ALL__"; // "__ALL__" or a specific location
+// Dashboard-only: include/exclude Legendary in KPIs + dashboard charts
+let includeLegendaryDashboard = JSON.parse(localStorage.getItem("includeLegendaryDashboard") ?? "true");
 let dashboardCategories = new Set(CATEGORY_ORDER); // multi-select
 
 function updateScoreRangesLocation(){
@@ -1807,7 +1822,8 @@ brokenXAxisBreak);
   });
 }
 
-function computeAggregates(records){
+function computeAggregates(records, opts = {}){
+  const { includeLegendary = true } = opts;
   const recs = records || recordsByLocation || {};
 
   const byLoc = {};
@@ -1824,6 +1840,7 @@ function computeAggregates(records){
     };
 
     for (const fish of LOCATIONS[loc]){
+      if(!includeLegendary && fish.category === 'Legendary') continue;
       const raw = recs?.[loc]?.[fish.name];
       const w = parseAndClampRecordLbs(raw, fish);
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
@@ -1843,7 +1860,8 @@ function computeAggregates(records){
   return { byLoc, allFish };
 }
 
-function computeDashboardAggregates(records){
+function computeDashboardAggregates(records, opts = {}){
+  const { includeLegendary = true } = opts;
   const recs = records || recordsByLocation || {};
   const locsAll = getLocationList();
   const locs = (dashboardLocation && dashboardLocation !== '__ALL__' && LOCATIONS[dashboardLocation])
@@ -1864,6 +1882,7 @@ function computeDashboardAggregates(records){
 
     for (const fish of (LOCATIONS[loc] || [])){
       if(!dashboardCategories.has(fish.category)) continue;
+      if(!includeLegendary && fish.category === 'Legendary') continue;
       const raw = recs?.[loc]?.[fish.name];
       let w = parseUserWeightToLbs(raw);
       if(weightUnit === 'kgs' && tinyFishKgAcceptsDisplayed(raw, fish)){
@@ -1921,11 +1940,13 @@ function getEffectiveRecords(){
 function updateDashboard(){
   const effectiveRecords = getEffectiveRecords();
   const activeView = document.querySelector('.tab-view.active')?.id;
-  const { byLoc, allFish } = computeAggregates(effectiveRecords);
+  const { byLoc: byLocAll, allFish } = computeAggregates(effectiveRecords);
+  const { byLoc: byLocKPI } = computeAggregates(effectiveRecords, { includeLegendary: includeLegendaryDashboard });
   const locs = getLocationList();
+  const byLoc = byLocAll;
 
   // Dashboard charts use slicers (location + rarity). Other tabs ignore slicers.
-  const { byLoc: dashByLoc, locs: dashLocs } = computeDashboardAggregates(effectiveRecords);
+  const { byLoc: dashByLoc, locs: dashLocs } = computeDashboardAggregates(effectiveRecords, { includeLegendary: includeLegendaryDashboard });
 
   // Precompute commonly used arrays (Dashboard charts)
   const pointsCommon = dashLocs.map(l=>dashByLoc[l].pointsByCat.Common);
@@ -1942,11 +1963,11 @@ function updateDashboard(){
   const locSorted = [...dashLocs].sort((a,b)=>dashByLoc[b].totalPoints - dashByLoc[a].totalPoints);
 
   // ---- KPIs FIRST (so a chart error can't block them) ----
-  const totalPoints = locs.reduce((s,l)=>s+byLoc[l].totalPoints,0);
-  const totalStars = locs.reduce((s,l)=>s+byLoc[l].totalStars,0);
-  const totalCaught = locs.reduce((s,l)=>s+byLoc[l].caught,0);
-  const star4 = locs.reduce((s,l)=>s+byLoc[l].starCounts[3],0);
-  const star5 = locs.reduce((s,l)=>s+byLoc[l].starCounts[4],0);
+  const totalPoints = locs.reduce((s,l)=>s+(byLocKPI[l]?.totalPoints||0),0);
+  const totalStars = locs.reduce((s,l)=>s+(byLocKPI[l]?.totalStars||0),0);
+  const totalCaught = locs.reduce((s,l)=>s+(byLocKPI[l]?.caught||0),0);
+  const star4 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[3]||0),0);
+  const star5 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[4]||0),0);
 
   if(totalPointsEl) totalPointsEl.textContent = fmtNumber(totalPoints);
 
@@ -2027,7 +2048,7 @@ function updateDashboard(){
     pointsByRarityChart.data.datasets[0].hidden = !dashboardCategories.has('Common');
     pointsByRarityChart.data.datasets[1].hidden = !dashboardCategories.has('Rare');
     pointsByRarityChart.data.datasets[2].hidden = !dashboardCategories.has('Epic');
-    pointsByRarityChart.data.datasets[3].hidden = !dashboardCategories.has('Legendary');
+    pointsByRarityChart.data.datasets[3].hidden = (!includeLegendaryDashboard) || !dashboardCategories.has('Legendary');
     safeUpdate(pointsByRarityChart);
   }
 
@@ -2040,7 +2061,7 @@ function updateDashboard(){
     starsByRarityChart.data.datasets[0].hidden = !dashboardCategories.has('Common');
     starsByRarityChart.data.datasets[1].hidden = !dashboardCategories.has('Rare');
     starsByRarityChart.data.datasets[2].hidden = !dashboardCategories.has('Epic');
-    starsByRarityChart.data.datasets[3].hidden = !dashboardCategories.has('Legendary');
+    starsByRarityChart.data.datasets[3].hidden = (!includeLegendaryDashboard) || !dashboardCategories.has('Legendary');
     safeUpdate(starsByRarityChart);
   }
 
@@ -2337,6 +2358,7 @@ async function initApp(){
   updateRecordsUnitLabel();
   buildLocationButtons();
   setupRaritySlicers();
+  initIncludeLegendaryToggle();
   makeCharts();
   locationSelect.onchange = renderTable;
   renderTable();
@@ -2938,4 +2960,23 @@ function setupBackupRestoreUI(){
       restoreFromFile(file);
     });
   }
+}
+
+
+// GDPR: Clear all local FishMetrics data
+function clearFishMetricsData() {
+  if (confirm("This will permanently delete all FishMetrics data on this device. Continue?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+
+// Privacy modal handlers
+function openPrivacyNotice() {
+  document.getElementById("privacyModal").style.display = "flex";
+}
+
+function closePrivacyNotice() {
+  document.getElementById("privacyModal").style.display = "none";
 }

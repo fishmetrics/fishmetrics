@@ -1,0 +1,6 @@
+CSS-only patch:
+- Windows select dropdown option readability fix (dark text on white).
+- Log Records table: target actual table (.table-scroll > table) and keep fish name + OOS badge on one line by narrowing Location/Category columns.
+
+- Fix JS syntax error in Season title swap (extra brace before else)
+- Fix app.html icon filenames (icon-192.png/icon-512.png) and remove missing manifest link

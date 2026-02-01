@@ -222,6 +222,72 @@ h1{
   color: #ffd84d !important;
 }
 
+
+.btnVip{
+  background: #39ff14 !important; /* toxic green */
+  color: #0b0b0b !important;
+  border: 1px solid rgba(0,0,0,.15);
+  box-shadow: 0 10px 24px rgba(57,255,20,.18);
+}
+,
+.btnVip:hover{
+  filter: none;
+}
+.btnVip:active{
+  filter: none;
+}
+
+.vip-modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 9999;
+}
+.vip-modal[aria-hidden="false"]{ display: block; }
+
+.vip-modal-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+}
+
+.vip-modal-card{
+  position: relative;
+  margin: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 280px;
+  background: #ffffff;
+  color: #111;
+  border-radius: 14px;
+  padding: 28px 24px 22px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0,0,0,.35);
+}
+
+.vip-modal-text{
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.vip-modal-close{
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.btn:focus,
+.btnVip:focus,
+.btn:focus-visible,
+.btnVip:focus-visible{
+  outline: none;
+  box-shadow: none;
+}
+
 </style>
 </head>
 <body>
@@ -239,7 +305,8 @@ h1{
       <p class="hook">Track, compare, and overanalyze your CotD fishing career.</p>
 
       <div class="ctaRow">
-        <a class="btn" href="app.html" aria-label="Enter FishMetrics">Enter</a>
+        <a class="btn" href="app.html" aria-label="Enter FishMetrics">Enter Main</a>
+        <a class="btn btnVip" href="#" id="enterVipBtn" aria-label="Enter VIP">Enter VIP</a>
       </div>
 
       </div>
@@ -247,5 +314,59 @@ h1{
 
     
   </div>
+
+<script>
+  (function(){
+    const vip = document.getElementById('enterVipBtn');
+    if(vip){
+      vip.addEventListener('click', function(){
+        
+      });
+    }
+  })();
+</script>
+
+<div id="vipModal" class="vip-modal" aria-hidden="true">
+  <div class="vip-modal-backdrop"></div>
+  <div class="vip-modal-card">
+    <div class="vip-modal-text">Patience . . .</div>
+    <button class="vip-modal-close" aria-label="Close">OK</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const btn = document.getElementById('enterVipBtn');
+  const modal = document.getElementById('vipModal');
+  const closeBtn = modal ? modal.querySelector('.vip-modal-close') : null;
+
+  function openModal(){
+    if(!modal) return;
+    modal.setAttribute('aria-hidden','false');
+    document.body.classList.add('vip-modal-open');
+    closeBtn && closeBtn.focus();
+  }
+
+  function closeModal(){
+    if(!modal) return;
+    modal.setAttribute('aria-hidden','true');
+    document.body.classList.remove('vip-modal-open');
+  }
+
+  if(btn){
+    btn.addEventListener('click', function(e){ e.preventDefault(); openModal(); });
+    btn.addEventListener('mousedown', e => e.preventDefault());
+  }
+  if(closeBtn){
+    closeBtn.addEventListener('click', closeModal);
+  }
+  if(modal){
+    modal.addEventListener('click', e => {
+      if(e.target.classList.contains('vip-modal-backdrop')) closeModal();
+    });
+  }
+})();
+</script>
 </body>
+
 </html>

@@ -10,6 +10,13 @@
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&amp;display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
 </head>
 <body>
 <header class="topbar">
@@ -21,7 +28,13 @@
     </div>
     <img alt="FishMetrics logo" class="brand-logo" src="logo.png"/></div>
 
-  <div class="header-menu-wrap">
+  <div class="topbar-controls">
+    <div class="mode-toggle" role="group" aria-label="Mode">
+      <button type="button" id="modeCareerBtn" class="mode-btn active">All-time</button>
+      <button type="button" id="modeSeasonBtn" class="mode-btn">Season</button>
+    </div>
+
+    <div class="header-menu-wrap">
     <button type="button" id="menuBtn" class="menu-btn" aria-label="Share card" title="Share card">
       <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/>
@@ -49,15 +62,19 @@
       <div class="menu-divider" role="separator" aria-hidden="true"></div>
       <button class="menu-item" type="button" role="menuitem" data-share="backup">Export your Fish Tank (JSON)</button>
     </div>
+  </div>
 </div>
 </div>
 </header>
 
 <nav class="top-tabs" aria-label="Primary">
   <button class="tab-btn active" id="tabOverview" type="button" data-view="dashboardView">Dashboard</button>
+  
   <button class="tab-btn" id="tabRecords" type="button" data-view="recordsView">Log Records</button>
   <button class="tab-btn" id="tabMap" type="button" data-view="mapView">Score Ranges</button>
   <button class="tab-btn" id="tabFish" type="button" data-view="fishView">Fish Insights</button>
+  <button class="tab-btn career-only" id="tabCareerTargets" type="button" data-view="careerTargetsView">Career Targets</button>
+  <button class="tab-btn career-only" id="tabFocus" type="button" data-view="focusView">Focus Mode</button>
   <button class="tab-btn" id="tabInstructions" type="button" data-view="instructionsView">Instructions</button>
 </nav>
 
@@ -86,6 +103,20 @@
 <section class="content">
 <div class="tab-view active" id="dashboardView">
 
+<div id="seasonBanner" class="season-banner hidden" role="status" aria-live="polite">
+  <div class="season-banner-left">
+    <div class="season-banner-title" id="seasonBannerTitle">Season Active — Month YYYY</div>
+    <div class="season-banner-sub">Monthly CotD Season • All-time stats unaffected</div>
+
+    <div class="season-progress" id="seasonProgress">
+      <div class="season-progress-label" id="seasonProgressLabel">0/200</div>
+      <div class="season-progress-track" aria-hidden="true">
+        <div class="season-progress-fill" id="seasonProgressFill"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
 <div class="dash-controls" aria-label="Dashboard Controls">
   <label class="toggle">
     <input type="checkbox" id="includeLegendaryToggle">
@@ -136,6 +167,82 @@
 </div>
 
 
+
+<div class="tab-view" id="careerTargetsView">
+  <section class="panel career-targets-panel">
+    <div class="panel-title career-targets-title">
+      <span>Career Targets</span>
+      <div class="career-targets-controls">
+        <div class="career-targets-selector" role="group" aria-label="Career target selector">
+          <button type="button" class="ct-target-btn" data-ct-target="3">3★</button>
+          <button type="button" class="ct-target-btn" data-ct-target="4">4★</button>
+          <button type="button" class="ct-target-btn" data-ct-target="5">5★</button>
+          <button type="button" class="ct-target-btn ct-target-wide" data-ct-target="oos1">OOS next month</button>
+          <button type="button" class="ct-target-btn ct-target-wide" data-ct-target="oos3">OOS ≤ 3 months</button>
+        </div>
+<div class="career-targets-sort-toggle" role="group" aria-label="Career target sort">
+          <span class="ct-sort-label" data-mode="closest" tabindex="0" role="button">Closest to target</span>
+          <label class="ct-switch" title="Toggle sort mode">
+            <input type="checkbox" id="ctSortToggle" aria-label="Toggle sort mode (closest to target / biggest climb)">
+            <span class="ct-slider"></span>
+          </label>
+          <span class="ct-sort-label" data-mode="climb" tabindex="0" role="button">Biggest climb</span>
+        </div>
+</div>
+    </div>
+
+    <div class="career-targets-sub"><span id="careerTargetsSubLabel">All-time best stars • In-season this month</span> • Sorted by <span id="careerTargetsSortLabel">closest to target</span></div>
+
+    <div id="careerTargetsPanels" class="career-targets-panels" aria-live="polite"></div>
+  </section>
+</div>
+
+
+<div class="tab-view" id="focusView">
+  <section class="panel">
+    <div class="panel-title">Focus Mode</div>
+
+    <div class="fm-helptext" id="focusDesc" class="fm-helptext" style="margin-top:10px; line-height:1.45;">
+      Focus helps you pick up to five fish and see how close each one is to its next milestone. Use it to decide what to chase next and where the biggest point gains are.
+    </div>
+
+    <div class="focus-controls" style="margin-top:12px;">
+      <label class="focus-field">
+        <span class="focus-label">Location</span>
+        <select id="focusLocationSelect" class="focus-select" aria-label="Focus location"></select>
+      </label>
+
+      <label class="focus-field">
+        <span class="focus-label">Category</span>
+        <select id="focusCategorySelect" class="focus-select" aria-label="Focus category" disabled></select>
+      </label>
+
+      <label class="focus-field">
+        <span class="focus-label">Fish</span>
+        <select id="focusFishSelect" class="focus-select" aria-label="Focus fish" disabled></select>
+      </label>
+    </div>
+
+    <div class="fm-helptext" id="focusHint" class="fm-helptext" style="margin-top:10px; line-height:1.45;">
+      Pick a location to begin.
+    </div>
+
+    <div class="focus-actions" style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+      <button id="focusAddBtn" class="focus-add-btn" type="button" style="display:none;" disabled>Add</button>
+    </div>
+
+    <div id="focusListEmpty" class="fm-helptext" style="margin-top:10px; display:none;">
+      No focus fish yet. Add one above.
+    </div>
+    <div id="focusList" class="focus-list" style="margin-top:10px;"></div>
+
+    <div id="focusGapPanel" class="focus-gap-panel" style="margin-top:14px;"></div>
+
+  </section>
+</div>
+</div>
+
+
 <div class="tab-view" id="fishView">
   <section class="grid">
     <div class="panel">
@@ -149,17 +256,17 @@
 </div>
 
     <div class="panel">
-      <div class="panel-title">The Elite Epics</div>
+      <div class="panel-title" id="eliteEpicsTitle">The Elite Epics</div>
       <canvas id="eliteEpicsChart"></canvas>
     </div>
 
     <div class="panel">
-      <div class="panel-title">The Short-Lived Specials</div>
+      <div class="panel-title" id="shortLivedTitle">The Short-Lived Specials</div>
       <canvas id="shortLivedEpicsChart"></canvas>
     </div>
 
     <div class="panel">
-      <div class="panel-title">The Invisibles</div>
+      <div class="panel-title" id="invisiblesTitle">The Invisibles</div>
       <canvas id="invisiblesChart"></canvas>
     </div>
 
@@ -176,20 +283,20 @@
   <section class="grid">
 
     <div class="panel">
-      <div class="panel-title">Common Points Range</div>
+      <div class="panel-title">Common Points Range <span class="oos-sub">(OOS catches not included)</span></div>
       <canvas id="commonDumbbellChart"></canvas>
     </div>
     <div class="panel">
-      <div class="panel-title">Rare Points Range</div>
+      <div class="panel-title">Rare Points Range <span class="oos-sub">(OOS catches not included)</span></div>
       <canvas id="rareDumbbellChart"></canvas>
     </div>
     <div class="panel">
-      <div class="panel-title">Epic Points Range</div>
+      <div class="panel-title">Epic Points Range <span class="oos-sub">(OOS catches not included)</span></div>
       <canvas id="epicDumbbellChart"></canvas>
     </div>
   
     <div class="panel">
-      <div class="panel-title">Points Range by Type</div>
+      <div class="panel-title">Points Range by Type <span class="oos-sub">(OOS catches not included)</span></div>
       <canvas id="typeDumbbellChart"></canvas>
     </div>
 </section>
@@ -198,14 +305,15 @@
 
 <div class="tab-view" id="instructionsView">
   <section class="panel">
-    <div class="panel-title">Instructions</div>
+    <div class="panel-title">Instructions
+  </div>
     <div class="instructions-text" style="line-height:1.6">
 
       <p class="ack-wrapper">
         <span class="instr-text">
           <strong>Welcome to FishMetrics.</strong>
           First things first: this isn't a scientific measure of any fisherperson's skills, so shouldn't be taken too seriously.
-          If you like playing with numbers like I do, keeping tabs on your CotD fishing career, or casually comparing stats
+          If you like playing with numbers like I do, keeping tabs on your CotD fishing all-time, or casually comparing stats
           with friends and clanmates, FishMetrics is for you.
            Enjoy!
         </span>
@@ -213,11 +321,13 @@
 
       <p class="ack-wrapper"><strong>How to Use FishMetrics</strong><br>
         <span class="instr-text">
-          1) Go to <span class="tab-ref">Log Records</span> to enter fish weights for each location.<br>
+          1) Go to <span class="tab-ref">Log Records</span> to enter fish weights.<br>
           2) <span class="tab-ref">Dashboard</span> shows your overall progress and KPIs.<br>
-          3) Use <span class="tab-ref">Score Ranges</span> and <span class="tab-ref">Fish Insights</span> to explore performance by map and by fish.<br>
-          4) Use the sliders on <span class="tab-ref">Dashboard</span> to filter and explore your stats.<br>
-          5) Use the share icon (top right) to download and share scorecards for each location.
+          3) Use the sliders on <span class="tab-ref">Dashboard</span> to filter and explore your stats.<br>
+          4) Explore performance by map and by fish using <span class="tab-ref">Score Ranges</span> and <span class="tab-ref">Fish Insights</span>.<br>
+          
+          5) <span class="tab-ref">Career Targets</span> and <span class="tab-ref">Focus Mode</span> help prioritize fish sets to improve stats.<br>
+          6) Use the share icon (top right) to download and share scorecards.
           </span>
       </p>
 
@@ -240,10 +350,17 @@
         </div>
       </div>
 
-      <hr class="instr-divider">
+      <p class="ack-wrapper"><strong>Season Archiving</strong><br>
+        <span class="instr-text">
+          Seasons archive automatically when the calendar month changes.<br>
+          Your previous season information is preserved for reference.
+        </span>
+      </p>
 
-      <p class="ack-wrapper"><span class="ack-heading">Acknowledgements</span><br>
-        <span class="ack-text">
+<hr class="instr-divider">
+
+<p class="ack-wrapper"><span class="ack-heading"><strong>Acknowledgements</strong></span></p>
+<span class="ack-text">
           A huge thank you to everyone — my super awesome clanmates at
           <a class="ack-discord" href="https://discord.gg/Dp3tk2aQqb" target="_blank" rel="noopener" title="Visit us on Discord">
             <img src="carp_diem_logo.png" alt="Carp Diem" class="ack-logo">
@@ -255,8 +372,14 @@
         </span>
       </p>
 
-    </div>
+    
+      <hr style="margin:14px 0; opacity:0.25;">
+      <p style="margin:0 0 6px 0;"><strong>
+      </p>
+</div>
   </section>
+  <div class="fm-instructions-footer">© 2026 FishMetrics — an independent personal project to help anglers track and improve their catches.</div>
+
 </div>
 
 <div class="tab-view" id="recordsView">
@@ -299,14 +422,25 @@
 <script src="app.js"></script>
 
 <footer class="app-footer">
-  <a class="contact-btn" href="mailto:fishyloni@gmail.com">CONTACT</a>
-
-  <div class="version-micro">v1.3</div>
+  <div class="footer-left">
+    <button class="privacy-btn footer-meta-btn" onclick="openPrivacyNotice()" aria-label="Privacy Notice">
+      <span class="footer-icon" aria-hidden="true">🔒</span>
+      <span class="footer-label">Privacy Notice</span>
+    </button>
+  </div>
+  <div class="footer-center">
+    <a class="contact-btn" href="mailto:fishyloni@gmail.com" aria-label="Contact">
+      <span class="footer-icon" aria-hidden="true">✉️</span>
+      <span class="footer-label">Contact</span>
+    </a>
+  </div>
+  <div class="footer-right">
+    <button class="version-btn footer-meta-btn" onclick="openReleaseNotes()" aria-label="Version and release notes">
+      <span class="footer-icon" aria-hidden="true">ⓘ</span>
+      <span class="footer-label">v1.4.4</span>
+    </button>
+  </div>
 </footer>
-
-
-<hr class="privacy-divider">
-<button class="privacy-btn" onclick="openPrivacyNotice()">Privacy Notice</button>
 
 <div id="privacyModal" class="privacy-modal">
   <div class="privacy-content">
@@ -323,12 +457,73 @@
     <button onclick="clearFishMetricsData()">Clear All Local Data</button>
 
     <p class="privacy-footnote">
-      GDPR compliance: FishMetrics v1.3 – local-only data storage.
+      GDPR compliance: FishMetrics v1.4.4 – local-only data storage.
     </p>
 
     <button class="close-btn" onclick="closePrivacyNotice()">Close</button>
   </div>
 </div>
+
+<div id="releaseNotesModal" class="privacy-modal">
+  <div class="privacy-content">
+    <h3>FishMetrics v1.4.4</h3>
+
+    <ul class="release-notes">
+      <li>Marina fish added</li>
+      <li>Season mode added</li>
+      <li>Career targets added</li>
+      <li>Focus Mode added</li>
+      <li>Minor UI changes</li>
+    </ul>
+
+    <button class="close-btn" onclick="closeReleaseNotes()">Close</button>
+  </div>
+</div>
+
+
+  <!-- PB confirm modal -->
+  <div class="modal-backdrop" id="pbConfirmBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pbConfirmTitle">
+      <div class="modal-title" id="pbConfirmTitle">New All-time PB detected</div>
+      <div class="modal-body" id="pbConfirmBody">
+        This season catch beats your All-time best. Update All-time PB?
+      </div>
+      <label class="modal-check">
+        <input type="checkbox" id="pbConfirmAlways">
+        Always update All-time PBs from Season
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="pbConfirmNo">Keep Season only</button>
+        <button type="button" class="btn-primary" id="pbConfirmYes">Update PB</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Restore confirm modal (custom, avoids browser file:// header) -->
+  <div class="modal-backdrop" id="restoreConfirmBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="restoreConfirmTitle">
+      <div class="modal-title" id="restoreConfirmTitle">Backup detected</div>
+      <div class="modal-body" id="restoreConfirmBody"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="restoreConfirmCancel">Cancel</button>
+        <button type="button" class="btn-primary" id="restoreConfirmOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Clear data confirm modal (custom, avoids browser file:// header) -->
+  <div class="modal-backdrop" id="clearConfirmBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clearConfirmTitle">
+      <div class="modal-title" id="clearConfirmTitle">Clear all data?</div>
+      <div class="modal-body" id="clearConfirmBody"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="clearConfirmCancel">Cancel</button>
+        <button type="button" class="btn-primary" id="clearConfirmOk">Clear</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

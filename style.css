@@ -386,6 +386,29 @@ body{
   .ct-sort-label{
     font-size: 11px;
   }
+
+
+  /* Mobile: keep stars on the same line and move map to its own row */
+  .ct-row{
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "fish stars"
+      "map  stars";
+    row-gap:4px;
+  }
+  .ct-row .ct-fish{ grid-area: fish; }
+  /* Mobile: reduce fish name size + clamp to 2 lines, then ellipsis */
+  .ct-row .ct-fish{
+    font-size:11px;
+    line-height:1.15;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .ct-row .ct-map{ grid-area: map; font-size:11px; }
+  .ct-row .ct-stars{ grid-area: stars; font-size:11px; align-self:center; }
 }
 
 .career-targets-sub{
@@ -437,13 +460,36 @@ body{
 
 .ct-row{
   display:grid;
-  grid-template-columns: 1.35fr 1fr 0.75fr;
+  /* Use minmax(0, …) so long fish names don't force the whole grid wider than the viewport */
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) auto;
   gap:10px;
   align-items:center;
   padding:8px 10px;
   border-radius:16px;
   border:1px solid rgba(255,255,255,.08);
   background: rgba(0,0,0,0.10);
+}
+
+/* Allow text to shrink/wrap inside grid cells (prevents mobile stretching) */
+.ct-row .ct-fish,
+.ct-row .ct-map{ min-width:0; }
+
+.ct-row .ct-fish{
+  font-weight:700;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  line-height:1.15;
+}
+
+.ct-row .ct-map{ color: rgba(255,255,255,0.75); font-size:12px; }
+
+.ct-row .ct-stars{
+  text-align:right;
+  font-size:12px;
+  letter-spacing:.2px;
+  white-space:nowrap;
+  justify-self:end;
+  line-height:1;
 }
 
 .ct-row .ct-fish{ font-weight:700; }

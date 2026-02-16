@@ -116,6 +116,13 @@
     </div>
 
   </div>
+<div class="season-banner-right">
+  <label class="toggle">
+    <input type="checkbox" id="includeOOSDashboardToggle">
+    <span class="slider"></span>
+    <span class="toggle-label">Include OOS</span>
+  </label>
+</div>
 </div>
 <div class="dash-controls" aria-label="Dashboard Controls">
   <label class="toggle">
@@ -142,12 +149,21 @@
 <div class="kpi-label">5 Star Catches</div>
 <div class="kpi-value" id="pct5">0.0%</div>
 </div>
-<div class="kpi">
+<div class="kpi best-map">
 <div class="kpi-label">Best Map</div>
+<div class="kpi-subnote">Balanced across rarities</div>
 <div class="kpi-value" id="bestMap">—</div>
 </div>
 </section>
+<section class="panel star-dist-panel" aria-label="Star distribution">
+  <div class="panel-title">Star Distribution (<span id="starDistRange">2–5★</span>)</div>
+  <div class="star-dist-wrap">
+    <div id="starDistributionBar" class="star-dist-bar" role="img" aria-label="Distribution of 2 to 5 star catches"></div>
+    <div id="starDistributionLegend" class="star-dist-legend" aria-hidden="true"></div>
+  </div>
+</section>
 <section class="grid"><div class="panel">
+
 <div class="panel-title">Total Points / Rarity</div>
 <canvas id="pointsByRarityChart"></canvas>
 </div>
@@ -180,6 +196,7 @@
           <button type="button" class="ct-target-btn ct-target-wide" data-ct-target="oos1">OOS next month</button>
           <button type="button" class="ct-target-btn ct-target-wide" data-ct-target="oos3">OOS ≤ 3 months</button>
         </div>
+<div class="ct-sort-row">
 <div class="career-targets-sort-toggle" role="group" aria-label="Career target sort">
           <span class="ct-sort-label" data-mode="closest" tabindex="0" role="button">Closest to target</span>
           <label class="ct-switch" title="Toggle sort mode">
@@ -188,6 +205,16 @@
           </label>
           <span class="ct-sort-label" data-mode="climb" tabindex="0" role="button">Biggest climb</span>
         </div>
+
+        <div class="ct-secondary-sort" id="ctSecondarySortWrap" style="display:none;">
+          <label class="ct-secondary-sort-label" for="ctSecondarySortSelect">Sort:</label>
+          <select id="ctSecondarySortSelect" aria-label="Secondary sort">
+            <option value="stars">Stars</option>
+            <option value="oos">OOS priority</option>
+          </select>
+        </div>
+      </div>
+
 </div>
     </div>
 
@@ -203,7 +230,7 @@
     <div class="panel-title">Focus Mode</div>
 
     <div class="fm-helptext" id="focusDesc" class="fm-helptext" style="margin-top:10px; line-height:1.45;">
-      Focus helps you pick up to five fish and see how close each one is to its next milestone. Use it to decide what to chase next and where the biggest point gains are.
+      Focus Mode helps you pick up to ten fish and see how close each one is to its next milestone. Find where the biggest point gains are and decide what to chase next.
     </div>
 
     <div class="focus-controls" style="margin-top:12px;">
@@ -313,7 +340,7 @@
         <span class="instr-text">
           <strong>Welcome to FishMetrics.</strong>
           First things first: this isn't a scientific measure of any fisherperson's skills, so shouldn't be taken too seriously.
-          If you like playing with numbers like I do, keeping tabs on your CotD fishing all-time, or casually comparing stats
+          If you like playing with numbers like I do, keeping tabs on your CotD fishing career, or casually comparing stats
           with friends and clanmates, FishMetrics is for you.
            Enjoy!
         </span>
@@ -331,7 +358,42 @@
           </span>
       </p>
 
-      <p class="ack-wrapper"><strong>Data &amp; Backups</strong><br>
+      
+
+      <div class="light-divider"></div>
+
+
+      
+
+      <p class="ack-wrapper"><strong>Preferences</strong><br>
+        <div class="instr-text">
+<div class="pref-panel pb-policy-panel">
+  <div class="pref-note" style="margin-bottom:10px;">Choose how FishMetrics handles All-time PB updates when a Season catch beats your best.</div>
+
+<div class="pb-policy-options" role="radiogroup" aria-label="PB update preference">
+<label class="pref-option">
+  <input type="radio" name="pbPolicyPref" id="prefPbAsk" value="ask">
+  Ask every time
+</label>
+
+    <label class="pref-option">
+      <input type="radio" name="pbPolicyPref" id="prefPbAlways" value="always">
+      Always update PB
+    </label>
+
+    <label class="pref-option">
+      <input type="radio" name="pbPolicyPref" id="prefPbNever" value="never">
+      Never update PB
+    </label>
+  </div>
+
+  
+</div>
+</div>
+      </p>
+<div class="light-divider"></div>
+
+<p class="ack-wrapper"><strong>Data &amp; Backups</strong><br>
         <span class="instr-text">
           Want to move FishMetrics to another device (or just keep a safety copy)?
         </span>
@@ -393,6 +455,14 @@ Not affiliated with any company or organization of a similar name.</div>
     </div>
   </div>
 
+
+<div class="fish-search-row" aria-label="Fish search">
+  <div class="fish-search-box">
+    <input type="text" id="fishSearchInput" placeholder="Search fish..." autocomplete="off" />
+    <button type="button" id="fishSearchClearBtn" class="fish-search-clear-btn" aria-label="Clear search">×</button>
+  </div>
+</div>
+
 <section class="table-wrap">
 <div class="table-head">
 <div class="table-title">Log Records</div>
@@ -439,7 +509,7 @@ Not affiliated with any company or organization of a similar name.</div>
   <div class="footer-right">
     <button class="version-btn footer-meta-btn" onclick="openReleaseNotes()" aria-label="Version and release notes">
       <span class="footer-icon" aria-hidden="true">ⓘ</span>
-      <span class="footer-label">v1.4.4</span>
+      <span class="footer-label">v1.4.5</span>
     </button>
   </div>
 </footer>
@@ -459,7 +529,7 @@ Not affiliated with any company or organization of a similar name.</div>
     <button onclick="clearFishMetricsData()">Clear All Local Data</button>
 
     <p class="privacy-footnote">
-      GDPR compliance: FishMetrics v1.4.4 – local-only data storage.
+      GDPR compliance: FishMetrics v1.4.5 – local-only data storage.
     </p>
 
     <button class="close-btn" onclick="closePrivacyNotice()">Close</button>
@@ -468,15 +538,25 @@ Not affiliated with any company or organization of a similar name.</div>
 
 <div id="releaseNotesModal" class="privacy-modal">
   <div class="privacy-content">
-    <h3>FishMetrics v1.4.4</h3>
+<h3>FishMetrics v1.4.5</h3>
 
-    <ul class="release-notes">
-      <li>Marina fish added</li>
-      <li>Season view added</li>
-      <li>Career Targets added</li>
-      <li>Focus Mode added</li>
-      <li>Minor UI changes</li>
-    </ul>
+<ul class="release-notes">
+  <li>Added star distribution</li>
+  <li>New OOS toggle in Season view</li>
+  <li>Season Log Records match in-game fish order</li>
+  <li>Minor UI changes and bug fixes</li>
+  <li>Backups imported from older versions may see minor point changes due to calculation improvements</li>
+</ul>
+
+<h3>FishMetrics v1.4.4</h3>
+
+<ul class="release-notes">
+  <li>Marina fish added</li>
+  <li>Season view added</li>
+  <li>Career Targets added</li>
+  <li>Focus Mode added</li>
+  <li>Minor UI changes</li>
+</ul>
 
     <button class="close-btn" onclick="closeReleaseNotes()">Close</button>
   </div>
@@ -490,10 +570,17 @@ Not affiliated with any company or organization of a similar name.</div>
       <div class="modal-body" id="pbConfirmBody">
         This season catch beats your All-time best. Update All-time PB?
       </div>
-      <label class="modal-check">
-        <input type="checkbox" id="pbConfirmAlways">
-        Always update All-time PBs from Season
-      </label>
+      <div class="modal-checks pb-policy-options" role="radiogroup" aria-label="PB update preference">
+  <label class="modal-check">
+    <input type="radio" name="pbPolicyModal" id="pbModalAlways" value="always">
+    Always update PB
+  </label>
+  <label class="modal-check">
+    <input type="radio" name="pbPolicyModal" id="pbModalNever" value="never">
+    Never update PB
+  </label>
+</div>
+      <div class="modal-note">You can change this later in Preferences.</div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="pbConfirmNo">Keep Season only</button>
         <button type="button" class="btn-primary" id="pbConfirmYes">Update PB</button>

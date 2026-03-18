@@ -4,3 +4,5 @@ CSS-only patch:
 
 - Fix JS syntax error in Season title swap (extra brace before else)
 - Fix app.html icon filenames (icon-192.png/icon-512.png) and remove missing manifest link
+
+[2026-02-19 23:07 UTC] Fix VIP Bestiary Complete donut formula: use active locations (LOCATIONS_VIP) and filter allowed fish keys.

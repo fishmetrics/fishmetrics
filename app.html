@@ -21,9 +21,16 @@
 <body>
 <header class="topbar">
 <div class="topbar-inner">
+<button type="button" id="homeBtn" class="menu-btn home-left" aria-label="Home" title="Home">
+  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 11.5L12 3l9 8.5"/>
+    <path d="M5 10.5V21h14V10.5"/>
+  </svg>
+</button>
+
 <div class="brand-group">
     <div class="brand">
-      <div class="brand-title-row"><div class="brand-title">FISHMETRICS</div></div>
+      <div class="brand-title-row"><div class="vip-badge">VIP</div><div class="brand-title">FISHMETRICS</div></div>
       <div class="brand-sub">CREATURES OF THE DEEP</div>
     </div>
     <img alt="FishMetrics logo" class="brand-logo" src="logo.png"/></div>
@@ -49,15 +56,7 @@
 
       <div class="menu-divider" role="separator" aria-hidden="true"></div>
       <div class="menu-section" aria-hidden="true">By Location</div>
-
-      <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Paradise Island">Paradise Island</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Great Lakes">Great Lakes</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Costa Rica">Costa Rica</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Alaska">Alaska</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Australia">Australia</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Scotland">Scotland</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Thailand">Thailand</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="location" data-loc="Amazon">Amazon</button>
+<div id="dynamicShareLocations"></div>
 
       <div class="menu-divider" role="separator" aria-hidden="true"></div>
       <button class="menu-item" type="button" role="menuitem" data-share="backup">Export your Fish Tank (JSON)</button>
@@ -81,6 +80,7 @@
 <main class="layout">
 <aside class="sidebar">
 <div class="sidebar-section">
+<div class="pane-mode-switch" role="group" aria-label="Main or VIP mode"><button type="button" id="modeMainBtn" class="mode-btn">Main</button><button type="button" id="modeVipBtn" class="mode-btn">VIP</button></div>
 <div class="sidebar-title">Locations</div>
 <div aria-label="Locations" class="btn-list" id="locationButtons"></div>
 </div>
@@ -132,22 +132,53 @@
   </label>
 </div>
 
+<section id="companionPanel" class="panel companion-panel">
+  <div id="companionHeader" class="panel-title companion-header">
+    Fishing Guide <span id="companionChevron" class="chevron">▾</span>
+    <button id="companionReset" class="companion-reset" aria-label="Reset position">↺</button>
+    <button id="companionDismiss" class="companion-dismiss" aria-label="Dismiss">✕</button>
+  </div>
+  <div id="companionBody" class="companion-body">
+    <div id="companionWelcome" class="companion-welcome hidden">
+      <div class="welcome-title">Welcome to a great day of fishing.</div>
+      <div class="welcome-sub">Log a few catches to unlock:</div>
+      <ul class="welcome-list">
+        <li>Best point opportunities</li>
+        <li>Near milestone upgrades</li>
+        <li>Seasonal advantages</li>
+        <li>Hidden gains</li>
+      </ul>
+    </div>
+    <div id="companionRows" class="companion-rows">
+      <div class="companion-row"><span class="label">Best Point Opportunity</span><span class="value">—</span></div>
+      <div class="companion-row"><span class="label">Immediate Gains Available</span><span class="value">—</span></div>
+      <div class="companion-row"><span class="label">Seasonal Advantage</span><span class="value">—</span></div>
+      <div class="companion-row"><span class="label">Unclaimed Points</span><span class="value">—</span></div>
+    </div>
+  </div>
+</section>
+
 <section aria-label="Summary" class="kpis">
 <div class="kpi">
 <div class="kpi-label">Average Star Rating</div>
 <div class="kpi-stars" id="avgStars">—</div>
 </div>
+
+
 <div class="kpi">
 <div class="kpi-label">Total Points</div>
 <div class="kpi-value" id="totalPoints">0</div>
+<div class="kpi-stamp" id="badgeStampPoints" aria-hidden="true"></div>
 </div>
 <div class="kpi">
 <div class="kpi-label">4 Star Catches</div>
 <div class="kpi-value" id="pct4">0.0%</div>
+<div class="kpi-stamp" id="badgeStamp4" aria-hidden="true"></div>
 </div>
 <div class="kpi">
 <div class="kpi-label">5 Star Catches</div>
 <div class="kpi-value" id="pct5">0.0%</div>
+<div class="kpi-stamp" id="badgeStamp5" aria-hidden="true"></div>
 </div>
 <div class="kpi best-map">
 <div class="kpi-label">Best Map</div>
@@ -338,11 +369,7 @@
 
       <p class="ack-wrapper">
         <span class="instr-text">
-          <strong>Welcome to FishMetrics.</strong>
-          First things first: this isn't a scientific measure of any fisherperson's skills, so shouldn't be taken too seriously.
-          If you like playing with numbers like I do, keeping tabs on your CotD fishing career, or casually comparing stats
-          with friends and clanmates, FishMetrics is for you.
-           Enjoy!
+          <b>FishMetrics</b> — a companion for players who like to track, plan, and analyze their CotD fishing career. It’s not a scientific skill rating, but a structured way to explore your stats and progression. If you enjoy playing with numbers or comparing stats with friends and clanmates, you’re in the right place.
         </span>
       </p>
 
@@ -421,7 +448,7 @@
 
 <hr class="instr-divider">
 
-<p class="ack-wrapper"><span class="ack-heading"><strong>Acknowledgements</strong></span></p>
+<p class="ack-wrapper"><span class="ack-heading"><strong>Acknowledgements</span></p>
 <span class="ack-text">
           A huge thank you to everyone — my super awesome clanmates at
           <a class="ack-discord" href="https://discord.gg/Dp3tk2aQqb" target="_blank" rel="noopener" title="Visit us on Discord">
@@ -469,8 +496,8 @@ Not affiliated with any company or organization of a similar name.</div>
 <label class="location-select">
             Location:
             <select id="locationSelect"></select>
-<span class="total-fish">Total Fish: <strong id="totalFishCount"></strong></span>
-<span class="total-fish total-fish-all">All Locations: <strong id="totalFishCountAll"></strong></span>
+<span class="total-fish">Total Fish: <strong id="totalFishCount"></span>
+<span class="total-fish total-fish-all">All Locations: <strong id="totalFishCountAll"></span>
 </label>
 </div>
 <div class="table-scroll" aria-label="Records table scroll region">
@@ -509,7 +536,7 @@ Not affiliated with any company or organization of a similar name.</div>
   <div class="footer-right">
     <button class="version-btn footer-meta-btn" onclick="openReleaseNotes()" aria-label="Version and release notes">
       <span class="footer-icon" aria-hidden="true">ⓘ</span>
-      <span class="footer-label">v1.4.5</span>
+      <span class="footer-label">v1.5</span>
     </button>
   </div>
 </footer>
@@ -529,7 +556,7 @@ Not affiliated with any company or organization of a similar name.</div>
     <button onclick="clearFishMetricsData()">Clear All Local Data</button>
 
     <p class="privacy-footnote">
-      GDPR compliance: FishMetrics v1.4.5 – local-only data storage.
+      GDPR compliance: FishMetrics v1.5 – local-only data storage.
     </p>
 
     <button class="close-btn" onclick="closePrivacyNotice()">Close</button>
@@ -538,6 +565,13 @@ Not affiliated with any company or organization of a similar name.</div>
 
 <div id="releaseNotesModal" class="privacy-modal">
   <div class="privacy-content">
+
+<h3>FishMetrics v1.5.0</h3>
+
+<ul class="release-notes">
+  <li>VIP maps added</li>
+</ul>
+
 <h3>FishMetrics v1.4.5</h3>
 
 <ul class="release-notes">
@@ -613,6 +647,11 @@ Not affiliated with any company or organization of a similar name.</div>
       </div>
     </div>
   </div>
+
+
+<div id="companionRestore" style="display:none;" class="companion-restore-fixed" aria-live="polite">
+  Fishing Guide <span id="restoreGuide" class="restore-link">↺ Restore</span>
+</div>
 
 </body>
 </html>

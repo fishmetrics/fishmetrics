@@ -40,6 +40,9 @@
       <button type="button" id="modeCareerBtn" class="mode-btn active">All-time</button>
       <button type="button" id="modeSeasonBtn" class="mode-btn">Season</button>
     </div>
+    <div class="workspace-toggle workspace-single" aria-label="Workspace">
+      <button type="button" id="plannerToggleBtn" class="planner-tag" aria-label="Open planner" aria-controls="plannerDrawer" aria-expanded="false" title="Planner">Planner</button>
+    </div>
 
     <div class="header-menu-wrap">
     <button type="button" id="menuBtn" class="menu-btn" aria-label="Share card" title="Share card">
@@ -65,6 +68,53 @@
 </div>
 </div>
 </header>
+
+<aside id="plannerDrawer" class="planner-drawer" aria-hidden="true" aria-label="Planner panel">
+  <div class="planner-drawer-header">
+    <div>
+      <div class="planner-eyebrow">Strategy Tools</div>
+      <button type="button" id="plannerTitleHomeBtn" class="planner-title planner-title-btn" data-planner-home="1" aria-label="Planner Home" title="Planner Home">Planner Home</button>
+      <div class="planner-sub">Estimate lure costs, plan opportunities, forecast points</div>
+    </div>
+    <button type="button" id="plannerCloseBtn" class="planner-close planner-module-metrics-btn" aria-label="Metrics">Metrics</button>
+  </div>
+
+  <div class="planner-drawer-body">
+    <section class="planner-card planner-card-shell">
+      <div class="planner-list">
+        <button type="button" class="planner-list-item planner-nav-btn" data-planner-view="season">
+          <div class="planner-list-copy">
+            <div class="planner-list-title">Season Planning</div>
+            <div class="planner-list-sub">Forecast seasonal target points by month</div>
+          </div>
+        </button>
+        <button type="button" class="planner-list-item planner-nav-btn" data-planner-view="oos">
+          <div class="planner-list-copy">
+            <div class="planner-list-title">OOS Planning</div>
+            <div class="planner-list-sub">What is at risk right now</div>
+          </div>
+        </button>
+        <button type="button" class="planner-list-item planner-nav-btn" data-planner-view="lure">
+          <div class="planner-list-copy">
+            <div class="planner-list-title">Lure Planning</div>
+            <div class="planner-list-sub">Estimate reachable lure levels and costs</div>
+          </div>
+        </button>
+        <button type="button" class="planner-list-item planner-nav-btn" data-planner-view="lurecalc">
+          <div class="planner-list-copy">
+            <div class="planner-list-title">Lure Cost Calculator</div>
+            <div class="planner-list-sub">Generic lure upgrade cost lookup</div>
+          </div>
+        </button>
+        <button type="button" class="planner-list-item planner-nav-btn" data-planner-view="xp">
+          <div class="planner-list-copy">
+            <div class="planner-list-title">XP Tracker</div>
+            <div class="planner-list-sub">Track progress toward an XP goal</div>
+          </div>
+        </button></div>
+    </section>
+  </div>
+</aside>
 
 <nav class="top-tabs" aria-label="Primary">
   <button class="tab-btn active" id="tabOverview" type="button" data-view="dashboardView">Dashboard</button>
@@ -501,7 +551,7 @@ Not affiliated with any company or organization of a similar name.</div>
 </label>
 </div>
 <div class="table-scroll" aria-label="Records table scroll region">
-<table>
+<table class="records-table" id="recordsTable">
 <thead>
 <tr>
 <th>Rarity</th>
@@ -536,7 +586,7 @@ Not affiliated with any company or organization of a similar name.</div>
   <div class="footer-right">
     <button class="version-btn footer-meta-btn" onclick="openReleaseNotes()" aria-label="Version and release notes">
       <span class="footer-icon" aria-hidden="true">ⓘ</span>
-      <span class="footer-label">v1.5</span>
+      <span class="footer-label">v1.6</span>
     </button>
   </div>
 </footer>
@@ -556,7 +606,7 @@ Not affiliated with any company or organization of a similar name.</div>
     <button onclick="clearFishMetricsData()">Clear All Local Data</button>
 
     <p class="privacy-footnote">
-      GDPR compliance: FishMetrics v1.5 – local-only data storage.
+      GDPR compliance: FishMetrics v1.6 – local-only data storage.
     </p>
 
     <button class="close-btn" onclick="closePrivacyNotice()">Close</button>
@@ -565,6 +615,13 @@ Not affiliated with any company or organization of a similar name.</div>
 
 <div id="releaseNotesModal" class="privacy-modal">
   <div class="privacy-content">
+
+<h3>FishMetrics v1.6.0</h3>
+
+<ul class="release-notes">
+  <li>VIP Petrochemical added</li>
+  <li>Planner added</li>
+</ul>
 
 <h3>FishMetrics v1.5.0</h3>
 

@@ -1,4 +1,4 @@
-const APP_VERSION = "1.6.0";
+const APP_VERSION = "1.7.0";
 
 // === Seasonality (Out-of-Season) Support ===
 // Define which months each fish is IN season for. Months are 1-12.
@@ -440,7 +440,8 @@ const LOCATIONS = {
 const VIP_LOCATION_ORDER = [
   "Chemical Plant",
   "Nuclear Plant",
-  "Petrochemical"
+  "Petrochemical",
+  "Bermuda Triangle"
 ];
 
 // Weights are canonical lbs. Points formula is shared.
@@ -556,6 +557,33 @@ const LOCATIONS_VIP = {
     { name:"Giraffine", category:"Epic", min:1763.7, max:2645.55 },
     { name:"Rhynorid", category:"Epic", min:1763.7, max:7275.25 },
     { name:"Tailtress", category:"Epic", min:440.92, max:881.85 }
+  ],
+  "Bermuda Triangle": [
+    { name:"Diplacanthus", category:"Common", min:2.2, max:6.61 },
+    { name:"Eusthenopteron", category:"Common", min:44.09, max:99.21 },
+    { name:"Fanjingshania", category:"Common", min:2.2, max:4.41 },
+    { name:"Gogonasus", category:"Common", min:22.05, max:41.89 },
+    { name:"Gooloogongia", category:"Common", min:22.05, max:46.3 },
+    { name:"Gyracanthides", category:"Common", min:8.82, max:39.68 },
+    { name:"Haikouichthys", category:"Common", min:2.2, max:4.41 },
+    { name:"Hyneria", category:"Common", min:881.85, max:1322.77 },
+    { name:"Ischnacanthus", category:"Common", min:4.41, max:11.02 },
+    { name:"Latimeria", category:"Common", min:132.28, max:242.51 },
+    { name:"Macropoma", category:"Common", min:4.41, max:13.23 },
+    { name:"Mawsonia", category:"Common", min:661.39, max:1102.31 },
+    { name:"Parexus", category:"Common", min:2.2, max:6.61 },
+    { name:"Protosphyraena", category:"Common", min:198.42, max:771.62 },
+    { name:"Stethacanthus", category:"Common", min:55.12, max:99.21 },
+    { name:"Sword Ray", category:"Common", min:881.85, max:1433 },
+    { name:"Tiktaalik", category:"Common", min:132.28, max:264.55 },
+    { name:"Xenacanthus", category:"Common", min:22.05, max:48.5 },
+    { name:"Great White Shark", category:"Rare", min:881.85, max:4850.17 },
+    { name:"Leedsichthys", category:"Rare", min:55115.56, max:110231.1 },
+    { name:"Splendid Killifish", category:"Rare", min:2.2, max:6.61 },
+    { name:"Dunkleosteus", category:"Rare", min:8818.49, max:13227.74 },
+    { name:"Onchopristis", category:"Epic", min:440.92, max:771.62 },
+    { name:"Helicoprion", category:"Epic", min:220.46, max:2204.62 },
+    { name:"Megalodon", category:"Epic", min:88184.9, max:132277.36 }
   ]
 };
 // Season Log Records should follow the in-game ordering (UI-only).
@@ -574,7 +602,8 @@ const SEASON_GAME_ORDER = {
 ,
   "chemical plant": ["glowfish", "raspberryfish", "wicked carp", "crystal fin", "zombifin", "flatjaw", "spotted windchaser", "glow puffball", "cthulhu carp", "nylonfish", "luminator", "telebass", "long sparker", "rotting deadfish", "phosphorite", "fireborn scales", "burned potfish", "bubblefin", "silvered amelinium", "fish-eye", "teapotfish", "anvilfish", "chupakabrafish", "slimesnail", "wheelreef", "barreltail", "toxic salmon", "anchorscale", "bottlegill", "cantrout", "uranium eel", "bootfish", "flipper sneaker", "graterfin", "mailfish", "toxic puffer", "plant waterer", "gnawfish", "rusty mutang", "biterfish", "zombie genius", "stale deadfish", "stringed guitarfish", "banjoplayer", "cuddlyfish", "bomberfish", "soccerfish", "brainfish", "sawfish", "bonebite", "gasmist swimmer", "guitarfin", "swagfish", "fingered glovefish", "round tubefish", "polish spudfish", "seahorse abomination", "ribbed bonefish", "nightmary"],
   "nuclear plant": ["Oniongill", "Rock'N'Rollkingjaw", "Rug-ball-swimmer", "Irradiatedcutfin", "Geigerfin", "Forknose", "Double Troutot", "Carrotfin", "Knifetail", "Trianglegill", "Bat-eel", "Applegill", "Sausagetail", "Bread'N'Butterjaw", "Bottlefin", "Potatofin", "Bulpgill", "Footsalmon", "Magnetfin", "Yellowsubmarinecod", "Giantbusbass", "Devil Mutanoid"],
-  "petrochemical": ["Olexis", "Shooloop", "Harefin", "Pavonyx", "Moosecarver", "Punkflare", "Grungletide", "Globulett", "Garlite", "Harmonelle", "Swinklet", "Mooline", "Cresthorn", "Cirquelight", "Meliglow", "Balloonflare", "Arakelle", "Hartspike", "Ladybelle", "Taurfin", "Elephara", "Speartide", "Tailtress", "Giraffine", "Rhynorid"]
+  "petrochemical": ["Olexis", "Shooloop", "Harefin", "Pavonyx", "Moosecarver", "Punkflare", "Grungletide", "Globulett", "Garlite", "Harmonelle", "Swinklet", "Mooline", "Cresthorn", "Cirquelight", "Meliglow", "Balloonflare", "Arakelle", "Hartspike", "Ladybelle", "Taurfin", "Elephara", "Speartide", "Tailtress", "Giraffine", "Rhynorid"],
+  "bermuda triangle": ["Haikouichthys", "Xenacanthus", "Protosphyraena", "Mawsonia", "Latimeria", "Macropoma", "Gyracanthides", "Gooloogongia", "Sword Ray", "Ischnacanthus", "Fanjingshania", "Eusthenopteron", "Diplacanthus", "Hyneria", "Gogonasus", "Tiktaalik", "Parexus", "Stethacanthus", "Leedsichthys", "Dunkleosteus", "Great White Shark", "Splendid Killifish", "Helicoprion", "Megalodon", "Onchopristis"]
 };
 
 
@@ -4630,7 +4659,7 @@ async function autoRollSeasonMonthly(){
         const bundle = {
           schemaVersion: "season-archive-bundle-v1",
           exportedAt: (mainSnap && mainSnap.exportedAt) || (vipSnap && vipSnap.exportedAt) || new Date().toISOString(),
-          app: { name: "FishMetrics", version: "v1.6" },
+          app: { name: "FishMetrics", version: "v1.7" },
           month: storedMonth,
           main: mainSnap,
           vip: vipSnap
@@ -4811,7 +4840,7 @@ function _buildSeasonArchiveSnapshot(){
   return {
     schemaVersion: "season-archive-v2",
     exportedAt: now.toISOString(),
-    app: { name: "FishMetrics", version: "v1.6" },
+    app: { name: "FishMetrics", version: "v1.7" },
     season: { seasonId, startedAt, month },
     rules: {
       oosCaps: { Common: 357, Rare: 476, Epic: 595 },
@@ -4919,7 +4948,7 @@ function _buildSeasonArchiveSnapshotFrom(seasonRecordsInput, locationsData, mode
   return {
     schemaVersion: "season-archive-v2",
     exportedAt: now.toISOString(),
-    app: { name: "FishMetrics", version: "v1.6" },
+    app: { name: "FishMetrics", version: "v1.7" },
     season: { seasonId, startedAt, month: safeMonth },
     rules: {
       oosCaps: { Common: 357, Rare: 476, Epic: 595 },
@@ -5924,7 +5953,7 @@ async function downloadBackupJSON(){
 
     const payload = {
       schema: "fm_unified_backup_v1",
-      version: (typeof APP_VERSION !== "undefined" ? APP_VERSION : "1.6.0"),
+      version: (typeof APP_VERSION !== "undefined" ? APP_VERSION : "1.7.0"),
       createdAt: new Date().toISOString(),
       seasonMeta: (function(){ try{ const sid = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null; return sid ? { seasonId: String(sid) } : null; }catch(_){ return null; } })(),
       main: {
@@ -8977,6 +9006,7 @@ Requirement: ${currPct}% ${metricLabel}.`;
     lureCustomSets: [],
     lureSelectedFishKeys: [],
     lureCustomSelectionMode: false,
+    lureRarity: 'ALL',
     currentValues: Object.create(null),
     targetValues: Object.create(null),
     lureCalcFrom: 0,
@@ -9570,6 +9600,10 @@ function getFilteredPlannerRows(){
     }else{
       plannerState.lureActiveSetId = 'ALL';
     }
+  }
+  const rarity = String(plannerState.lureRarity || 'ALL');
+  if(rarity !== 'ALL'){
+    rows = rows.filter((row) => String(row.category || '') === rarity);
   }
   return rows;
 }
@@ -10340,6 +10374,14 @@ function getFilteredPlannerRows(){
               <select id="plannerMapSelect" class="planner-select">${mapOptions.map((opt) => `<option value="${escapeAttr(opt)}" ${plannerState.map === opt ? 'selected' : ''}>${opt === 'ALL' ? (plannerState.scope === 'VIP' ? 'All VIP Maps' : 'All Main Maps') : escapeHtml(opt)}</option>`).join('')}</select>
             </label>
           </div>
+          <div class="planner-control-row planner-control-row-rarity">
+            <div class="planner-rarity-control">
+              <span>Pick a rarity</span>
+              <div class="planner-pill-group planner-rarity-pills" role="group" aria-label="Lure planner rarity">
+                ${['ALL','Common','Rare','Epic','Legendary'].map((rarity) => `<button type="button" class="planner-pill ${String(plannerState.lureRarity || 'ALL') === rarity ? 'active' : ''}" data-planner-rarity="${rarity}">${rarity === 'ALL' ? 'All' : rarity}</button>`).join('')}
+              </div>
+            </div>
+          </div>
           <div class="planner-control-row planner-control-row-search">
             <label class="planner-search-control" for="plannerLureSearchInput">
               <span>Find a fish</span>
@@ -10391,7 +10433,7 @@ function getFilteredPlannerRows(){
           <div class="planner-subtle-copy planner-subtle-copy--center">${isCurrent ? 'Shows your current upgrade position and next steps' : 'Set a target lure level using your Current mode data'}</div>
         </div>
         <div class="planner-table-wrap">
-          <table class="planner-table${plannerState.lureCustomSelectionMode ? ' planner-table--select-mode' : ''}">
+          <table class="planner-table planner-lure-table${plannerState.lureCustomSelectionMode ? ' planner-table--select-mode' : ''}">
             <thead>
               <tr>
                 ${plannerState.lureCustomSelectionMode ? '<th>Select</th>' : ''}
@@ -10821,6 +10863,14 @@ function getFilteredPlannerRows(){
         plannerState.scope = scopeBtn.getAttribute('data-planner-scope') || 'ALL';
         ensureValidMap();
         ensureValidPlannerActiveSet();
+        queuePlannerStateSave();
+        renderPlannerView();
+        return;
+      }
+      const rarityBtn = e.target.closest('[data-planner-rarity]');
+      if(rarityBtn){
+        const nextRarity = rarityBtn.getAttribute('data-planner-rarity') || 'ALL';
+        plannerState.lureRarity = ['ALL','Common','Rare','Epic','Legendary'].includes(nextRarity) ? nextRarity : 'ALL';
         queuePlannerStateSave();
         renderPlannerView();
         return;

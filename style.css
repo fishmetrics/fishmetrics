@@ -5947,3 +5947,189 @@ body.planner-page-active .planner-drawer-body{
   left: 50%;
   transform: translateX(-50%);
 }
+
+/* Mobile-only: keep OOS Planning scope + map selector fully inside the card */
+@media (max-width: 720px){
+  .planner-oos-controls{
+    grid-template-columns:1fr !important;
+    gap:12px;
+  }
+  .planner-oos-controls .planner-map-control{
+    justify-self:stretch !important;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+  }
+  .planner-oos-controls .planner-select{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+}
+
+/* Mobile-only: keep Lure Cost Calculator controls usable and dropdown options readable */
+@media (max-width: 720px){
+  .planner-lure-calc-table{
+    min-width: 560px !important;
+    table-layout: fixed;
+  }
+  .planner-lure-calc-table .planner-select,
+  .planner-lure-calc-table .planner-input{
+    min-width: 72px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: center;
+    color: #fff !important;
+    background: rgba(5,18,53,.92) !important;
+  }
+  .planner-lure-calc-table .planner-select option,
+  .planner-lure-calc-table .planner-select optgroup{
+    color: #fff !important;
+    background: #061a4d !important;
+  }
+}
+
+/* Mobile-only: keep XP Tracker graph toggle from overlapping title/count text */
+@media (max-width: 640px){
+  .xp-toggle-center{
+    position: static !important;
+    left: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 8px !important;
+    order: 3 !important;
+  }
+  .planner-table-bar:has(#plannerXpChart),
+  .planner-table-card:has(#plannerXpChart) .planner-table-bar{
+    align-items: stretch !important;
+  }
+  .planner-table-card:has(#plannerXpChart) .planner-table-bar > div:last-child{
+    width: 100% !important;
+  }
+  .planner-table-card:has(#plannerXpChart) .planner-table-count{
+    width: 100% !important;
+    margin-left: 0 !important;
+    text-align: center !important;
+    order: 4 !important;
+  }
+}
+
+
+/* Mobile-only: compact Lure Planner table columns (does not affect desktop, Season/OOS, or Lure Cost Calculator) */
+@media (max-width: 720px){
+  .planner-table-wrap > .planner-table.planner-lure-table{
+    width: 600px !important;
+    min-width: 600px !important;
+    table-layout: fixed !important;
+  }
+  .planner-table.planner-lure-table th,
+  .planner-table.planner-lure-table td{
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+    letter-spacing: .8px !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+  }
+  .planner-table.planner-lure-table td{
+    font-size: 12px !important;
+  }
+  .planner-table.planner-lure-table th:first-child,
+  .planner-table.planner-lure-table td:first-child{
+    min-width: 0 !important;
+  }
+  .planner-table.planner-lure-table .planner-lure-location-cell{
+    min-width: 0 !important;
+    width: 84px !important;
+  }
+  .planner-table.planner-lure-table .planner-lure-primary,
+  .planner-table.planner-lure-table .planner-lure-fish{
+    font-size: 12px !important;
+    line-height: 1.18 !important;
+  }
+  .planner-table.planner-lure-table .planner-lure-meta{
+    font-size: 9px !important;
+    letter-spacing: .7px !important;
+  }
+  .planner-table.planner-lure-table .planner-level-select{
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    text-align: center !important;
+  }
+  .planner-table.planner-lure-table .planner-fish-input{
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  .planner-table.planner-lure-table th:nth-child(1),
+  .planner-table.planner-lure-table td:nth-child(1){ width: 84px !important; }
+  .planner-table.planner-lure-table th:nth-child(2),
+  .planner-table.planner-lure-table td:nth-child(2){ width: 110px !important; }
+  .planner-table.planner-lure-table th:nth-child(3),
+  .planner-table.planner-lure-table td:nth-child(3){ width: 72px !important; }
+  .planner-table.planner-lure-table th:nth-child(4),
+  .planner-table.planner-lure-table td:nth-child(4){ width: 82px !important; }
+  .planner-table.planner-lure-table th:nth-child(5),
+  .planner-table.planner-lure-table td:nth-child(5){ width: 72px !important; }
+  .planner-table.planner-lure-table th:nth-child(6),
+  .planner-table.planner-lure-table td:nth-child(6){ width: 82px !important; }
+
+  .planner-table.planner-lure-table.planner-table--select-mode{
+    width: 640px !important;
+    min-width: 640px !important;
+  }
+  .planner-table.planner-lure-table.planner-table--select-mode th:nth-child(1),
+  .planner-table.planner-lure-table.planner-table--select-mode td:nth-child(1){ width: 44px !important; }
+  .planner-table.planner-lure-table.planner-table--select-mode th:nth-child(2),
+  .planner-table.planner-lure-table.planner-table--select-mode td:nth-child(2){ width: 84px !important; }
+  .planner-table.planner-lure-table.planner-table--select-mode th:nth-child(3),
+  .planner-table.planner-lure-table.planner-table--select-mode td:nth-child(3){ width: 110px !important; }
+  .planner-table.planner-lure-table.planner-table--select-mode th:nth-child(4),
+  .planner-table.planner-lure-table.planner-table--select-mode td:nth-child(4){ width: 72px !important; }
+  .planner-table.planner-lure-table.planner-table--select-mode th:nth-child(5),
+  .planner-table.planner-lure-table.planner-table--select-mode td:nth-child(5){ width: 82px !important; }
+  .planner-table.planner-lure-table.planner-table--select-mode th:nth-child(6),
+  .planner-table.planner-lure-table.planner-table--select-mode td:nth-child(6){ width: 72px !important; }
+  .planner-table.planner-lure-table.planner-table--select-mode th:nth-child(7),
+  .planner-table.planner-lure-table.planner-table--select-mode td:nth-child(7){ width: 82px !important; }
+}
+
+/* Phase 1: Lure Planning rarity filter (Planner only) */
+.planner-control-row-rarity{ grid-template-columns:1fr; }
+.planner-rarity-control{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+.planner-rarity-control > span{ color:rgba(230,240,255,.86); font-weight:800; font-size:.86rem; }
+.planner-rarity-pills{ flex-wrap:wrap; }
+@media (max-width: 640px){
+  .planner-rarity-pills{ gap:6px; }
+  .planner-rarity-pills .planner-pill{ padding:8px 10px; font-size:.78rem; }
+}
+
+/* FM patch: keep Lure Planning rarity pills compact on desktop */
+.planner-control-row-rarity{
+  justify-items:start;
+}
+.planner-rarity-control{
+  align-items:flex-start;
+  width:auto;
+  max-width:100%;
+}
+.planner-rarity-pills{
+  width:fit-content !important;
+  max-width:100%;
+  align-self:flex-start;
+  justify-self:start;
+}
+@media (max-width: 640px){
+  .planner-rarity-pills{
+    width:100% !important;
+  }
+}

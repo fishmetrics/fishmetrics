@@ -40,9 +40,8 @@
       <button type="button" id="modeCareerBtn" class="mode-btn active">All-time</button>
       <button type="button" id="modeSeasonBtn" class="mode-btn">Season</button>
     </div>
-    <div class="workspace-toggle workspace-single workspace-stack" aria-label="Workspace">
+    <div class="workspace-toggle workspace-single" aria-label="Workspace">
       <button type="button" id="plannerToggleBtn" class="planner-tag" aria-label="Open planner" aria-controls="plannerDrawer" aria-expanded="false" title="Planner">Planner</button>
-      <button type="button" id="clanToggleBtn" class="clan-tag" aria-label="Clans coming soon" title="Clans coming soon">Clan <span class="coming-soon-mini">Soon</span></button>
     </div>
 
     <div class="header-menu-wrap">
@@ -57,9 +56,6 @@
     <!-- Sharecards menu -->
     <div id="shareDropdown" class="menu-dropdown share-dropdown" role="menu" aria-label="Sharecards">
       <button class="menu-item" type="button" role="menuitem" data-share="overall">Overall Scorecard</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="all-time-poster">All-time Poster</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="current-season-poster">Current Season Poster</button>
-      <button class="menu-item" type="button" role="menuitem" data-share="last-season-poster">Last Season Poster</button>
 
       <div class="menu-divider" role="separator" aria-hidden="true"></div>
       <div class="menu-section" aria-hidden="true">By Location</div>
@@ -115,181 +111,8 @@
             <div class="planner-list-title">XP Tracker</div>
             <div class="planner-list-sub">Track progress toward an XP goal</div>
           </div>
-        </button>
-        <button type="button" class="planner-list-item planner-nav-btn" data-planner-view="catchvalue">
-          <div class="planner-list-copy">
-            <div class="planner-list-title">Catch Value Tracker</div>
-            <div class="planner-list-sub">Track fish weight, points, and sell price</div>
-          </div>
         </button></div>
     </section>
-  </div>
-</aside>
-
-<aside id="clanDrawer" class="clan-drawer" aria-hidden="true" aria-label="Clan panel">
-  <div class="clan-drawer-header">
-    <div>
-      <div class="clan-eyebrow">Battle Analytics</div>
-      <button type="button" id="clanTitleHomeBtn" class="clan-title clan-title-btn" aria-label="Clan Home" title="Clan Home">Clan</button>
-      <div class="clan-sub">Battle entry, battle info, clan statistics, and player statistics</div>
-    </div>
-    <button type="button" id="clanCloseBtn" class="clan-close clan-module-metrics-btn" aria-label="Metrics">Metrics</button>
-  </div>
-
-  <div class="clan-drawer-body">
-    <section class="clan-card clan-card-shell">
-      <div id="clanSeasonBanner" class="clan-season-banner" role="status" aria-live="polite">
-        <div>
-          <div class="clan-season-title" id="clanSeasonBannerTitle">Clan Season</div>
-          <div class="clan-season-sub">Battle records are saved for the active season.</div>
-        </div>
-        <span class="clan-season-pill" id="clanSeasonBannerPill">Current</span>
-      </div>
-      <div class="clan-tabs" role="tablist" aria-label="Clan sections">
-        <button type="button" class="clan-tab active" data-clan-tab="entry" role="tab" aria-selected="true">Battle Entry</button>
-        <button type="button" class="clan-tab" data-clan-tab="info" role="tab" aria-selected="false">Battle Info</button>
-        <button type="button" class="clan-tab" data-clan-tab="stats" role="tab" aria-selected="false">Clan Statistics</button>
-        <button type="button" class="clan-tab" data-clan-tab="players" role="tab" aria-selected="false">Player Statistics</button>
-        <button type="button" class="clan-tab" data-clan-tab="archive" role="tab" aria-selected="false">Season Archive</button>
-      </div>
-
-      <div class="clan-tab-panel active" data-clan-panel="entry" role="tabpanel">
-        <div class="clan-section-head">
-          <div>
-            <h2>Battle Entry</h2>
-            <p>Import Day 1 battle-start screenshots, review the OCR preview, then save the battle setup.</p>
-          </div>
-          <span class="clan-soon-badge">Day 1 OCR</span>
-        </div>
-
-        <div class="clan-grid-two">
-          <div class="clan-mini-card clan-setup-card">
-            <div class="clan-mini-title">Day 1 Setup</div>
-            <div class="clan-mini-sub">Import battle-start screenshots for league, map, clans, trophies, ranks, and fish set.</div>
-            <input id="clanSetupFiles" class="clan-file-input" type="file" accept="image/*" multiple />
-            <div class="clan-setup-actions">
-              <button type="button" id="clanSetupPickBtn" class="clan-action-btn">Choose Screenshots</button>
-              <button type="button" id="clanSetupOcrBtn" class="clan-action-btn clan-action-primary" disabled>Preview Setup</button>
-            </div>
-            <div id="clanSetupFileList" class="clan-file-list">No files selected.</div>
-          </div>
-
-          <div class="clan-mini-card clan-results-card">
-            <div class="clan-mini-title">Day 2 Results</div>
-            <div class="clan-mini-sub">Import battle-end screenshots for final result, clan scores, and player contribution rows.</div>
-            <input id="clanResultsFiles" class="clan-file-input" type="file" accept="image/*" multiple />
-            <div class="clan-setup-actions">
-              <button type="button" id="clanResultsPickBtn" class="clan-action-btn">Choose Screenshots</button>
-              <button type="button" id="clanResultsOcrBtn" class="clan-action-btn clan-action-primary" disabled>Preview Results</button>
-            </div>
-            <div id="clanResultsFileList" class="clan-file-list">No files selected.</div>
-          </div>
-        </div>
-
-        <div id="clanSetupPreview" class="clan-setup-preview" hidden>
-          <div class="clan-preview-head">
-            <div>
-              <div class="clan-mini-title">Review Battle Setup</div>
-              <div id="clanSetupStatus" class="clan-mini-sub">Edit anything OCR missed before saving.</div>
-            </div>
-            <span class="clan-soon-badge">Editable Preview</span>
-          </div>
-          <div class="clan-form-grid">
-            <label>Start Date<input id="clanSetupStartDate" type="date" /></label>
-            <label>League<input id="clanSetupLeague" type="text" placeholder="Silver League" /></label>
-            <label>Map<input id="clanSetupMap" type="text" placeholder="Thailand" /></label>
-            <label>Own Clan<input id="clanSetupOwnClan" type="text" placeholder="Carp Diem" /></label>
-            <label>Own Rank<input id="clanSetupOwnRank" type="text" placeholder="#7" /></label>
-            <label>Own Trophies<input id="clanSetupOwnTrophies" type="number" inputmode="numeric" placeholder="157" /></label>
-            <label>Opponent Clan<input id="clanSetupOpponentClan" type="text" placeholder="Brindil" /></label>
-          </div>
-          <div class="clan-fishset-editor">
-            <div class="clan-mini-title">Battle Fish Set</div>
-            <div class="clan-fishset-grid">
-              <input id="clanSetupFish1" type="text" placeholder="Fish 1" />
-              <input id="clanSetupFish2" type="text" placeholder="Fish 2" />
-              <input id="clanSetupFish3" type="text" placeholder="Fish 3" />
-              <input id="clanSetupFish4" type="text" placeholder="Fish 4" />
-            </div>
-          </div>
-          <div class="clan-preview-foot">
-            <div id="clanSetupFlash" class="clan-inline-flash" hidden></div>
-            <button type="button" id="clanSetupClearBtn" class="clan-action-btn">Clear Preview</button>
-            <button type="button" id="clanSaveBattleBtn" class="clan-action-btn clan-action-primary">Save Battle</button>
-          </div>
-        </div>
-
-        <div id="clanResultsPreview" class="clan-setup-preview clan-results-preview" hidden>
-          <div class="clan-preview-head">
-            <div>
-              <div class="clan-mini-title">Review Battle Results</div>
-              <div id="clanResultsStatus" class="clan-mini-sub">Edit anything OCR missed before saving.</div>
-            </div>
-            <span class="clan-soon-badge">Editable Preview</span>
-          </div>
-          <div class="clan-form-grid">
-            <label>Result
-              <select id="clanResultOutcome">
-                <option value="">Pick result</option>
-                <option value="Win">Win</option>
-                <option value="Loss">Loss</option>
-              </select>
-            </label>
-            <label>Own Score<input id="clanResultOwnScore" type="number" inputmode="numeric" placeholder="Own score" /></label>
-            <label>Opponent Score<input id="clanResultOpponentScore" type="number" inputmode="numeric" placeholder="Opponent score" /></label>
-            <input id="clanResultDate" type="hidden" />
-          </div>
-          <div class="clan-member-editor">
-            <div class="clan-mini-title">Member Rankings</div>
-            <textarea id="clanResultPlayers" class="clan-result-players clan-hidden-players" rows="7" placeholder="Player name — score" aria-hidden="true" tabindex="-1"></textarea>
-            <div class="clan-member-table" id="clanMemberRankingsTable">
-              <div class="clan-member-head">
-                <div>Rank</div>
-                <div>Player</div>
-                <div>Score</div>
-              </div>
-              <div id="clanMemberRankingsRows" class="clan-member-rows"></div>
-            </div>
-          </div>
-          <div class="clan-preview-foot">
-            <div id="clanResultsFlash" class="clan-inline-flash" hidden></div>
-            <button type="button" id="clanResultsClearBtn" class="clan-action-btn">Clear Results</button>
-            <button type="button" id="clanSaveResultsBtn" class="clan-action-btn clan-action-primary">Save Results</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="clan-tab-panel" data-clan-panel="info" role="tabpanel">
-        <div class="clan-section-head">
-          <div>
-            <h2>Battle Info</h2>
-            <p>Saved battle setup records stored locally on this device.</p>
-          </div>
-        </div>
-        <div id="clanBattleHistory" class="clan-empty-card">No saved battles yet.</div>
-      </div>
-
-      <div class="clan-tab-panel" data-clan-panel="stats" role="tabpanel">
-        <div class="clan-section-head"><div><h2>Clan Statistics</h2><p>Lifetime clan stats from current and archived battle records.</p></div></div>
-        <div id="clanStatsPanel" class="clan-empty-card">Clan statistics will populate from saved battles.</div>
-      </div>
-
-      <div class="clan-tab-panel" data-clan-panel="players" role="tabpanel">
-        <div class="clan-section-head"><div><h2>Player Statistics</h2><p>Player participation and finish counts from saved battle results.</p></div></div>
-        <div id="clanPlayerStatsPanel" class="clan-empty-card">Player statistics will populate from saved battle results.</div>
-      </div>
-
-      <div class="clan-tab-panel" data-clan-panel="archive" role="tabpanel">
-        <div class="clan-section-head">
-          <div>
-            <h2>Season Archive</h2>
-            <p>Completed clan seasons appear here after season rollover. Recent seasons stay one tap away; older seasons use the dropdown.</p>
-          </div>
-        </div>
-        <div id="clanArchivePanel" class="clan-archive-panel">
-          <div class="clan-empty-card">No archived clan seasons yet. Completed seasons will appear here automatically after season rollover.</div>
-        </div>
-      </div>    </section>
   </div>
 </aside>
 
@@ -389,7 +212,6 @@
 <div class="kpi">
 <div class="kpi-label">Average Star Rating</div>
 <div class="kpi-stars" id="avgStars">—</div>
-<div class="kpi-subnote season-only-note" id="avgStarsSeasonNote">In-season fish only</div>
 </div>
 
 
@@ -418,13 +240,6 @@
   <div class="panel-title">Star Distribution (<span id="starDistRange">2–5★</span>)</div>
   <div class="star-dist-wrap">
     <div id="starDistributionBar" class="star-dist-bar" role="img" aria-label="Distribution of 2 to 5 star catches"></div>
-    <div class="star-dist-meta-row">
-      <div id="high4Chip" class="star-dist-chip" title="Counts 4★ catches at 85.5%+ of max points, below 5★.">
-        <span class="star-dist-chip-label">High 4★</span>
-        <strong id="high4Count">0</strong>
-        <span id="high4Pct" class="star-dist-chip-sub">0.0% • 85.5%+ max</span>
-      </div>
-    </div>
     <div id="starDistributionLegend" class="star-dist-legend" aria-hidden="true"></div>
   </div>
 </section>
@@ -649,9 +464,7 @@
     </label>
   </div>
 
-  <div class="pref-divider" aria-hidden="true"></div>
-  <button type="button" class="backup-btn pref-action-btn" id="reviewSeasonPbUpdatesBtn">Review Season PB Updates</button>
-  <div class="pref-note pref-action-note">Scan Season records for catches that may improve your All-time PBs.</div>
+  
 </div>
 </div>
       </p>
@@ -678,11 +491,10 @@
 
       <p class="ack-wrapper"><strong>Season Archiving</strong><br>
         <span class="instr-text">
-          Seasons archive automatically at the CotD global reset boundary, not local midnight.<br>
+          Seasons archive automatically when the calendar month changes.<br>
           Your previous season information is preserved for reference.
         </span>
       </p>
-
 
 <hr class="instr-divider">
 
@@ -775,7 +587,7 @@ Not affiliated with any company or organization of a similar name.</div>
   <div class="footer-right">
     <button class="version-btn footer-meta-btn" onclick="openReleaseNotes()" aria-label="Version and release notes">
       <span class="footer-icon" aria-hidden="true">ⓘ</span>
-      <span class="footer-label">v1.8</span>
+      <span class="footer-label">v1.7</span>
     </button>
   </div>
 </footer>
@@ -795,7 +607,7 @@ Not affiliated with any company or organization of a similar name.</div>
     <button onclick="clearFishMetricsData()">Clear All Local Data</button>
 
     <p class="privacy-footnote">
-      GDPR compliance: FishMetrics v1.8 – local-only data storage.
+      GDPR compliance: FishMetrics v1.7 – local-only data storage.
     </p>
 
     <button class="close-btn" onclick="closePrivacyNotice()">Close</button>
@@ -803,17 +615,7 @@ Not affiliated with any company or organization of a similar name.</div>
 </div>
 
 <div id="releaseNotesModal" class="privacy-modal">
-  <div class="privacy-content release-notes-content">
-    <button type="button" class="release-notes-x" onclick="closeReleaseNotes()" aria-label="Close release notes">×</button>
-
-<h3>FishMetrics v1.8.0</h3>
-
-<ul class="release-notes">
-  <li>Bulk upload added for Seasonal catches</li>
-  <li>All-time and Seasonal poster generation added</li>
-  <li>Fish Price Tracker added</li>
-  <li>XP Tracker interface refreshed</li>
-</ul>
+  <div class="privacy-content">
 
 <h3>FishMetrics v1.7.0</h3>
 
@@ -854,6 +656,7 @@ Not affiliated with any company or organization of a similar name.</div>
   <li>Minor UI changes</li>
 </ul>
 
+    <button class="close-btn" onclick="closeReleaseNotes()">Close</button>
   </div>
 </div>
 
@@ -868,15 +671,7 @@ Not affiliated with any company or organization of a similar name.</div>
         <label class="season-import-field">
           <span>Map</span>
           <select id="seasonImportMap">
-            <option value="Marina">Marina</option>
             <option value="Paradise Island">Paradise Island</option>
-            <option value="Great Lakes">Great Lakes</option>
-            <option value="Costa Rica">Costa Rica</option>
-            <option value="Alaska">Alaska</option>
-            <option value="Australia">Australia</option>
-            <option value="Scotland">Scotland</option>
-            <option value="Thailand">Thailand</option>
-            <option value="Amazon">Amazon</option>
           </select>
         </label>
         <label class="season-import-upload">
@@ -911,19 +706,6 @@ Not affiliated with any company or organization of a similar name.</div>
         <button type="button" class="btn-secondary" id="seasonImportCancel">Cancel</button>
         <button type="button" class="btn-secondary" id="seasonImportPreview" disabled>Preview Import</button>
         <button type="button" class="btn-primary" id="seasonImportConfirm" disabled>Confirm Import</button>
-      </div>
-    </div>
-  </div>
-
-
-
-  <!-- Season import complete modal (custom, avoids browser file:// header) -->
-  <div class="modal-backdrop" id="seasonImportCompleteBackdrop" aria-hidden="true">
-    <div class="modal season-import-complete-modal" role="dialog" aria-modal="true" aria-labelledby="seasonImportCompleteTitle">
-      <div class="modal-title" id="seasonImportCompleteTitle">Season Import Complete</div>
-      <div class="modal-body" id="seasonImportCompleteBody"></div>
-      <div class="modal-actions">
-        <button type="button" class="btn-primary" id="seasonImportCompleteOk">OK</button>
       </div>
     </div>
   </div>

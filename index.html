@@ -4,6 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FishMetrics</title>
+  <meta property="og:title" content="FishMetrics">
+  <meta property="og:description" content="Companion Analytics for Creatures of the Deep.">
+  <meta property="og:image" content="https://fishmetrics.github.io/fishmetrics_test/og-image.png">
+  <meta property="og:url" content="https://fishmetrics.github.io/fishmetrics_test/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet" />
@@ -229,10 +236,12 @@
     }
     
     .plannerRow{
-      margin-top: 22px;
+      margin-top: 20px;
       display:flex;
       justify-content:center;
       align-items:center;
+      gap:18px;
+      flex-wrap:wrap;
     }
 
     .ctaRow{
@@ -259,19 +268,39 @@
       background: linear-gradient(180deg, #ffd84d, #f2be22) !important;
       color:#1a1a1a !important;
       border-radius: 13px;
-      padding: 15px 30px;
-      min-width: 150px;
-      box-shadow: 0 10px 22px rgba(255,200,0,0.30);
-      transform: translateY(0) scale(1.06);
+      padding: 12px 22px;
+      min-width: 128px;
+      font-size:15px;
+      box-shadow: 0 8px 18px rgba(255,200,0,0.22);
+      transform: none;
     }
 
     .btnPlanner:hover{
       filter: brightness(1.02);
-      transform: translateY(0) scale(1.08);
+      transform: translateY(-1px);
     }
 
     .btnPlanner:active{
-      transform: translateY(1px) scale(1.06);
+      transform: translateY(1px);
+    }
+
+    .btnClan{
+      background: linear-gradient(180deg, #ff8a4d, #d85a28) !important;
+      color:#1a1a1a !important;
+      border-radius: 13px;
+      padding: 12px 22px;
+      min-width: 128px;
+      font-size:15px;
+      box-shadow: 0 8px 18px rgba(255,105,45,0.22);
+    }
+
+    .btnClan:hover{
+      filter: brightness(1.03);
+      transform: translateY(-1px);
+    }
+
+    .btnClan:active{
+      transform: translateY(1px);
     }
 
 
@@ -327,8 +356,12 @@ h1{
 
 .btn:focus,
 .btnVip:focus,
+.btnPlanner:focus,
+.btnClan:focus,
 .btn:focus-visible,
-.btnVip:focus-visible{
+.btnVip:focus-visible,
+.btnPlanner:focus-visible,
+.btnClan:focus-visible{
   outline: none;
   box-shadow: none;
 }
@@ -504,9 +537,30 @@ h1{
   .fm-splash{ display:none; }
 }
 
+
+/* Keep landing buttons hidden behind the boot splash so no underlying button flashes through during fade-out. */
+body.fm-splash-active > .card{
+  visibility:hidden;
+}
+    .landing-soon-badge{
+      display:inline-block;
+      margin-left:7px;
+      padding:2px 7px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:900;
+      line-height:1.2;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      background:rgba(255,216,77,.28);
+      color:#ffd84d;
+      border:1px solid rgba(255,216,77,.55);
+      vertical-align:middle;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
+    }
 </style>
 </head>
-<body>
+<body class="fm-splash-active">
   <div id="fmSplash" class="fm-splash" aria-hidden="true">
     <canvas id="fmSplashCanvas" class="fm-splash-canvas"></canvas>
     <div class="fm-splash-card">
@@ -537,6 +591,7 @@ h1{
 
       <div class="plannerRow">
         <a class="btn btnPlanner" href="app.html?planner=1" aria-label="Open Planner">Planner</a>
+        <a class="btn btnClan" href="app.html?clan=1" aria-label="Clans coming soon">Clan <span class="landing-soon-badge">Soon</span></a>
       </div>
 
       </div>
@@ -585,6 +640,8 @@ h1{
 </div>
 
 
+
+
 <script>
 (function(){
   var splash = document.getElementById('fmSplash');
@@ -592,6 +649,7 @@ h1{
   if(!splash || !canvas) return;
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
     splash.remove();
+    document.body.classList.remove('fm-splash-active');
     return;
   }
 
@@ -601,7 +659,7 @@ h1{
 
   var blueTokens = ['VIP','PB','OOS','5★','4★','480','640','7500','LURE','35','RARE','EPIC','BT','BERMUDA','CROWN','MAP','XP','208','540','8000'];
   var tinyTokens = ['0','1','3','5','8','B','T','P','V','R','E','★'];
-  var goldTokens = ['👑','5★','7500','VIP','EPIC','PB'];
+  var goldTokens = ['5★','7500','VIP','EPIC','PB'];
   var streams = [];
   var fontSize = 17;
   var columnGap = 26;
@@ -617,8 +675,8 @@ h1{
       len: special ? 7 + Math.floor(Math.random()*8) : 11 + Math.floor(Math.random()*18),
       alpha: .26 + Math.random() * .52,
       gold: Math.random() > .76,
-      fish: Math.random() > .84,
-      crown: Math.random() > .82,
+      fish: false,
+      crown: false,
       drift: (Math.random() - .5) * .20,
       phase: Math.random() * 1000
     };
@@ -631,8 +689,8 @@ h1{
     st.len = (st.fish || st.crown) ? 8 + Math.floor(Math.random()*9) : 10 + Math.floor(Math.random()*20);
     st.alpha = .25 + Math.random() * .55;
     st.gold = Math.random() > .76;
-    st.fish = Math.random() > .86;
-    st.crown = Math.random() > .83;
+    st.fish = false;
+    st.crown = false;
     st.drift = (Math.random() - .5) * .22;
   }
 
@@ -667,8 +725,6 @@ h1{
   }
 
   function pickToken(st, j){
-    if(st.crown && j === Math.floor(st.len*.45)) return '👑';
-    if(st.fish && j === Math.floor(st.len*.35)) return '__FISH__';
     if(st.gold && Math.random() > .73) return goldTokens[(Math.random()*goldTokens.length)|0];
     if(Math.random() > .72) return blueTokens[(Math.random()*blueTokens.length)|0];
     return tinyTokens[(Math.random()*tinyTokens.length)|0];
@@ -721,6 +777,7 @@ h1{
     window.setTimeout(function(){
       window.cancelAnimationFrame(raf);
       if(splash && splash.parentNode) splash.parentNode.removeChild(splash);
+      document.body.classList.remove('fm-splash-active');
     }, 1200);
   }
 
@@ -729,6 +786,7 @@ h1{
   draw();
   window.setTimeout(finish, 5600);
 })();
+
 </script>
 
 </body>

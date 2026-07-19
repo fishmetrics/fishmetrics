@@ -1,11 +1,11 @@
-FishMetrics v1.7.0
-- VIP Bermuda Triangle added
+FishMetrics v1.8.0 duplicate-date + delete-edit cleanup fix
 
-CSS-only patch:
-- Windows select dropdown option readability fix (dark text on white).
-- Log Records table: target actual table (.table-scroll > table) and keep fish name + OOS badge on one line by narrowing Location/Category columns.
+- Duplicate battle warning now triggers for any existing saved battle on the same date, even when the opponent/clan is different.
+- Deleting a battle currently loaded in Battle Entry now clears the edit screen immediately.
+- OCR logic unchanged.
 
-- Fix JS syntax error in Season title swap (extra brace before else)
-- Fix app.html icon filenames (icon-192.png/icon-512.png) and remove missing manifest link
-
-[2026-02-19 23:07 UTC] Fix VIP Bestiary Complete donut formula: use active locations (LOCATIONS_VIP) and filter allowed fish keys.
+Patch: Season PB review utility
+- Added Instructions > Preferences button: Review Season PB Updates.
+- Bulk Season import remains unchanged and does not update All-time PBs.
+- Manual Season entry PB preference behavior remains unchanged.
+- Review modal scans Season records, previews candidates, and applies selected PB updates with Imported from Season precision flag when needed.

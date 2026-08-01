@@ -2615,7 +2615,9 @@ function setStoredWeight(loc, fishName, value){
 }
 
 function recomputeFromDOM(){
-  document.querySelectorAll("tbody tr").forEach((row)=>{
+  // Only process Log Records rows. Planner and other modules also contain
+  // tbody rows, but they do not map to currentFish and must never be included.
+  document.querySelectorAll("#recordsTable tbody tr").forEach((row)=>{
     const idx = Number(row.dataset.idx);
     const fish = currentFish[idx];
     const weightInp = row.querySelector("input.weight-input");
@@ -10445,6 +10447,9 @@ Requirement: ${currPct}% ${metricLabel}.`;
     lureCustomSets: [],
     lureSelectedFishKeys: [],
     lureCustomSelectionMode: false,
+    lureGoals: { Common: 15, Rare: 10, Epic: 10 },
+    lureOverviewSortKey: 'map',
+    lureOverviewSortDir: 'ASC',
     lureRarity: 'ALL',
     lureSortKey: '',
     lureSortDir: 'ASC',
@@ -10499,6 +10504,9 @@ Requirement: ${currPct}% ${metricLabel}.`;
       lureCustomSets: Array.isArray(plannerState.lureCustomSets) ? plannerState.lureCustomSets.map((set) => ({ id: String(set.id || ''), name: String(set.name || ''), scope: String(set.scope || 'MAIN'), fishKeys: Array.isArray(set.fishKeys) ? set.fishKeys.map((key) => String(key || '')) : [] })) : [],
       lureSelectedFishKeys: Array.isArray(plannerState.lureSelectedFishKeys) ? plannerState.lureSelectedFishKeys.map((key) => String(key || '')).filter(Boolean).slice(0, 500) : [],
       lureCustomSelectionMode: !!plannerState.lureCustomSelectionMode,
+      lureGoals: Object.assign({}, plannerState.lureGoals || {}),
+      lureOverviewSortKey: String(plannerState.lureOverviewSortKey || 'map'),
+      lureOverviewSortDir: String(plannerState.lureOverviewSortDir || 'ASC'),
       currentValues: Object.assign({}, plannerState.currentValues || {}),
       targetValues: Object.assign({}, plannerState.targetValues || {}),
       lureCalcFrom: plannerState.lureCalcFrom,
@@ -10644,9 +10652,12 @@ function addFishKeysToPlannerSet(setId, fishKeys){
 
 
 function syncPlannerCustomSelectionMode(){
-  const hasActiveCustomSet = !!(plannerState.lureActiveSetId && plannerState.lureActiveSetId !== 'ALL');
+  const hasActiveCustomSet = isCustomPlannerSetId(plannerState.lureActiveSetId);
   if(hasActiveCustomSet){
     plannerState.lureCustomSelectionMode = true;
+  }else if(isAllBattleFishSetId(plannerState.lureActiveSetId) || isBattlePlannerSetId(plannerState.lureActiveSetId) || isBattlePlannerMapId(plannerState.lureActiveSetId)){
+    plannerState.lureCustomSelectionMode = false;
+    plannerState.lureSelectedFishKeys = [];
   }else if(!plannerState.lureCustomSelectionMode){
     plannerState.lureSelectedFishKeys = [];
   }
@@ -10705,13 +10716,141 @@ function openPlannerNoticeModal(message, title){
   });
 }
 
+
+const BATTLE_LURE_SETS = [
+  { id:'battle_paradise_1', map:'Paradise Island', name:'Set 1', fishNames:['clownfish','blue trevally','humphead parrotfish','white tuna'] },
+  { id:'battle_paradise_2', map:'Paradise Island', name:'Set 2', fishNames:['bluefish','largetooth flounder','spotfin porcupinefish','longtail tuna'] },
+  { id:'battle_paradise_3', map:'Paradise Island', name:'Set 3', fishNames:['blue trevally','snubnose pompano','bonefish','pelagic stingray'] },
+
+  { id:'battle_great_lakes_1', map:'Great Lakes', name:'Set 1', fishNames:['white bass','yellow perch','sea lamprey','chinook salmon'] },
+  { id:'battle_great_lakes_2', map:'Great Lakes', name:'Set 2', fishNames:['brook trout','channel catfish','largemouth bass','coho salmon'] },
+  { id:'battle_great_lakes_3', map:'Great Lakes', name:'Set 3', fishNames:['pink salmon','brown trout','lake trout','lake sturgeon'] },
+
+  { id:'battle_costa_rica_1', map:'Costa Rica', name:'Set 1', fishNames:['snook','pompano','barracuda','blue marlin'] },
+  { id:'battle_costa_rica_2', map:'Costa Rica', name:'Set 2', fishNames:['dorado','roosterfish','yellowfin tuna','tarpon'] },
+  { id:'battle_costa_rica_3', map:'Costa Rica', name:'Set 3', fishNames:['jack crevalle','broomtail grouper','pacific sailfish','striped marlin'] },
+
+  { id:'battle_alaska_1', map:'Alaska', name:'Set 1', fishNames:['coalfish','steelhead','humpback salmon','halibut'] },
+  { id:'battle_alaska_2', map:'Alaska', name:'Set 2', fishNames:['arctic char','dolly varden','rougheye rockfish','spiny skate'] },
+  { id:'battle_alaska_3', map:'Alaska', name:'Set 3', fishNames:['chum salmon','silver salmon','lancetfish','blue lingcod'] },
+
+  { id:'battle_australia_1', map:'Australia', name:'Set 1', fishNames:['black saddled coral grouper','albacore','golden trevally','queensland grouper'] },
+  { id:'battle_australia_2', map:'Australia', name:'Set 2', fishNames:['skipjack tuna','john dory','carpet shark','swordfish'] },
+  { id:'battle_australia_3', map:'Australia', name:'Set 3', fishNames:['coral trout','tailor','barramundi','giant trevally'] },
+
+  { id:'battle_scotland_1', map:'Scotland', name:'Set 1', fishNames:['carp','freshwater bream','rainbow trout','european whitefish'] },
+  { id:'battle_scotland_2', map:'Scotland', name:'Set 2', fishNames:['european perch','tench','sea trout','european eel'] },
+
+  { id:'battle_thailand_1', map:'Thailand', name:'Set 1', fishNames:['bighead carp','malayan leaffish','black ear catfish','wallago'] },
+  { id:'battle_thailand_2', map:'Thailand', name:'Set 2', fishNames:['bambusa','spotted sorubim','empurau','great snakehead'] },
+
+  { id:'battle_amazon_1', map:'Amazon', name:'Set 1', fishNames:['freshwater barracuda','giant trahira','red piranha','zungaro'] },
+  { id:'battle_amazon_2', map:'Amazon', name:'Set 2', fishNames:['amazon puffer','corvina','rock bacu','cachama'] }
+];
+
+
+const ALL_BATTLE_FISH_SET_ID = 'battle_all_fish';
+
+function isAllBattleFishSetId(id){
+  return String(id || '') === ALL_BATTLE_FISH_SET_ID;
+}
+
+function getAllBattlePlannerFishKeys(){
+  const keys = new Set();
+  BATTLE_LURE_SETS.forEach((set) => {
+    (set.fishNames || []).forEach((name) => {
+      const canonical = canonicalizeFishName(name);
+      if(canonical) keys.add(String(set.map || '') + '|' + canonical);
+    });
+  });
+  return keys;
+}
+
+function getBattlePlannerMaps(){
+  const seen = new Set();
+  const maps = [];
+  BATTLE_LURE_SETS.forEach((set) => {
+    if(!set || !set.map || seen.has(set.map)) return;
+    seen.add(set.map);
+    maps.push(set.map);
+  });
+  return maps;
+}
+
+function battleMapSetId(map){
+  return 'battle_map_' + String(map || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+function getBattlePlannerMapById(id){
+  const target = String(id || '');
+  const map = getBattlePlannerMaps().find((name) => battleMapSetId(name) === target);
+  return map || null;
+}
+
+function isBattlePlannerMapId(id){
+  return !!getBattlePlannerMapById(id);
+}
+
+function getBattlePlannerFishNamesForMap(map){
+  const names = [];
+  const seen = new Set();
+  BATTLE_LURE_SETS
+    .filter((set) => set && set.map === map)
+    .forEach((set) => {
+      (set.fishNames || []).forEach((name) => {
+        const canonical = canonicalizeFishName(name);
+        if(!canonical || seen.has(canonical)) return;
+        seen.add(canonical);
+        names.push(name);
+      });
+    });
+  return names;
+}
+
+function getBattlePlannerSetsForScope(scope){
+  return String(scope || plannerState.scope || 'MAIN').toUpperCase() === 'MAIN' ? BATTLE_LURE_SETS : [];
+}
+
+function getBattlePlannerSetById(id){
+  return BATTLE_LURE_SETS.find((set) => set.id === String(id || '')) || null;
+}
+
+function isBattlePlannerSetId(id){
+  return !!getBattlePlannerSetById(id);
+}
+
+function isCustomPlannerSetId(id){
+  return (plannerState.lureCustomSets || []).some((set) => set && set.id === String(id || '') && set.scope === plannerState.scope);
+}
+
+function renderBattleSetOptions(){
+  if(plannerState.scope !== 'MAIN') return '';
+  const grouped = new Map();
+  BATTLE_LURE_SETS.forEach((set) => {
+    if(!grouped.has(set.map)) grouped.set(set.map, []);
+    grouped.get(set.map).push(set);
+  });
+  return Array.from(grouped.entries()).map(([map, sets]) => {
+    const mapId = battleMapSetId(map);
+    return `
+      <optgroup label="${escapeAttr(map)}">
+        <option value="${escapeAttr(mapId)}" ${plannerState.lureActiveSetId === mapId ? 'selected' : ''}>All Battle Fish</option>
+        ${sets.map((set) => `<option value="${escapeAttr(set.id)}" ${plannerState.lureActiveSetId === set.id ? 'selected' : ''}>↳ ${escapeHtml(set.name)}</option>`).join('')}
+      </optgroup>`;
+  }).join('');
+}
+
 function getPlannerSetsForScope(scope){
   const safeScope = String(scope || plannerState.scope || 'MAIN').toUpperCase() === 'VIP' ? 'VIP' : 'MAIN';
   return (plannerState.lureCustomSets || []).filter((set) => set && set.scope === safeScope);
 }
 
 function ensureValidPlannerActiveSet(){
-  const validIds = ['ALL'].concat(getPlannerSetsForScope(plannerState.scope).map((set) => set.id));
+  const validIds = ['ALL']
+    .concat(plannerState.scope === 'MAIN' ? [ALL_BATTLE_FISH_SET_ID] : [])
+    .concat(plannerState.scope === 'MAIN' ? getBattlePlannerMaps().map((map) => battleMapSetId(map)) : [])
+    .concat(getBattlePlannerSetsForScope(plannerState.scope).map((set) => set.id))
+    .concat(getPlannerSetsForScope(plannerState.scope).map((set) => set.id));
   if(!validIds.includes(plannerState.lureActiveSetId)) plannerState.lureActiveSetId = 'ALL';
 }
 
@@ -10777,6 +10916,111 @@ function ensureValidPlannerActiveSet(){
     delete plannerState.seasonFishTargets[String(key || '')];
   }
 
+  const DEFAULT_LURE_GOALS = Object.freeze({ Common: 15, Rare: 10, Epic: 10 });
+
+  function normalizeLureGoals(raw){
+    const out = {};
+    ['Common','Rare','Epic'].forEach((rarity) => {
+      const num = Number(raw && raw[rarity]);
+      out[rarity] = Number.isFinite(num) ? Math.max(1, Math.min(LURE_MAX, Math.round(num))) : DEFAULT_LURE_GOALS[rarity];
+    });
+    return out;
+  }
+
+  function calculateLureProgress(rows){
+    const list = Array.isArray(rows) ? rows : [];
+    if(!list.length) return { goals: 0, maximum: 0 };
+    const goals = normalizeLureGoals(plannerState.lureGoals);
+    let goalSum = 0;
+    let maxSum = 0;
+    list.forEach((row) => {
+      const current = Math.max(0, Math.min(LURE_MAX, Number(getCurrentCell(row).start) || 0));
+      const rarityGoal = goals[String(row.category || '')] || LURE_MAX;
+      goalSum += Math.min(current / rarityGoal, 1);
+      maxSum += current / LURE_MAX;
+    });
+    return {
+      goals: Math.round((goalSum / list.length) * 100),
+      maximum: Math.round((maxSum / list.length) * 100)
+    };
+  }
+
+  function getAllBattleFishFocusByMap(rows){
+    const goals = normalizeLureGoals(plannerState.lureGoals);
+    const source = Array.isArray(rows) ? rows : [];
+    return getBattlePlannerMaps().map((map) => {
+      const candidates = source
+        .filter((row) => String(row.location || '') === map)
+        .map((row) => {
+          const current = Math.max(0, Math.min(LURE_MAX, Number(getCurrentCell(row).start) || 0));
+          const goal = goals[String(row.category || '')] || LURE_MAX;
+          return { row, current, goal, gap: Math.max(0, goal - current) };
+        })
+        .filter((item) => item.gap > 0)
+        .sort((a,b) => b.gap - a.gap || comparePlannerGameOrder(a.row, b.row, 'lure'))
+        .slice(0, 2);
+      return { map, fish: candidates };
+    });
+  }
+
+  function getClosestBattleFishToGoal(rows){
+    const goals = normalizeLureGoals(plannerState.lureGoals);
+    const rarityPriority = { Epic: 0, Rare: 1, Common: 2 };
+    return (Array.isArray(rows) ? rows : [])
+      .map((row) => {
+        const current = Math.max(0, Math.min(LURE_MAX, Number(getCurrentCell(row).start) || 0));
+        const goal = goals[String(row.category || '')] || LURE_MAX;
+        return { row, current, goal, gap: Math.max(0, goal - current) };
+      })
+      .filter((item) => item.gap > 0)
+      .sort((a,b) => {
+        if(a.gap !== b.gap) return a.gap - b.gap;
+        const rarityCmp = (rarityPriority[a.row.category] ?? 9) - (rarityPriority[b.row.category] ?? 9);
+        if(rarityCmp) return rarityCmp;
+        if(a.current !== b.current) return b.current - a.current;
+        return comparePlannerGameOrder(a.row, b.row, 'lure');
+      })
+      .slice(0, 10);
+  }
+
+  function getBattleMapOverviewRows(allRows){
+    // Always calculate from every main-map row; the current Pick a map filter must not limit Overview.
+    const source = getPlannerRowsAllMaps('lure', 'MAIN');
+    const items = getBattlePlannerMaps().map((map) => {
+      const allowed = new Set(getBattlePlannerFishNamesForMap(map).map((name) => canonicalizeFishName(name)));
+      const mapRows = source.filter((row) => String(row.location || '') === map && allowed.has(canonicalizeFishName(row.name || '')));
+      const progress = calculateLureProgress(mapRows);
+      return { map, mapId: battleMapSetId(map), count: mapRows.length, goals: progress.goals, maximum: progress.maximum };
+    });
+    const key = String(plannerState.lureOverviewSortKey || 'map');
+    const dir = plannerState.lureOverviewSortDir === 'DESC' ? -1 : 1;
+    const canonicalMapOrder = new Map(getBattlePlannerMaps().map((map, index) => [map, index]));
+    return items.sort((a,b) => {
+      let cmp = 0;
+      if(key === 'goals') cmp = a.goals - b.goals;
+      else if(key === 'maximum') cmp = a.maximum - b.maximum;
+      else cmp = (canonicalMapOrder.get(a.map) ?? Number.MAX_SAFE_INTEGER) - (canonicalMapOrder.get(b.map) ?? Number.MAX_SAFE_INTEGER);
+      // Equal progress values fall back to the same canonical map sequence used elsewhere.
+      if(cmp === 0) cmp = (canonicalMapOrder.get(a.map) ?? Number.MAX_SAFE_INTEGER) - (canonicalMapOrder.get(b.map) ?? Number.MAX_SAFE_INTEGER);
+      return cmp * dir;
+    });
+  }
+
+  function lureOverviewSortArrow(key){
+    return plannerState.lureOverviewSortKey === key ? (plannerState.lureOverviewSortDir === 'ASC' ? ' ▲' : ' ▼') : ' ↕';
+  }
+
+  function updateLureProgressDisplay(body, rows){
+    const progress = calculateLureProgress(rows);
+    const goalsEl = body && body.querySelector('#plannerLureGoalProgress');
+    const maxEl = body && body.querySelector('#plannerLureMaxProgress');
+    const basisEl = body && body.querySelector('#plannerLureGoalBasis');
+    const goals = normalizeLureGoals(plannerState.lureGoals);
+    if(goalsEl) goalsEl.textContent = `${progress.goals}%`;
+    if(maxEl) maxEl.textContent = `${progress.maximum}%`;
+    if(basisEl) basisEl.textContent = `Goals: C${goals.Common} • R${goals.Rare} • E${goals.Epic}`;
+  }
+
   function applyPlannerPersistedState(saved){
     if(!saved || typeof saved !== 'object') return;
     plannerState.view = ['home','lure','lurecalc','season','oos','xp'].includes(saved.view) ? saved.view : plannerState.view;
@@ -10785,9 +11029,22 @@ function ensureValidPlannerActiveSet(){
     plannerState.map = String(saved.map || plannerState.map || 'ALL');
     plannerState.lureSearch = String(saved.lureSearch || '').trim().slice(0, 80);
     plannerState.lureActiveSetId = String(saved.lureActiveSetId || plannerState.lureActiveSetId || 'ALL');
+    const restoredAllBattleFish = isAllBattleFishSetId(plannerState.lureActiveSetId);
+    const restoredBattleMap = getBattlePlannerMapById(plannerState.lureActiveSetId);
+    const restoredBattleSet = getBattlePlannerSetById(plannerState.lureActiveSetId);
+    if(restoredAllBattleFish){
+      plannerState.scope = 'MAIN';
+      plannerState.map = 'ALL';
+    }else if(restoredBattleMap || restoredBattleSet){
+      plannerState.scope = 'MAIN';
+      plannerState.map = restoredBattleMap || restoredBattleSet.map;
+    }
     plannerState.lureCustomSets = sanitizePlannerCustomSets(saved.lureCustomSets);
     plannerState.lureSelectedFishKeys = Array.isArray(saved.lureSelectedFishKeys) ? saved.lureSelectedFishKeys.map((key) => String(key || '')).filter(Boolean).slice(0, 500) : plannerState.lureSelectedFishKeys;
     plannerState.lureCustomSelectionMode = !!saved.lureCustomSelectionMode;
+    plannerState.lureGoals = normalizeLureGoals(saved.lureGoals);
+    plannerState.lureOverviewSortKey = ['map','goals','maximum'].includes(saved.lureOverviewSortKey) ? saved.lureOverviewSortKey : 'map';
+    plannerState.lureOverviewSortDir = saved.lureOverviewSortDir === 'DESC' ? 'DESC' : 'ASC';
     plannerState.currentValues = sanitizePlannerRowMap(saved.currentValues, 'CURRENT');
     plannerState.targetValues = sanitizePlannerRowMap(saved.targetValues, 'TARGET');
     plannerState.lureCalcFrom = clampLevel(saved.lureCalcFrom, 0);
@@ -11095,6 +11352,20 @@ function ensureValidPlannerActiveSet(){
   }
 
   
+function getPlannerRowsAllMaps(orderType = 'season', scope = 'MAIN'){
+  const rows = [];
+  const addRows = (pool, rowScope) => {
+    Object.keys(pool || {}).forEach((location) => {
+      (pool[location] || []).forEach((fish) => {
+        rows.push({ scope: rowScope, location, name: fish.name, category: fish.category });
+      });
+    });
+  };
+  if(String(scope || 'MAIN').toUpperCase() === 'VIP') addRows(LOCATIONS_VIP, 'VIP');
+  else addRows(LOCATIONS, 'MAIN');
+  return rows.sort((a, b) => comparePlannerGameOrder(a, b, orderType));
+}
+
 function getFilteredPlannerRows(orderType = 'season'){
   ensureValidPlannerActiveSet();
   let rows = getPlannerRows(orderType);
@@ -11103,12 +11374,35 @@ function getFilteredPlannerRows(orderType = 'season'){
     rows = rows.filter((row) => String(row.name || '').toLowerCase().includes(q));
   }
   if(plannerState.lureActiveSetId && plannerState.lureActiveSetId !== 'ALL'){
-    const activeSet = (plannerState.lureCustomSets || []).find((set) => set && set.id === plannerState.lureActiveSetId && set.scope === plannerState.scope);
-    if(activeSet && Array.isArray(activeSet.fishKeys) && activeSet.fishKeys.length){
-      const allowed = new Set(activeSet.fishKeys);
-      rows = rows.filter((row) => allowed.has(keyForRow(row)));
+    const allBattleFish = isAllBattleFishSetId(plannerState.lureActiveSetId);
+    const battleMap = getBattlePlannerMapById(plannerState.lureActiveSetId);
+    const battleSet = getBattlePlannerSetById(plannerState.lureActiveSetId);
+    if(allBattleFish && plannerState.scope === 'MAIN'){
+      const allowedKeys = getAllBattlePlannerFishKeys();
+      rows = getPlannerRowsAllMaps(orderType, 'MAIN').filter((row) =>
+        allowedKeys.has(String(row.location || '') + '|' + canonicalizeFishName(row.name || ''))
+      );
+      if(q) rows = rows.filter((row) => String(row.name || '').toLowerCase().includes(q));
+    }else if(battleMap && plannerState.scope === 'MAIN'){
+      const allowedNames = new Set(getBattlePlannerFishNamesForMap(battleMap).map((name) => canonicalizeFishName(name)));
+      rows = rows.filter((row) =>
+        String(row.location || '') === battleMap &&
+        allowedNames.has(canonicalizeFishName(row.name || ''))
+      );
+    }else if(battleSet && plannerState.scope === 'MAIN'){
+      const allowedNames = new Set((battleSet.fishNames || []).map((name) => canonicalizeFishName(name)));
+      rows = rows.filter((row) =>
+        String(row.location || '') === battleSet.map &&
+        allowedNames.has(canonicalizeFishName(row.name || ''))
+      );
     }else{
-      plannerState.lureActiveSetId = 'ALL';
+      const activeSet = (plannerState.lureCustomSets || []).find((set) => set && set.id === plannerState.lureActiveSetId && set.scope === plannerState.scope);
+      if(activeSet && Array.isArray(activeSet.fishKeys) && activeSet.fishKeys.length){
+        const allowed = new Set(activeSet.fishKeys);
+        rows = rows.filter((row) => allowed.has(keyForRow(row)));
+      }else{
+        plannerState.lureActiveSetId = 'ALL';
+      }
     }
   }
   const rarity = String(plannerState.lureRarity || 'ALL');
@@ -11585,7 +11879,7 @@ function getFilteredPlannerRows(orderType = 'season'){
 
 
   const OOS_DAY_FISH_MAIN = new Set(["striped red mullet", "mudskipper", "redear sunfish", "muskie", "goldfish", "bessie", "white crappie", "tripletail", "sierra mackerel", "jack crevalle", "broomtail grouper", "striped marlin", "whale shark", "atka mackerel", "capelin", "arctic greyling", "chum salmon", "blue lingcod", "king salmon", "dusky flathead", "red emperor snapper", "albacore", "unicorn leatherjacket", "coral trout", "hoodwinker sunfish", "bunyip", "twaite shad", "three spined stickleback", "gudgeon", "roach", "european grayling", "scottish salmon", "red tail tiger catfish", "giant freshwater whipray", "juliens golden prize carp", "amazon pellona", "jatuarana", "redeye piranha", "bicuda", "pirapitinga", "rock bacu", "payara", "boiuna"]);
-  const OOS_NIGHT_FISH_MAIN = new Set(["brisling", "gilt-head bream", "bonefish", "pacific footballfish", "brown trout", "walleye", "smallmouth bass", "flathead catfish", "longnose gar", "wahoo", "pacific sailfish", "cubera snapper", "nurse shark", "black marlin", "bull shark", "don pedro", "lancetfish", "sockeye salmon", "burbot", "bigmouth sculpin", "wolf eel", "ocean sunfish", "shortfin mako shark", "carpet shark", "rock flagtail", "fingermark", "mangrove jack", "spotted handfish", "tiger shark", "northern pike", "vendace", "dace", "european smelt", "european eel", "common sturgeon", "pla kad thong", "rice eel", "marbled sand goby", "giant devil catfish", "yellow mystus", "wallago", "striped catfish", "mekong giant catfish", "tucunare", "curimbata", "redtail catfish", "tiger sorubim", "peacock bass", "speckled pavon", "arowana", "electric eel", "flatwhiskered catfish", "arapaima"]);
+  const OOS_NIGHT_FISH_MAIN = new Set(["brisling", "gilt-head bream", "bonefish", "pacific footballfish", "brown trout", "walleye", "smallmouth bass", "flathead catfish", "longnose gar", "wahoo", "pacific sailfish", "cubera snapper", "nurse shark", "black marlin", "bull shark", "don pedro", "lancetfish", "sockeye salmon", "burbot", "wolf eel", "ocean sunfish", "shortfin mako shark", "rock flagtail", "fingermark", "mangrove jack", "spotted handfish", "tiger shark", "northern pike", "vendace", "dace", "european smelt", "european eel", "common sturgeon", "pla kad thong", "rice eel", "marbled sand goby", "yellow mystus", "wallago", "striped catfish", "mekong giant catfish", "tucunare", "curimbata", "redtail catfish", "tiger sorubim", "peacock bass", "speckled pavon", "flatwhiskered catfish", "arapaima"]);
   const OOS_DAY_FISH_VIP = new Set(["teapotfish", "slimesnail"]);
   const OOS_NIGHT_FISH_VIP = new Set(["anchorscale", "fish-eye", "bonebite"]);
 
@@ -11891,6 +12185,18 @@ function getFilteredPlannerRows(orderType = 'season'){
     const isCurrent = plannerState.mode === 'CURRENT';
     const currentKpis = isCurrent ? getLurePlannerCurrentKPIs(baseRows) : null;
     const rows = applyLureTableSort(baseRows, isCurrent);
+    const activeAllBattleFish = isAllBattleFishSetId(plannerState.lureActiveSetId);
+    const activeBattleMap = getBattlePlannerMapById(plannerState.lureActiveSetId);
+    const activeBattleSet = getBattlePlannerSetById(plannerState.lureActiveSetId);
+    const activeCustomSet = isCustomPlannerSetId(plannerState.lureActiveSetId);
+    // A top-level All Battle Fish selection represents every map, so no single Overview row is active.
+    const activeOverviewMap = activeAllBattleFish ? null : (activeBattleMap || (activeBattleSet && activeBattleSet.map) || null);
+    const isBattleSelection = !!(activeAllBattleFish || activeBattleMap || activeBattleSet);
+    const lureProgress = isBattleSelection ? calculateLureProgress(rows) : null;
+    const lureGoals = normalizeLureGoals(plannerState.lureGoals);
+    const lureOverviewRows = isBattleSelection ? getBattleMapOverviewRows(allRows) : [];
+    const allBattleFocus = activeAllBattleFish ? getAllBattleFishFocusByMap(rows) : [];
+    const closestBattleFocus = activeAllBattleFish ? getClosestBattleFishToGoal(rows) : [];
 
     let totalFishNeeded = 0;
     let totalGoldNeeded = 0;
@@ -11946,7 +12252,7 @@ function getFilteredPlannerRows(orderType = 'season'){
             </div>
             <label class="planner-map-control planner-map-control-inline">
               <span>Pick a map</span>
-              <select id="plannerMapSelect" class="planner-select">${mapOptions.map((opt) => `<option value="${escapeAttr(opt)}" ${plannerState.map === opt ? 'selected' : ''}>${opt === 'ALL' ? (plannerState.scope === 'VIP' ? 'All VIP Maps' : 'All Main Maps') : escapeHtml(opt)}</option>`).join('')}</select>
+              <select id="plannerMapSelect" class="planner-select" ${isBattleSelection ? 'disabled aria-disabled="true" title="The selected battle list determines the map"' : ''}>${mapOptions.map((opt) => `<option value="${escapeAttr(opt)}" ${plannerState.map === opt ? 'selected' : ''}>${opt === 'ALL' ? (plannerState.scope === 'VIP' ? 'All VIP Maps' : 'All Main Maps') : escapeHtml(opt)}</option>`).join('')}</select>
             </label>
           </div>
           <div class="planner-control-row planner-control-row-rarity">
@@ -11971,15 +12277,23 @@ function getFilteredPlannerRows(orderType = 'season'){
                   <span>Pick a set</span>
                   <select id="plannerSetSelect" class="planner-select">
                     <option value="ALL" ${plannerState.lureActiveSetId === 'ALL' ? 'selected' : ''}>All Fish</option>
-                    ${getPlannerSetsForScope(plannerState.scope).map((set) => `<option value="${escapeAttr(set.id)}" ${plannerState.lureActiveSetId === set.id ? 'selected' : ''}>${escapeHtml(set.name)}</option>`).join('')}
+                    ${plannerState.scope === 'MAIN' ? `<option value="${ALL_BATTLE_FISH_SET_ID}" ${plannerState.lureActiveSetId === ALL_BATTLE_FISH_SET_ID ? 'selected' : ''}>All Battle Fish</option>` : ''}
+                    ${plannerState.scope === 'MAIN' ? renderBattleSetOptions() : ''}
+                    ${getPlannerSetsForScope(plannerState.scope).length ? `<optgroup label="My Custom Sets">${getPlannerSetsForScope(plannerState.scope).map((set) => `<option value="${escapeAttr(set.id)}" ${plannerState.lureActiveSetId === set.id ? 'selected' : ''}>${escapeHtml(set.name)}</option>`).join('')}</optgroup>` : ''}
                   </select>
                 </label>
                 <div class="planner-inline-actions planner-inline-actions-set">
-                  ${plannerState.lureActiveSetId === 'ALL'
-                    ? `<button type="button" class="planner-pill active planner-tooltip" data-tooltip="${plannerState.lureCustomSelectionMode ? 'Click + or ✓ in the table to add or remove fish, then save the set. Use Cancel Custom Set to exit without saving.' : 'Enter custom set mode, then click + in the table to build a set.'}" data-planner-make-set="1" ${plannerState.lureCustomSets.length >= 10 ? 'disabled' : ''}>${plannerState.lureCustomSelectionMode ? 'Save Custom Set' : 'Make Custom Set'}</button>`
-                    : `<button type="button" class="planner-pill active planner-tooltip" data-tooltip="Click + or ✓ in the table to add or remove fish from this set.">Editing Set</button>`}
+                  ${activeAllBattleFish
+                    ? `<div class="planner-battle-set-chip"><strong>All Battle Fish</strong><span>${fmtInt(rows.length)} fish across ${fmtInt(getBattlePlannerMaps().length)} maps</span></div>`
+                    : (activeBattleMap
+                      ? `<div class="planner-battle-set-chip"><strong>${escapeHtml(activeBattleMap)}</strong><span>All Battle Fish • ${fmtInt(rows.length)} unique fish</span></div>`
+                      : (activeBattleSet
+                      ? `<div class="planner-battle-set-chip"><strong>${escapeHtml(activeBattleSet.map)}</strong><span>${escapeHtml(activeBattleSet.name)} • ${fmtInt(rows.length)} fish</span></div>`
+                      : (plannerState.lureActiveSetId === 'ALL'
+                      ? `<button type="button" class="planner-pill active planner-tooltip" data-tooltip="${plannerState.lureCustomSelectionMode ? 'Click + or ✓ in the table to add or remove fish, then save the set. Use Cancel Custom Set to exit without saving.' : 'Enter custom set mode, then click + in the table to build a set.'}" data-planner-make-set="1" ${plannerState.lureCustomSets.length >= 10 ? 'disabled' : ''}>${plannerState.lureCustomSelectionMode ? 'Save Custom Set' : 'Make Custom Set'}</button>`
+                      : `<button type="button" class="planner-pill active planner-tooltip" data-tooltip="Click + or ✓ in the table to add or remove fish from this set.">Editing Set</button>`)))}
                   ${plannerState.lureCustomSelectionMode && plannerState.lureActiveSetId === 'ALL' ? `<button type="button" class="planner-pill" data-planner-cancel-set="1">Cancel Custom Set</button>` : ''}
-                  ${plannerState.lureActiveSetId !== 'ALL' ? `<button type="button" class="planner-pill" data-planner-delete-set="1">Delete Set</button>` : ''}
+                  ${activeCustomSet ? `<button type="button" class="planner-pill" data-planner-delete-set="1">Delete Set</button>` : ''}
                   ${plannerState.lureCustomSelectionMode ? `<div class="planner-subtle-copy planner-subtle-copy-inline">${plannerState.lureActiveSetId === 'ALL' ? `${fmtInt((plannerState.lureSelectedFishKeys || []).length)} selected` : `${fmtInt(((getPlannerSetsForScope(plannerState.scope).find((set) => set.id === plannerState.lureActiveSetId) || {}).fishKeys || []).length)} in set`}</div>` : ''}
                 </div>
               </div>
@@ -11987,6 +12301,90 @@ function getFilteredPlannerRows(orderType = 'season'){
           </div>
         </div>
       </section>
+      ${isBattleSelection ? `
+      <section class="planner-lure-progress-card">
+        <div class="planner-lure-progress-head">
+          <div>
+            <div class="planner-lure-progress-title">Lure Progress</div>
+            <div class="planner-lure-progress-copy">Progress for the selected battle fish using current lure levels.</div>
+          </div>
+        </div>
+        <div class="planner-lure-progress-kpis">
+          <div class="planner-lure-progress-kpi">
+            <span>Goal Progress</span>
+            <small id="plannerLureGoalBasis">Goals: C${lureGoals.Common} • R${lureGoals.Rare} • E${lureGoals.Epic}</small>
+            <strong id="plannerLureGoalProgress">${lureProgress.goals}%</strong>
+          </div>
+          <div class="planner-lure-progress-kpi">
+            <span>Maximum Progress</span>
+            <small>Goal: 35</small>
+            <strong id="plannerLureMaxProgress">${lureProgress.maximum}%</strong>
+          </div>
+        </div>
+        <details class="planner-lure-overview">
+          <summary>Overview</summary>
+          <div class="planner-lure-overview-body">
+            <div class="planner-lure-overview-head">
+              <button type="button" data-lure-overview-sort="map">Map${lureOverviewSortArrow('map')}</button>
+              <button type="button" data-lure-overview-sort="goals">Goal Progress${lureOverviewSortArrow('goals')}</button>
+              <button type="button" data-lure-overview-sort="maximum">Maximum Progress${lureOverviewSortArrow('maximum')}</button>
+            </div>
+            <div class="planner-lure-overview-list">
+              ${lureOverviewRows.map((item) => `
+                <button type="button" class="planner-lure-overview-row ${activeOverviewMap === item.map ? 'active' : ''}" data-lure-overview-map="${escapeAttr(item.mapId)}">
+                  <span class="planner-lure-overview-map">${escapeHtml(item.map)}</span>
+                  <span class="planner-lure-overview-metric"><span class="planner-lure-overview-bar"><i style="width:${item.goals}%"></i></span><strong>${item.goals}%</strong></span>
+                  <span class="planner-lure-overview-metric"><span class="planner-lure-overview-bar"><i style="width:${item.maximum}%"></i></span><strong>${item.maximum}%</strong></span>
+                </button>`).join('')}
+            </div>
+          </div>
+        </details>
+        ${activeAllBattleFish ? `
+        <details class="planner-battle-focus">
+          <summary>Focus Fish</summary>
+          <div class="planner-battle-focus-body">
+            <section class="planner-battle-focus-section">
+              <div class="planner-battle-focus-section-title">Closest to Goal</div>
+              ${closestBattleFocus.length ? `
+                <div class="planner-battle-focus-closest-grid">
+                  ${closestBattleFocus.map((focus) => `
+                    <article class="planner-battle-focus-closest-item">
+                      <div class="planner-battle-focus-fish-name">🐟 ${escapeHtml(toTitleCase(focus.row.name))}</div>
+                      <div class="planner-battle-focus-map-label">${escapeHtml(focus.row.location)} • ${escapeHtml(focus.row.category)}</div>
+                      <div class="planner-battle-focus-levels">Current ${fmtInt(focus.current)} <span aria-hidden="true">→</span> Goal ${fmtInt(focus.goal)}</div>
+                    </article>`).join('')}
+                </div>`
+                : `<div class="planner-battle-focus-complete">✓ All battle fish have reached their goals</div>`}
+            </section>
+
+            <section class="planner-battle-focus-section planner-battle-focus-section--farthest">
+              <div class="planner-battle-focus-section-title">Farthest from Goal</div>
+              <div class="planner-battle-focus-grid">
+                ${allBattleFocus.map((item) => `
+                  <article class="planner-battle-focus-map">
+                    <div class="planner-battle-focus-map-name">${escapeHtml(item.map)}</div>
+                    ${item.fish.length ? item.fish.map((focus) => `
+                      <div class="planner-battle-focus-fish">
+                        <div class="planner-battle-focus-fish-name">🐟 ${escapeHtml(toTitleCase(focus.row.name))}</div>
+                        <div class="planner-battle-focus-levels">Current ${fmtInt(focus.current)} <span aria-hidden="true">→</span> Goal ${fmtInt(focus.goal)}</div>
+                      </div>`).join('') : `<div class="planner-battle-focus-complete">✓ Goal Complete</div>`}
+                  </article>`).join('')}
+              </div>
+            </section>
+          </div>
+        </details>` : ''}
+        <details class="planner-lure-goals">
+          <summary>Lure Goals</summary>
+          <div class="planner-lure-goals-body">
+            ${['Common','Rare','Epic'].map((rarity) => `
+              <label class="planner-lure-goal-field">
+                <span>${rarity}</span>
+                <input type="number" min="1" max="35" step="1" value="${lureGoals[rarity]}" data-lure-goal="${rarity}">
+              </label>`).join('')}
+            <button type="button" class="planner-pill planner-lure-goals-reset" data-lure-goals-reset="1">Reset Defaults</button>
+          </div>
+        </details>
+      </section>` : ''}
       <section class="planner-kpi-grid${isCurrent ? ' planner-kpi-grid--lure-current' : ''}">
         ${isCurrent
           ? `<article class="planner-kpi-card"><div class="planner-kpi-label">Total Gold Needed</div><div class="planner-kpi-value">${fmtInt(totalGoldNeeded)}</div><div class="planner-lure-meta">Across shown fish</div></article>
@@ -12926,7 +13324,7 @@ if(rowSelectBtn){
   const key = rowSelectBtn.getAttribute('data-planner-row-select') || '';
   const row = getPlannerRows('lure').find((item) => keyForRow(item) === key);
   if(row){
-    if(plannerState.lureActiveSetId && plannerState.lureActiveSetId !== 'ALL' && plannerState.lureCustomSelectionMode){
+    if(isCustomPlannerSetId(plannerState.lureActiveSetId) && plannerState.lureCustomSelectionMode){
       const targetKey = keyForRow(row);
       plannerState.lureCustomSets = sanitizePlannerCustomSets((plannerState.lureCustomSets || []).map((set) => {
         if(!set || set.id !== plannerState.lureActiveSetId) return set;
@@ -12994,7 +13392,7 @@ if(rowSelectBtn){
 
       const deleteSetBtn = e.target.closest('[data-planner-delete-set="1"]');
       if(deleteSetBtn){
-        if(plannerState.lureActiveSetId === 'ALL') return;
+        if(!isCustomPlannerSetId(plannerState.lureActiveSetId)) return;
         const activeId = plannerState.lureActiveSetId;
         plannerState.lureCustomSets = sanitizePlannerCustomSets((plannerState.lureCustomSets || []).filter((set) => set && set.id !== activeId));
         plannerState.lureActiveSetId = 'ALL';
@@ -13152,6 +13550,45 @@ if(rowSelectBtn){
         }
         return;
       }
+      const lureOverviewMapBtn = e.target.closest('[data-lure-overview-map]');
+      if(lureOverviewMapBtn){
+        const mapId = String(lureOverviewMapBtn.getAttribute('data-lure-overview-map') || '');
+        const map = getBattlePlannerMapById(mapId);
+        if(map){
+          plannerState.scope = 'MAIN';
+          plannerState.map = map;
+          plannerState.lureActiveSetId = mapId;
+          plannerState.lureRarity = 'ALL';
+          plannerState.lureSearch = '';
+          plannerState.lureCustomSelectionMode = false;
+          plannerState.lureSelectedFishKeys = [];
+          queuePlannerStateSave();
+          renderPlannerView();
+        }
+        return;
+      }
+      const lureOverviewSortBtn = e.target.closest('[data-lure-overview-sort]');
+      if(lureOverviewSortBtn){
+        const key = String(lureOverviewSortBtn.getAttribute('data-lure-overview-sort') || 'map');
+        if(['map','goals','maximum'].includes(key)){
+          if(plannerState.lureOverviewSortKey === key){
+            plannerState.lureOverviewSortDir = plannerState.lureOverviewSortDir === 'ASC' ? 'DESC' : 'ASC';
+          }else{
+            plannerState.lureOverviewSortKey = key;
+            plannerState.lureOverviewSortDir = key === 'map' ? 'ASC' : 'DESC';
+          }
+          queuePlannerStateSave();
+          renderPlannerView();
+        }
+        return;
+      }
+      const lureGoalsResetBtn = e.target.closest('[data-lure-goals-reset]');
+      if(lureGoalsResetBtn){
+        plannerState.lureGoals = Object.assign({}, DEFAULT_LURE_GOALS);
+        queuePlannerStateSave();
+        renderPlannerView();
+        return;
+      }
       const clearSearchBtn = e.target.closest('[data-planner-search-clear]');
       if(clearSearchBtn){
         plannerState.lureSearch = '';
@@ -13210,6 +13647,21 @@ if(rowSelectBtn){
         return;
       }
 
+      const lureGoalInput = e.target.closest('[data-lure-goal]');
+      if(lureGoalInput){
+        const rarity = String(lureGoalInput.getAttribute('data-lure-goal') || '');
+        if(['Common','Rare','Epic'].includes(rarity)){
+          const num = Number(lureGoalInput.value);
+          if(Number.isFinite(num) && num >= 1){
+            plannerState.lureGoals = normalizeLureGoals(Object.assign({}, plannerState.lureGoals, { [rarity]: num }));
+            lureGoalInput.value = plannerState.lureGoals[rarity];
+            queuePlannerStateSave();
+            updateLureProgressDisplay(body, getFilteredPlannerRows('lure'));
+          }
+        }
+        return;
+      }
+
       const lureSearchInput = e.target.closest('#plannerLureSearchInput');
       if(lureSearchInput){
         const nextValue = String(lureSearchInput.value || '').slice(0, 80);
@@ -13263,8 +13715,20 @@ if(rowSelectBtn){
       if(setSel){
         plannerState.lureActiveSetId = setSel.value || 'ALL';
         ensureValidPlannerActiveSet();
-        plannerState.lureCustomSelectionMode = plannerState.lureActiveSetId !== 'ALL';
-        if(plannerState.lureActiveSetId === 'ALL') plannerState.lureSelectedFishKeys = [];
+        const selectedAllBattleFish = isAllBattleFishSetId(plannerState.lureActiveSetId);
+        const selectedBattleMap = getBattlePlannerMapById(plannerState.lureActiveSetId);
+        const selectedBattleSet = getBattlePlannerSetById(plannerState.lureActiveSetId);
+        if(selectedAllBattleFish || selectedBattleMap || selectedBattleSet){
+          plannerState.scope = 'MAIN';
+          plannerState.map = selectedAllBattleFish ? 'ALL' : (selectedBattleMap || selectedBattleSet.map);
+          plannerState.lureRarity = 'ALL';
+          plannerState.lureSearch = '';
+          plannerState.lureCustomSelectionMode = false;
+          plannerState.lureSelectedFishKeys = [];
+        }else{
+          plannerState.lureCustomSelectionMode = isCustomPlannerSetId(plannerState.lureActiveSetId);
+          if(plannerState.lureActiveSetId === 'ALL') plannerState.lureSelectedFishKeys = [];
+        }
         clearPlannerSelectedFishForScope();
         queuePlannerStateSave();
         renderPlannerView();
@@ -13299,8 +13763,20 @@ if(rowSelectBtn){
       if(setSel){
         plannerState.lureActiveSetId = setSel.value || 'ALL';
         ensureValidPlannerActiveSet();
-        plannerState.lureCustomSelectionMode = plannerState.lureActiveSetId !== 'ALL';
-        if(plannerState.lureActiveSetId === 'ALL') plannerState.lureSelectedFishKeys = [];
+        const selectedAllBattleFish = isAllBattleFishSetId(plannerState.lureActiveSetId);
+        const selectedBattleMap = getBattlePlannerMapById(plannerState.lureActiveSetId);
+        const selectedBattleSet = getBattlePlannerSetById(plannerState.lureActiveSetId);
+        if(selectedAllBattleFish || selectedBattleMap || selectedBattleSet){
+          plannerState.scope = 'MAIN';
+          plannerState.map = selectedAllBattleFish ? 'ALL' : (selectedBattleMap || selectedBattleSet.map);
+          plannerState.lureRarity = 'ALL';
+          plannerState.lureSearch = '';
+          plannerState.lureCustomSelectionMode = false;
+          plannerState.lureSelectedFishKeys = [];
+        }else{
+          plannerState.lureCustomSelectionMode = isCustomPlannerSetId(plannerState.lureActiveSetId);
+          if(plannerState.lureActiveSetId === 'ALL') plannerState.lureSelectedFishKeys = [];
+        }
         clearPlannerSelectedFishForScope();
         queuePlannerStateSave();
         renderPlannerView();

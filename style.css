@@ -7234,3 +7234,334 @@ body:not(.season-active) .season-only-note{
 #clanDrawer[aria-hidden="true"]{
   display:none !important;
 }
+
+
+/* v1.9 Battle Sets — built-in, read-only lure-planner presets */
+.planner-battle-set-chip{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:34px;
+  padding:6px 10px;
+  border:1px solid rgba(255,152,94,.34);
+  border-radius:12px;
+  background:linear-gradient(180deg, rgba(255,138,77,.16), rgba(216,90,40,.10));
+  color:var(--text, #f4f7fb);
+  white-space:nowrap;
+}
+.planner-battle-set-chip strong{
+  font-size:12px;
+  font-weight:900;
+}
+.planner-battle-set-chip span{
+  font-size:11px;
+  opacity:.76;
+}
+@media (max-width:720px){
+  .planner-battle-set-chip{
+    white-space:normal;
+    flex-wrap:wrap;
+  }
+}
+
+
+/* v1.9 Battle Lure Progress */
+.planner-lure-progress-card{
+  margin:16px 0;
+  padding:18px;
+  border:1px solid rgba(103,181,164,.28);
+  border-radius:20px;
+  background:linear-gradient(135deg, rgba(31,79,72,.07), rgba(255,255,255,.72));
+  box-shadow:0 10px 28px rgba(24,63,57,.07);
+}
+.planner-lure-progress-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.planner-lure-progress-title{font-size:1.05rem;font-weight:800;color:var(--ink, #183c37)}
+.planner-lure-progress-copy{margin-top:4px;font-size:.85rem;color:var(--muted, #657875)}
+.planner-lure-progress-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.planner-lure-progress-kpi{padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid rgba(103,181,164,.22)}
+.planner-lure-progress-kpi span{display:block;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted, #657875)}
+.planner-lure-progress-kpi strong{display:block;margin-top:3px;font-size:1.7rem;line-height:1.1;color:var(--ink, #183c37)}
+.planner-lure-goals{margin-top:14px;border-top:1px solid rgba(103,181,164,.22);padding-top:12px}
+.planner-lure-goals summary{cursor:pointer;font-weight:800;color:var(--ink, #183c37);list-style-position:inside}
+.planner-lure-goals-body{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;padding-top:12px}
+.planner-lure-goal-field{display:flex;flex-direction:column;gap:5px;min-width:110px}
+.planner-lure-goal-field span{font-size:.78rem;font-weight:700;color:var(--muted, #657875)}
+.planner-lure-goal-field input{width:100%;min-height:40px;padding:8px 10px;border:1px solid rgba(75,120,112,.3);border-radius:11px;background:#fff;color:inherit;font:inherit}
+.planner-lure-goals-reset{margin-left:auto}
+@media (max-width:640px){
+  .planner-lure-progress-kpis{grid-template-columns:1fr 1fr}
+  .planner-lure-goal-field{flex:1 1 28%}
+  .planner-lure-goals-reset{width:100%;margin-left:0}
+}
+
+/* v1.9 Lure Progress visual integration */
+.planner-lure-progress-card{
+  margin:16px 0;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(2,31,88,.78), rgba(1,28,78,.88));
+  box-shadow:0 14px 30px rgba(0,0,0,.14);
+}
+.planner-lure-progress-title{
+  color:#fff;
+  font-size:1.05rem;
+  font-weight:900;
+}
+.planner-lure-progress-copy{
+  color:rgba(255,255,255,.76);
+}
+.planner-lure-progress-kpis{
+  gap:14px;
+  margin-top:14px;
+}
+.planner-lure-progress-kpi{
+  padding:14px 16px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+.planner-lure-progress-kpi span{
+  color:rgba(255,255,255,.68);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1.5px;
+}
+.planner-lure-progress-kpi strong{
+  color:#fff;
+  font-size:1.55rem;
+  font-weight:900;
+}
+.planner-lure-goals{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.planner-lure-goals summary{
+  color:rgba(255,255,255,.92);
+}
+.planner-lure-goal-field span{
+  color:rgba(255,255,255,.72);
+}
+.planner-lure-goal-field input{
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(5,18,53,.76);
+  color:#fff;
+}
+
+
+/* v1.9 Lure Progress overview */
+.planner-lure-overview{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.planner-lure-overview summary{
+  cursor:pointer;
+  color:rgba(255,255,255,.92);
+  font-weight:800;
+  list-style-position:inside;
+}
+.planner-lure-overview-body{padding-top:12px}
+.planner-lure-overview-head,
+.planner-lure-overview-row{
+  display:grid;
+  grid-template-columns:minmax(150px,1.25fr) minmax(150px,1fr) minmax(150px,1fr);
+  gap:12px;
+  align-items:center;
+}
+.planner-lure-overview-head{
+  padding:0 12px 8px;
+}
+.planner-lure-overview-head button{
+  appearance:none;
+  border:0;
+  padding:0;
+  background:transparent;
+  color:rgba(255,255,255,.62);
+  font:inherit;
+  font-size:.72rem;
+  font-weight:800;
+  text-align:left;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  cursor:pointer;
+}
+.planner-lure-overview-row{
+  width:100%;
+  margin-top:6px;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:13px;
+  background:rgba(255,255,255,.035);
+  color:#fff;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+.planner-lure-overview-row:hover{
+  background:rgba(255,255,255,.075);
+  border-color:rgba(255,255,255,.16);
+  transform:translateY(-1px);
+}
+.planner-lure-overview-row.active{
+  background:rgba(103,181,164,.16);
+  border-color:rgba(127,218,198,.36);
+}
+.planner-lure-overview-map{font-weight:800}
+.planner-lure-overview-metric{
+  display:grid;
+  grid-template-columns:minmax(55px,1fr) 42px;
+  gap:9px;
+  align-items:center;
+}
+.planner-lure-overview-metric strong{
+  color:#fff;
+  font-size:.84rem;
+  text-align:right;
+}
+.planner-lure-overview-bar{
+  display:block;
+  height:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+}
+.planner-lure-overview-bar i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:rgba(127,218,198,.82);
+}
+@media (max-width:720px){
+  .planner-lure-overview-head{display:none}
+  .planner-lure-overview-row{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .planner-lure-overview-metric::before{
+    color:rgba(255,255,255,.6);
+    font-size:.7rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  .planner-lure-overview-metric:nth-child(2)::before{content:'Goal Progress'}
+  .planner-lure-overview-metric:nth-child(3)::before{content:'Maximum Progress'}
+  .planner-lure-overview-metric{grid-template-columns:105px minmax(55px,1fr) 42px}
+}
+
+
+/* v1.9 All Battle Fish focus */
+.planner-battle-focus{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.planner-battle-focus summary{
+  cursor:pointer;
+  color:rgba(255,255,255,.92);
+  font-weight:800;
+  list-style-position:inside;
+}
+.planner-battle-focus-body{padding-top:12px}
+.planner-battle-focus-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.planner-battle-focus-map{
+  padding:12px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  background:rgba(255,255,255,.035);
+}
+.planner-battle-focus-map-name{
+  margin-bottom:8px;
+  font-weight:900;
+  color:#fff;
+}
+.planner-battle-focus-fish{
+  padding:8px 9px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(5,18,53,.46);
+}
+.planner-battle-focus-fish + .planner-battle-focus-fish{margin-top:6px}
+.planner-battle-focus-fish-name{font-weight:800;color:rgba(255,255,255,.96)}
+.planner-battle-focus-levels{margin-top:2px;font-size:.82rem;color:rgba(255,255,255,.66)}
+.planner-battle-focus-levels span{padding:0 4px;font-weight:900;color:rgba(255,255,255,.54)}
+.planner-battle-focus-complete{
+  padding:10px 9px;
+  border-radius:10px;
+  border:1px solid rgba(127,218,198,.20);
+  background:rgba(103,181,164,.12);
+  color:rgba(210,255,244,.94);
+  font-weight:800;
+}
+@media (max-width:720px){
+  .planner-battle-focus-grid{grid-template-columns:1fr}
+}
+
+
+.planner-battle-focus-section + .planner-battle-focus-section{
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.planner-battle-focus-section-title{
+  margin-bottom:10px;
+  color:rgba(255,255,255,.94);
+  font-size:.86rem;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+.planner-battle-focus-closest-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.planner-battle-focus-closest-item{
+  padding:10px 11px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  background:rgba(5,18,53,.46);
+}
+.planner-battle-focus-map-label{
+  margin-top:3px;
+  color:rgba(255,255,255,.54);
+  font-size:.76rem;
+}
+@media (max-width:720px){
+  .planner-battle-focus-closest-grid{grid-template-columns:1fr}
+}
+
+
+.planner-lure-progress-kpi small{
+  display:block;
+  margin-top:4px;
+  color:rgba(255,255,255,.58);
+  font-size:.72rem;
+  font-weight:700;
+  line-height:1.2;
+  white-space:nowrap;
+}
+.planner-lure-progress-kpi small + strong{
+  margin-top:7px;
+}
+
+
+/* v1.9 KPI helper hierarchy polish */
+.planner-lure-progress-kpi small{
+  font-size:.62rem;
+  font-weight:400;
+  color:rgba(255,255,255,.48);
+  letter-spacing:0;
+  text-transform:none;
+  line-height:1.15;
+}
+.planner-lure-progress-kpi small + strong{
+  margin-top:10px;
+}

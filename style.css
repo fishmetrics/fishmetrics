@@ -7565,3 +7565,14 @@ body:not(.season-active) .season-only-note{
 .planner-lure-progress-kpi small + strong{
   margin-top:10px;
 }
+
+
+/* v1.8.1 Reachable Progress: three equal progress KPIs */
+.planner-lure-progress-kpis--three{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+@media (max-width: 900px){
+  .planner-lure-progress-kpis--three{
+    grid-template-columns:1fr;
+  }
+}

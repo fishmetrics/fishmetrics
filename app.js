@@ -10929,19 +10929,33 @@ function ensureValidPlannerActiveSet(){
 
   function calculateLureProgress(rows){
     const list = Array.isArray(rows) ? rows : [];
-    if(!list.length) return { goals: 0, maximum: 0 };
+    if(!list.length) return { goals: 0, reachable: 0, reachableGain: 0, maximum: 0, reachableGold: 0, upgradesReady: 0 };
     const goals = normalizeLureGoals(plannerState.lureGoals);
     let goalSum = 0;
+    let reachableSum = 0;
     let maxSum = 0;
+    let reachableGold = 0;
+    let upgradesReady = 0;
     list.forEach((row) => {
-      const current = Math.max(0, Math.min(LURE_MAX, Number(getCurrentCell(row).start) || 0));
+      const cell = getCurrentCell(row);
+      const current = Math.max(0, Math.min(LURE_MAX, Number(cell.start) || 0));
+      const reachable = Math.max(current, Math.min(LURE_MAX, Number(cell.reachable) || current));
       const rarityGoal = goals[String(row.category || '')] || LURE_MAX;
       goalSum += Math.min(current / rarityGoal, 1);
+      reachableSum += Math.min(reachable / rarityGoal, 1);
       maxSum += current / LURE_MAX;
+      reachableGold += Math.max(0, Number(cell.goldNeeded) || 0);
+      upgradesReady += Math.max(0, reachable - current);
     });
+    const goalPct = Math.round((goalSum / list.length) * 100);
+    const reachablePct = Math.round((reachableSum / list.length) * 100);
     return {
-      goals: Math.round((goalSum / list.length) * 100),
-      maximum: Math.round((maxSum / list.length) * 100)
+      goals: goalPct,
+      reachable: reachablePct,
+      reachableGain: Math.max(0, reachablePct - goalPct),
+      maximum: Math.round((maxSum / list.length) * 100),
+      reachableGold,
+      upgradesReady
     };
   }
 
@@ -11013,10 +11027,14 @@ function ensureValidPlannerActiveSet(){
   function updateLureProgressDisplay(body, rows){
     const progress = calculateLureProgress(rows);
     const goalsEl = body && body.querySelector('#plannerLureGoalProgress');
+    const reachableEl = body && body.querySelector('#plannerLureReachableProgress');
+    const upgradesEl = body && body.querySelector('#plannerLureUpgradesReadyLine');
     const maxEl = body && body.querySelector('#plannerLureMaxProgress');
     const basisEl = body && body.querySelector('#plannerLureGoalBasis');
     const goals = normalizeLureGoals(plannerState.lureGoals);
     if(goalsEl) goalsEl.textContent = `${progress.goals}%`;
+    if(reachableEl) reachableEl.textContent = `${progress.reachable}% (+${progress.reachableGain}%)`;
+    if(upgradesEl) upgradesEl.textContent = `${fmtInt(progress.upgradesReady)} ${progress.upgradesReady === 1 ? 'upgrade' : 'upgrades'} ready`;
     if(maxEl) maxEl.textContent = `${progress.maximum}%`;
     if(basisEl) basisEl.textContent = `Goals: C${goals.Common} • R${goals.Rare} • E${goals.Epic}`;
   }
@@ -12309,11 +12327,16 @@ function getFilteredPlannerRows(orderType = 'season'){
             <div class="planner-lure-progress-copy">Progress for the selected battle fish using current lure levels.</div>
           </div>
         </div>
-        <div class="planner-lure-progress-kpis">
+        <div class="planner-lure-progress-kpis planner-lure-progress-kpis--three">
           <div class="planner-lure-progress-kpi">
             <span>Goal Progress</span>
             <small id="plannerLureGoalBasis">Goals: C${lureGoals.Common} • R${lureGoals.Rare} • E${lureGoals.Epic}</small>
             <strong id="plannerLureGoalProgress">${lureProgress.goals}%</strong>
+          </div>
+          <div class="planner-lure-progress-kpi">
+            <span>Reachable Progress</span>
+            <small id="plannerLureUpgradesReadyLine">${fmtInt(lureProgress.upgradesReady)} ${lureProgress.upgradesReady === 1 ? 'upgrade' : 'upgrades'} ready</small>
+            <strong id="plannerLureReachableProgress">${lureProgress.reachable}% (+${lureProgress.reachableGain}%)</strong>
           </div>
           <div class="planner-lure-progress-kpi">
             <span>Maximum Progress</span>

@@ -10448,8 +10448,8 @@ Requirement: ${currPct}% ${metricLabel}.`;
     lureSelectedFishKeys: [],
     lureCustomSelectionMode: false,
     lureGoals: { Common: 15, Rare: 10, Epic: 10 },
-    lureOverviewSortKey: 'map',
-    lureOverviewSortDir: 'ASC',
+    lureOverviewSortKey: '',
+    lureOverviewSortDir: '',
     lureRarity: 'ALL',
     lureSortKey: '',
     lureSortDir: 'ASC',
@@ -10468,13 +10468,13 @@ Requirement: ${currPct}% ${metricLabel}.`;
     seasonCustomMain: { Common: 480, Rare: 640, Epic: 800, Legendary: 8000 },
     seasonCustomVIP: { Common: 480, Rare: 640, Epic: 800, Legendary: 8000 },
     seasonFishTargets: Object.create(null),
-    seasonSort: 'STATUS_ASC',
+    seasonSort: 'DEFAULT',
     oosScope: 'MAIN',
     oosMap: 'ALL_MAIN',
     oosSort: 'STATUS_ASC',
     oosLeavesSort: 'LEAVES_ASC',
     oosLengthSort: 'LENGTH_ASC',
-    oosPrimarySort: 'status',
+    oosPrimarySort: '',
     xpStart: null,
     xpTarget: null,
     xpLogDate: '',
@@ -10505,8 +10505,8 @@ Requirement: ${currPct}% ${metricLabel}.`;
       lureSelectedFishKeys: Array.isArray(plannerState.lureSelectedFishKeys) ? plannerState.lureSelectedFishKeys.map((key) => String(key || '')).filter(Boolean).slice(0, 500) : [],
       lureCustomSelectionMode: !!plannerState.lureCustomSelectionMode,
       lureGoals: Object.assign({}, plannerState.lureGoals || {}),
-      lureOverviewSortKey: String(plannerState.lureOverviewSortKey || 'map'),
-      lureOverviewSortDir: String(plannerState.lureOverviewSortDir || 'ASC'),
+      lureOverviewSortKey: String(plannerState.lureOverviewSortKey || ''),
+      lureOverviewSortDir: String(plannerState.lureOverviewSortDir || ''),
       currentValues: Object.assign({}, plannerState.currentValues || {}),
       targetValues: Object.assign({}, plannerState.targetValues || {}),
       lureCalcFrom: plannerState.lureCalcFrom,
@@ -11021,7 +11021,8 @@ function ensureValidPlannerActiveSet(){
   }
 
   function lureOverviewSortArrow(key){
-    return plannerState.lureOverviewSortKey === key ? (plannerState.lureOverviewSortDir === 'ASC' ? ' ▲' : ' ▼') : ' ↕';
+    if(plannerState.lureOverviewSortKey !== key) return ' ↕';
+    return plannerState.lureOverviewSortDir === 'ASC' ? ' ▲' : (plannerState.lureOverviewSortDir === 'DESC' ? ' ▼' : ' ↕');
   }
 
   function updateLureProgressDisplay(body, rows){
@@ -11061,8 +11062,8 @@ function ensureValidPlannerActiveSet(){
     plannerState.lureSelectedFishKeys = Array.isArray(saved.lureSelectedFishKeys) ? saved.lureSelectedFishKeys.map((key) => String(key || '')).filter(Boolean).slice(0, 500) : plannerState.lureSelectedFishKeys;
     plannerState.lureCustomSelectionMode = !!saved.lureCustomSelectionMode;
     plannerState.lureGoals = normalizeLureGoals(saved.lureGoals);
-    plannerState.lureOverviewSortKey = ['map','goals','maximum'].includes(saved.lureOverviewSortKey) ? saved.lureOverviewSortKey : 'map';
-    plannerState.lureOverviewSortDir = saved.lureOverviewSortDir === 'DESC' ? 'DESC' : 'ASC';
+    plannerState.lureOverviewSortKey = ['map','goals','maximum'].includes(saved.lureOverviewSortKey) ? saved.lureOverviewSortKey : '';
+    plannerState.lureOverviewSortDir = ['ASC','DESC'].includes(saved.lureOverviewSortDir) ? saved.lureOverviewSortDir : '';
     plannerState.currentValues = sanitizePlannerRowMap(saved.currentValues, 'CURRENT');
     plannerState.targetValues = sanitizePlannerRowMap(saved.targetValues, 'TARGET');
     plannerState.lureCalcFrom = clampLevel(saved.lureCalcFrom, 0);
@@ -11081,13 +11082,13 @@ function ensureValidPlannerActiveSet(){
     plannerState.seasonCustomMain = normalizeSeasonCustomTargets(saved.seasonCustomMain, plannerState.seasonCustomMain);
     plannerState.seasonCustomVIP = normalizeSeasonCustomTargets(saved.seasonCustomVIP, plannerState.seasonCustomVIP);
     plannerState.seasonFishTargets = sanitizeSeasonFishTargets(saved.seasonFishTargets);
-    plannerState.seasonSort = ['STATUS_ASC','STATUS_DESC'].includes(saved.seasonSort) ? saved.seasonSort : plannerState.seasonSort;
+    plannerState.seasonSort = ['STATUS_ASC','STATUS_DESC','DEFAULT'].includes(saved.seasonSort) ? saved.seasonSort : plannerState.seasonSort;
     plannerState.oosScope = ['MAIN','VIP'].includes(saved.oosScope) ? saved.oosScope : plannerState.oosScope;
     plannerState.oosMap = String(saved.oosMap || plannerState.oosMap || 'ALL_MAIN');
     plannerState.oosSort = ['STATUS_ASC','STATUS_DESC'].includes(saved.oosSort) ? saved.oosSort : plannerState.oosSort;
     plannerState.oosLeavesSort = ['LEAVES_ASC','LEAVES_DESC'].includes(saved.oosLeavesSort) ? saved.oosLeavesSort : plannerState.oosLeavesSort;
     plannerState.oosLengthSort = ['LENGTH_ASC','LENGTH_DESC'].includes(saved.oosLengthSort) ? saved.oosLengthSort : plannerState.oosLengthSort;
-    plannerState.oosPrimarySort = ['status','leavesIn','oosLength'].includes(saved.oosPrimarySort) ? saved.oosPrimarySort : plannerState.oosPrimarySort;
+    plannerState.oosPrimarySort = ['status','leavesIn','oosLength'].includes(saved.oosPrimarySort) ? saved.oosPrimarySort : '';
     plannerState.xpStart = clampXPValue(saved.xpStart);
     plannerState.xpTarget = clampXPValue(saved.xpTarget);
     plannerState.xpLogDate = normalizeISODate(saved.xpLogDate) || plannerState.xpLogDate;
@@ -11885,7 +11886,7 @@ function getFilteredPlannerRows(orderType = 'season'){
                 <th>Fish</th>
                 <th class="planner-time-head">Time</th>
                 <th>Category</th>
-                <th class="planner-sortable-head" data-season-sort="1">Season Status ${plannerState.seasonSort === 'STATUS_ASC' ? '▲' : '▼'}</th>
+                <th class="planner-sortable-head" data-season-sort="1">Season Status ${plannerState.seasonSort === 'STATUS_ASC' ? '▲' : (plannerState.seasonSort === 'STATUS_DESC' ? '▼' : '↕')}</th>
                 <th>Target Points</th>
               </tr>
             </thead>
@@ -12034,12 +12035,14 @@ function getFilteredPlannerRows(orderType = 'season'){
         return plannerState.oosLengthSort === 'LENGTH_DESC' ? (oB - oA) : (oA - oB);
       };
 
-      const primary = plannerState.oosPrimarySort || 'status';
+      const primary = plannerState.oosPrimarySort || '';
       const chain = primary === 'oosLength'
         ? [compareByLength, compareByStatus, compareByLeaves]
         : primary === 'leavesIn'
           ? [compareByLeaves, compareByStatus, compareByLength]
-          : [compareByStatus, compareByLeaves, compareByLength];
+          : primary === 'status'
+            ? [compareByStatus, compareByLeaves, compareByLength]
+            : [];
 
       for(const cmp of chain){
         const diff = cmp();
@@ -12116,9 +12119,9 @@ function getFilteredPlannerRows(orderType = 'season'){
                 <th>Fish</th>
                 <th class="planner-time-head">Time</th>
                 <th>Category</th>
-                <th class="planner-sortable-head" data-oos-leaves-sort="1">Leaves In ${plannerState.oosLeavesSort === 'LEAVES_ASC' ? '▲' : '▼'}</th>
-                <th class="planner-sortable-head" data-oos-length-sort="1">OOS Length ${plannerState.oosLengthSort === 'LENGTH_ASC' ? '▲' : '▼'}</th>
-                <th class="planner-sortable-head" data-oos-sort="1">Season Status ${plannerState.oosSort === 'STATUS_ASC' ? '▲' : '▼'}</th>
+                <th class="planner-sortable-head" data-oos-leaves-sort="1">Leaves In ${plannerState.oosPrimarySort !== 'leavesIn' ? '↕' : (plannerState.oosLeavesSort === 'LEAVES_ASC' ? '▲' : '▼')}</th>
+                <th class="planner-sortable-head" data-oos-length-sort="1">OOS Length ${plannerState.oosPrimarySort !== 'oosLength' ? '↕' : (plannerState.oosLengthSort === 'LENGTH_ASC' ? '▲' : '▼')}</th>
+                <th class="planner-sortable-head" data-oos-sort="1">Season Status ${plannerState.oosPrimarySort !== 'status' ? '↕' : (plannerState.oosSort === 'STATUS_ASC' ? '▲' : '▼')}</th>
               </tr>
             </thead>
             <tbody>${bodyRows}</tbody>
@@ -12146,7 +12149,8 @@ function getFilteredPlannerRows(orderType = 'season'){
   }
 
   function plannerSortArrow(activeKey, dir, key){
-    return activeKey === key ? (dir === 'ASC' ? ' ▲' : ' ▼') : ' ↕';
+    if(activeKey !== key) return ' ↕';
+    return dir === 'ASC' ? ' ▲' : (dir === 'DESC' ? ' ▼' : ' ↕');
   }
 
   function compareNumericSort(a, b, dir){
@@ -13463,24 +13467,42 @@ if(rowSelectBtn){
       }
       const oosSortBtn = e.target.closest('[data-oos-sort]');
       if(oosSortBtn){
-        plannerState.oosPrimarySort = 'status';
-        plannerState.oosSort = plannerState.oosSort === 'STATUS_ASC' ? 'STATUS_DESC' : 'STATUS_ASC';
+        if(plannerState.oosPrimarySort !== 'status'){
+          plannerState.oosPrimarySort = 'status';
+          plannerState.oosSort = 'STATUS_ASC';
+        }else if(plannerState.oosSort === 'STATUS_ASC'){
+          plannerState.oosSort = 'STATUS_DESC';
+        }else{
+          plannerState.oosPrimarySort = '';
+        }
         queuePlannerStateSave();
         renderPlannerView();
         return;
       }
       const oosLeavesSortBtn = e.target.closest('[data-oos-leaves-sort]');
       if(oosLeavesSortBtn){
-        plannerState.oosPrimarySort = 'leavesIn';
-        plannerState.oosLeavesSort = plannerState.oosLeavesSort === 'LEAVES_ASC' ? 'LEAVES_DESC' : 'LEAVES_ASC';
+        if(plannerState.oosPrimarySort !== 'leavesIn'){
+          plannerState.oosPrimarySort = 'leavesIn';
+          plannerState.oosLeavesSort = 'LEAVES_ASC';
+        }else if(plannerState.oosLeavesSort === 'LEAVES_ASC'){
+          plannerState.oosLeavesSort = 'LEAVES_DESC';
+        }else{
+          plannerState.oosPrimarySort = '';
+        }
         queuePlannerStateSave();
         renderPlannerView();
         return;
       }
       const oosLengthSortBtn = e.target.closest('[data-oos-length-sort]');
       if(oosLengthSortBtn){
-        plannerState.oosPrimarySort = 'oosLength';
-        plannerState.oosLengthSort = plannerState.oosLengthSort === 'LENGTH_ASC' ? 'LENGTH_DESC' : 'LENGTH_ASC';
+        if(plannerState.oosPrimarySort !== 'oosLength'){
+          plannerState.oosPrimarySort = 'oosLength';
+          plannerState.oosLengthSort = 'LENGTH_ASC';
+        }else if(plannerState.oosLengthSort === 'LENGTH_ASC'){
+          plannerState.oosLengthSort = 'LENGTH_DESC';
+        }else{
+          plannerState.oosPrimarySort = '';
+        }
         queuePlannerStateSave();
         renderPlannerView();
         return;
@@ -13494,7 +13516,9 @@ if(rowSelectBtn){
       }
       const seasonSortBtn = e.target.closest('[data-season-sort]');
       if(seasonSortBtn){
-        plannerState.seasonSort = plannerState.seasonSort === 'STATUS_ASC' ? 'STATUS_DESC' : 'STATUS_ASC';
+        plannerState.seasonSort = plannerState.seasonSort === 'DEFAULT'
+          ? 'STATUS_ASC'
+          : (plannerState.seasonSort === 'STATUS_ASC' ? 'STATUS_DESC' : 'DEFAULT');
         queuePlannerStateSave();
         renderPlannerView();
         return;
@@ -13503,11 +13527,14 @@ if(rowSelectBtn){
       if(lureSortBtn){
         const key = String(lureSortBtn.getAttribute('data-lure-sort') || '');
         if(['currentLure','fishInHand','goldNeeded'].includes(key)){
-          if(plannerState.lureSortKey === key){
-            plannerState.lureSortDir = plannerState.lureSortDir === 'ASC' ? 'DESC' : 'ASC';
-          }else{
+          if(plannerState.lureSortKey !== key){
             plannerState.lureSortKey = key;
             plannerState.lureSortDir = 'ASC';
+          }else if(plannerState.lureSortDir === 'ASC'){
+            plannerState.lureSortDir = 'DESC';
+          }else{
+            plannerState.lureSortKey = '';
+            plannerState.lureSortDir = '';
           }
           renderPlannerView();
           return;
@@ -13517,11 +13544,14 @@ if(rowSelectBtn){
       if(catchValueSortBtn){
         const key = String(catchValueSortBtn.getAttribute('data-catchvalue-sort') || '');
         if(['avgPoints','avgSale','bestSale','avgWeight'].includes(key)){
-          if(plannerState.catchValueSortKey === key){
-            plannerState.catchValueSortDir = plannerState.catchValueSortDir === 'ASC' ? 'DESC' : 'ASC';
-          }else{
+          if(plannerState.catchValueSortKey !== key){
             plannerState.catchValueSortKey = key;
+            plannerState.catchValueSortDir = 'ASC';
+          }else if(plannerState.catchValueSortDir === 'ASC'){
             plannerState.catchValueSortDir = 'DESC';
+          }else{
+            plannerState.catchValueSortKey = '';
+            plannerState.catchValueSortDir = '';
           }
           renderPlannerView();
           return;
@@ -13594,11 +13624,14 @@ if(rowSelectBtn){
       if(lureOverviewSortBtn){
         const key = String(lureOverviewSortBtn.getAttribute('data-lure-overview-sort') || 'map');
         if(['map','goals','maximum'].includes(key)){
-          if(plannerState.lureOverviewSortKey === key){
-            plannerState.lureOverviewSortDir = plannerState.lureOverviewSortDir === 'ASC' ? 'DESC' : 'ASC';
-          }else{
+          if(plannerState.lureOverviewSortKey !== key){
             plannerState.lureOverviewSortKey = key;
-            plannerState.lureOverviewSortDir = key === 'map' ? 'ASC' : 'DESC';
+            plannerState.lureOverviewSortDir = 'ASC';
+          }else if(plannerState.lureOverviewSortDir === 'ASC'){
+            plannerState.lureOverviewSortDir = 'DESC';
+          }else{
+            plannerState.lureOverviewSortKey = '';
+            plannerState.lureOverviewSortDir = '';
           }
           queuePlannerStateSave();
           renderPlannerView();
@@ -14883,8 +14916,8 @@ if(rowSelectBtn){
       return true;
     });
   }
-  let clanPlayerSortKey = 'participation';
-  let clanPlayerSortDir = 'desc';
+  let clanPlayerSortKey = '';
+  let clanPlayerSortDir = '';
   function clanPlayerMetricValue(row, key){
     if(!row) return 0;
     if(key === 'top5') return Number(row.top5 || 0);
@@ -14892,7 +14925,8 @@ if(rowSelectBtn){
     return Number(row.battles || 0);
   }
   function clanPlayerSortRows(rows, totalBattles){
-    const key = clanPlayerSortKey || 'participation';
+    const key = clanPlayerSortKey || '';
+    if(!key) return rows.slice();
     const dir = clanPlayerSortDir === 'asc' ? 1 : -1;
     return rows.slice().sort((a,b) => {
       const av = clanPlayerMetricValue(a, key);
@@ -14905,7 +14939,8 @@ if(rowSelectBtn){
     });
   }
   function clanPlayerSortLabel(key){
-    return clanPlayerSortKey === key ? (clanPlayerSortDir === 'asc' ? ' ▲' : ' ▼') : '';
+    if(clanPlayerSortKey !== key) return ' ↕';
+    return clanPlayerSortDir === 'asc' ? ' ▲' : (clanPlayerSortDir === 'desc' ? ' ▼' : ' ↕');
   }
   function clanUniquePlayerLeader(rows, key, minValue){
     const valid = rows.filter(r => clanPlayerMetricValue(r, key) >= (minValue || 1));
@@ -14965,11 +15000,14 @@ if(rowSelectBtn){
     wrap.querySelectorAll('[data-player-sort]').forEach(btn => {
       btn.addEventListener('click', () => {
         const nextKey = btn.getAttribute('data-player-sort') || 'participation';
-        if(clanPlayerSortKey === nextKey){
-          clanPlayerSortDir = clanPlayerSortDir === 'asc' ? 'desc' : 'asc';
-        }else{
+        if(clanPlayerSortKey !== nextKey){
           clanPlayerSortKey = nextKey;
+          clanPlayerSortDir = 'asc';
+        }else if(clanPlayerSortDir === 'asc'){
           clanPlayerSortDir = 'desc';
+        }else{
+          clanPlayerSortKey = '';
+          clanPlayerSortDir = '';
         }
         renderPlayerStatistics();
       });

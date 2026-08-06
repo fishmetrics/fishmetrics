@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>FISHMETRICS</title>
-<link href="style.css" rel="stylesheet"/>
+<link href="style.css?v=181-captainslog-mobile2" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&amp;display=swap" rel="stylesheet"/>
@@ -757,7 +757,7 @@ Not affiliated with any company or organization of a similar name.</div>
 </div>
 </section>
 </main>
-<script src="app.js"></script>
+<script src="app.js?v=181-captainslog-mobile2"></script>
 
 <footer class="app-footer">
   <div class="footer-left">
@@ -775,7 +775,7 @@ Not affiliated with any company or organization of a similar name.</div>
   <div class="footer-right">
     <button class="version-btn footer-meta-btn" onclick="openReleaseNotes()" aria-label="Version and release notes">
       <span class="footer-icon" aria-hidden="true">ⓘ</span>
-      <span class="footer-label">v1.8.1</span>
+      <span class="footer-label">v1.8.2</span>
     </button>
   </div>
 </footer>
@@ -795,7 +795,7 @@ Not affiliated with any company or organization of a similar name.</div>
     <button onclick="clearFishMetricsData()">Clear All Local Data</button>
 
     <p class="privacy-footnote">
-      GDPR compliance: FishMetrics v1.8.1 – local-only data storage.
+      GDPR compliance: FishMetrics v1.8.2 – local-only data storage.
     </p>
 
     <button class="close-btn" onclick="closePrivacyNotice()">Close</button>
@@ -805,6 +805,12 @@ Not affiliated with any company or organization of a similar name.</div>
 <div id="releaseNotesModal" class="privacy-modal">
   <div class="privacy-content release-notes-content">
     <button type="button" class="release-notes-x" onclick="closeReleaseNotes()" aria-label="Close release notes">×</button>
+
+<h3>FishMetrics v1.8.2</h3>
+
+<ul class="release-notes">
+  <li>Added Captain's Log for notes</li>
+</ul>
 
 <h3>FishMetrics v1.8.1</h3>
 
@@ -990,6 +996,111 @@ Not affiliated with any company or organization of a similar name.</div>
 <div id="companionRestore" style="display:none;" class="companion-restore-fixed" aria-live="polite">
   Fishing Guide <span id="restoreGuide" class="restore-link">↺ Restore</span>
 </div>
+
+
+<!-- Captain's Log: floating notebook -->
+<button type="button" id="captainsLogToggle" class="captains-log-toggle"
+        aria-label="Captain's Log" aria-controls="captainsLogDrawer"
+        aria-expanded="false" data-tooltip="Captain's Log">
+  <svg class="captains-log-book-icon" viewBox="0 0 64 64" aria-hidden="true">
+    <path class="captains-log-book-cover" d="M12 7h32a7 7 0 0 1 7 7v41H19a7 7 0 0 1-7-7V7Z"/>
+    <path class="captains-log-book-spine" d="M20 7v48"/>
+    <path class="captains-log-book-pages" d="M27 18h16M27 27h16M27 36h12"/>
+    <path class="captains-log-book-base" d="M12 47h39"/>
+    <path class="captains-log-bookmark" d="M34 53v9l4-3 4 3v-9"/>
+  </svg>
+  <span class="captains-log-shine" aria-hidden="true"></span>
+</button>
+
+<div id="captainsLogBackdrop" class="captains-log-backdrop" aria-hidden="true"></div>
+
+<aside id="captainsLogDrawer" class="captains-log-drawer"
+       aria-hidden="true" aria-labelledby="captainsLogTitle">
+  <div class="captains-log-header">
+    <div class="captains-log-heading">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M14 8h30a6 6 0 0 1 6 6v42H20a6 6 0 0 1-6-6V8Z"/>
+        <path d="M20 8v48"/>
+        <path d="M27 18h15M27 27h15M27 36h11"/>
+      </svg>
+      <div>
+        <div id="captainsLogTitle" class="captains-log-title">Captain's Log</div>
+        <div class="captains-log-subtitle">Your notes, available anywhere in FishMetrics</div>
+      </div>
+    </div>
+    <button type="button" id="captainsLogClose" class="captains-log-close" aria-label="Close Captain's Log">×</button>
+  </div>
+
+  <div class="captains-log-tabs" role="tablist" aria-label="Captain's Log sections">
+    <button type="button" class="captains-log-tab active" data-log-section="general" role="tab" aria-selected="true">General</button>
+    <button type="button" class="captains-log-tab" data-log-section="maps" role="tab" aria-selected="false">Maps</button>
+    <button type="button" class="captains-log-tab" data-log-section="planner" role="tab" aria-selected="false">Planner</button>
+    <button type="button" class="captains-log-tab" data-log-section="battles" role="tab" aria-selected="false">Battles</button>
+  </div>
+
+  <div class="captains-log-body">
+    <label class="captains-log-label" for="captainsLogText">
+      <span id="captainsLogSectionTitle">General Notes</span>
+      <span id="captainsLogSaved" class="captains-log-saved">Saved locally</span>
+    </label>
+    <textarea id="captainsLogText" class="captains-log-text"
+              placeholder="Write anything you want to remember..."></textarea>
+  </div>
+</aside>
+
+<script>
+(function(){
+  function forceCaptainLogClosed(){
+    var drawer=document.getElementById('captainsLogDrawer');
+    var backdrop=document.getElementById('captainsLogBackdrop');
+    var toggle=document.getElementById('captainsLogToggle');
+    if(drawer){
+      drawer.classList.remove('open');
+      drawer.setAttribute('aria-hidden','true');
+      drawer.style.transform='translate3d(105%,0,0)';
+      drawer.style.visibility='hidden';
+    }
+    if(backdrop){
+      backdrop.classList.remove('open');
+      backdrop.setAttribute('aria-hidden','true');
+      backdrop.style.opacity='0';
+      backdrop.style.visibility='hidden';
+    }
+    document.body.classList.remove('captains-log-open');
+    if(toggle) toggle.setAttribute('aria-expanded','false');
+  }
+
+  function closeCaptainLogFallback(event){
+    if(event){ event.preventDefault(); event.stopPropagation(); }
+    forceCaptainLogClosed();
+  }
+
+  forceCaptainLogClosed();
+  document.addEventListener('DOMContentLoaded', forceCaptainLogClosed, {once:true});
+  window.addEventListener('pageshow', function(e){ if(e.persisted) forceCaptainLogClosed(); });
+
+  var closeBtn=document.getElementById('captainsLogClose');
+  var backdrop=document.getElementById('captainsLogBackdrop');
+  if(closeBtn){
+    closeBtn.addEventListener('click', closeCaptainLogFallback, true);
+    closeBtn.addEventListener('touchend', closeCaptainLogFallback, {capture:true, passive:false});
+  }
+  if(backdrop){
+    backdrop.addEventListener('click', closeCaptainLogFallback, true);
+    backdrop.addEventListener('touchend', closeCaptainLogFallback, {capture:true, passive:false});
+  }
+
+  var toggle=document.getElementById('captainsLogToggle');
+  if(toggle){
+    toggle.addEventListener('click', function(){
+      var drawer=document.getElementById('captainsLogDrawer');
+      var backdrop=document.getElementById('captainsLogBackdrop');
+      if(drawer){ drawer.style.transform=''; drawer.style.visibility=''; }
+      if(backdrop){ backdrop.style.opacity=''; backdrop.style.visibility=''; }
+    }, true);
+  }
+})();
+</script>
 
 </body>
 </html>

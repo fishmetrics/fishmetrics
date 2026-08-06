@@ -9976,7 +9976,7 @@ try{
       }
     })();
 
-// Easy Catch:
+// Quick Win:
     // If ANY fish uncaught (in-season), pick an uncaught fish from the easiest tier (Common→Rare→Epic→Legendary).
     // Tie-break: lower-level map first, then A→Z.
     // If NO fish uncaught (Bestiary 100% for this dataset), pick an easy upgrade target:
@@ -10026,7 +10026,7 @@ try{
           if(!list || !list.length) continue;
           list.sort((a,b)=> (a.lr - b.lr) || String(a.k).localeCompare(String(b.k)));
           const pick = list[0];
-          setRow(1,'Easy Catch', `${toTitle(pick.k)} → Not yet caught`);
+          setRow(1,'Quick Win', `${toTitle(pick.k)} → Not yet caught`);
           return;
         }
       }
@@ -10056,11 +10056,11 @@ try{
 
         pool.sort((a,b)=> (a.pts - b.pts) || (a.lr - b.lr) || String(a.k).localeCompare(String(b.k)));
         const pick = pool[0];
-        setRow(1,'Easy Catch', `${toTitle(pick.k)} → Easy upgrade`);
+        setRow(1,'Quick Win', `${toTitle(pick.k)} → Easy upgrade`);
         return;
       }
 
-      setRow(1,'Easy Catch', 'No easy catches right now');
+      setRow(1,'Quick Win', 'No easy catches right now');
     })();
 
 // Seasonal advantage: rare+ fish in season and uncaught
@@ -16757,4 +16757,193 @@ if(rowSelectBtn){
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDay2);
   else initDay2();
   setTimeout(initDay2, 500);
+})();
+
+
+/* Captain's Log */
+(function(){
+  const STORAGE_KEY = 'fm_captains_log_v1';
+  const TITLES = {
+    general: 'General Notes',
+    maps: 'Map Notes',
+    planner: 'Planner Notes',
+    battles: 'Battle Notes'
+  };
+  let state = { active: 'general', notes: { general:'', maps:'', planner:'', battles:'' } };
+  let saveTimer = null;
+
+  function load(){
+    try{
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if(parsed && typeof parsed === 'object'){
+        state.active = TITLES[parsed.active] ? parsed.active : 'general';
+        if(parsed.notes && typeof parsed.notes === 'object'){
+          Object.keys(TITLES).forEach((key)=>{
+            state.notes[key] = String(parsed.notes[key] || '');
+          });
+        }
+      }
+    }catch(_){}
+  }
+
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){}
+    const saved = document.getElementById('captainsLogSaved');
+    if(saved){
+      saved.textContent = 'Saved locally';
+      saved.classList.remove('saving');
+    }
+  }
+
+  function scheduleSave(){
+    const saved = document.getElementById('captainsLogSaved');
+    if(saved){
+      saved.textContent = 'Saving…';
+      saved.classList.add('saving');
+    }
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(save, 280);
+  }
+
+  function setSection(key){
+    if(!TITLES[key]) return;
+    const text = document.getElementById('captainsLogText');
+    if(text && TITLES[state.active]) state.notes[state.active] = text.value;
+    state.active = key;
+
+    document.querySelectorAll('.captains-log-tab').forEach((btn)=>{
+      const active = btn.getAttribute('data-log-section') === key;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    const title = document.getElementById('captainsLogSectionTitle');
+    if(title) title.textContent = TITLES[key];
+    if(text) text.value = state.notes[key] || '';
+    scheduleSave();
+  }
+
+  function resolveContextSection(){
+    try{
+      if(document.body.classList.contains('planner-page-active')) return 'planner';
+      if(document.body.classList.contains('clan-page-active')) return 'battles';
+
+      const activeView = document.querySelector('.tab-view.active');
+      const activeId = String(activeView && activeView.id || '').toLowerCase();
+      if(activeId.includes('clan') || activeId.includes('battle')) return 'battles';
+
+      const metricsVisible = !document.body.classList.contains('planner-page-active')
+        && !document.body.classList.contains('clan-page-active');
+
+      if(metricsVisible){
+        const selectedLocation = document.getElementById('locationSelect');
+        if(selectedLocation && selectedLocation.value && selectedLocation.value !== '__ALL__'){
+          return 'maps';
+        }
+      }
+    }catch(_){}
+    return 'general';
+  }
+
+  function setOpen(open){
+    const toggle = document.getElementById('captainsLogToggle');
+    const drawer = document.getElementById('captainsLogDrawer');
+    const backdrop = document.getElementById('captainsLogBackdrop');
+    if(!toggle || !drawer || !backdrop) return;
+
+    const isOpen = !!open;
+    drawer.classList.toggle('open', isOpen);
+    backdrop.classList.toggle('open', isOpen);
+    document.body.classList.toggle('captains-log-open', isOpen);
+    drawer.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    backdrop.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+    if(isOpen){
+      setSection(resolveContextSection());
+      setTimeout(()=>{ try{ document.getElementById('captainsLogText')?.focus(); }catch(_){} }, 220);
+    }else{
+      const text = document.getElementById('captainsLogText');
+      if(text && TITLES[state.active]) state.notes[state.active] = text.value;
+      save();
+    }
+  }
+
+  function init(){
+    const toggle = document.getElementById('captainsLogToggle');
+    const drawer = document.getElementById('captainsLogDrawer');
+    const backdrop = document.getElementById('captainsLogBackdrop');
+    const close = document.getElementById('captainsLogClose');
+    const text = document.getElementById('captainsLogText');
+    if(!toggle || !drawer || !backdrop || !text || toggle.dataset.bound === '1') return;
+
+    // Mobile browsers and installed PWAs may restore the previous DOM snapshot.
+    // Always normalize Captain's Log to a closed state on a fresh launch.
+    drawer.classList.remove('open');
+    backdrop.classList.remove('open');
+    document.body.classList.remove('captains-log-open');
+    drawer.setAttribute('aria-hidden', 'true');
+    backdrop.setAttribute('aria-hidden', 'true');
+    toggle.setAttribute('aria-expanded', 'false');
+
+    toggle.dataset.bound = '1';
+
+    load();
+    setSection(state.active);
+
+    toggle.addEventListener('click', ()=>setOpen(true));
+    if(close){
+      close.addEventListener('click', (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        setOpen(false);
+      });
+      close.addEventListener('touchend', (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        setOpen(false);
+      }, { passive:false });
+    }
+    backdrop.addEventListener('click', ()=>setOpen(false));
+    document.querySelectorAll('.captains-log-tab').forEach((btn)=>{
+      btn.addEventListener('click', ()=>setSection(btn.getAttribute('data-log-section') || 'general'));
+    });
+    text.addEventListener('input', ()=>{
+      state.notes[state.active] = text.value;
+      scheduleSave();
+    });
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape' && drawer.classList.contains('open')) setOpen(false);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+  setTimeout(init, 350);
+})();
+
+
+/* Mobile Fishing Guide viewport clamp */
+(function(){
+  function clampFishingGuideMobile(){
+    if(!window.matchMedia || !window.matchMedia('(max-width: 640px)').matches) return;
+    const panel = document.getElementById('companionPanel');
+    if(!panel) return;
+
+    // Saved desktop drag coordinates can push the panel off-screen on mobile.
+    panel.style.removeProperty('width');
+    panel.style.removeProperty('min-width');
+    panel.style.removeProperty('max-width');
+    panel.style.setProperty('left', '12px', 'important');
+    panel.style.setProperty('right', '12px', 'important');
+    panel.style.setProperty('top', 'auto', 'important');
+    panel.style.setProperty('bottom', '76px', 'important');
+    panel.style.setProperty('transform', 'none', 'important');
+  }
+
+  document.addEventListener('DOMContentLoaded', clampFishingGuideMobile);
+  window.addEventListener('resize', clampFishingGuideMobile);
+  window.addEventListener('orientationchange', ()=>{
+    setTimeout(clampFishingGuideMobile, 120);
+  });
+  setTimeout(clampFishingGuideMobile, 350);
 })();

@@ -16805,10 +16805,19 @@ if(rowSelectBtn){
     saveTimer = setTimeout(save, 280);
   }
 
-  function setSection(key){
+  function setSection(key, options){
     if(!TITLES[key]) return;
+    const opts = options || {};
     const text = document.getElementById('captainsLogText');
-    if(text && TITLES[state.active]) state.notes[state.active] = text.value;
+
+    // When switching sections during normal use, capture the note currently
+    // visible in the textarea. On initial load, skip this step: the textarea
+    // starts empty and would otherwise overwrite the note just loaded from
+    // localStorage.
+    if(!opts.skipCapture && text && TITLES[state.active]){
+      state.notes[state.active] = text.value;
+    }
+
     state.active = key;
 
     document.querySelectorAll('.captains-log-tab').forEach((btn)=>{
@@ -16820,7 +16829,8 @@ if(rowSelectBtn){
     const title = document.getElementById('captainsLogSectionTitle');
     if(title) title.textContent = TITLES[key];
     if(text) text.value = state.notes[key] || '';
-    scheduleSave();
+
+    if(!opts.skipSave) scheduleSave();
   }
 
   function resolveContextSection(){
@@ -16889,7 +16899,9 @@ if(rowSelectBtn){
     toggle.dataset.bound = '1';
 
     load();
-    setSection(state.active);
+    // Render the loaded section without capturing the initially empty textarea
+    // or writing anything back to storage.
+    setSection(state.active, { skipCapture:true, skipSave:true });
 
     toggle.addEventListener('click', ()=>setOpen(true));
     if(close){

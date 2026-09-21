@@ -564,8 +564,8 @@ const LOCATIONS_VIP = {
     { name:"Tailtress", category:"Epic", min:440.92, max:881.85 }
   ],
   "Bermuda Triangle": [
-    { name:"Alienacanthus", category:"Common", min:22.05, max:24.25 },
-    { name:"Chinlea", category:"Common", min:4.41, max:8.82 },
+    { name:"Alienacanthus", category:"Common", min:22.05, max:33.07 },
+    { name:"Chinlea", category:"Common", min:4.41, max:19.84 },
     { name:"Anglaspis", category:"Common", min:2.2, max:6.61 },
     { name:"Cladoselache", category:"Common", min:55.12, max:110.23 },
     { name:"Diplacanthus", category:"Common", min:2.2, max:6.61 },
